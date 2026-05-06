@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第5回｜Scratchでゲームをつくろう</title>
+<style>
+  :root{
+    --primary:#118AB2;
+    --secondary:#FFD166;
+    --accent:#EF476F;
+    --green:#06D6A0;
+    --dark:#24323D;
+    --light:#F0FBFF;
+    --panel:#FFFFFF;
+    --muted:#66737F;
+    --blue:#4D96FF;
+    --orange:#FF9F1C;
+    --purple:#9B5DE5;
+    --shadow:0 4px 0 rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;
+  }
+  button,input{font:inherit}
+  .progress{
+    position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--green),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;
+  }
+  .top-status{
+    position:fixed;top:20px;right:20px;z-index:60;
+    background:rgba(255,255,255,.94);padding:10px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:14px;
+  }
+  .top-status b{color:var(--primary)}
+  .snav{
+    position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;
+  }
+  .snav a{
+    width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.12);
+    position:relative;transition:transform .15s,background .15s,color .15s;
+  }
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a span{
+    position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;
+  }
+  .snav a:hover span,.snav a:focus span{opacity:1;transform:translateY(-50%)}
+
+  .hero{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(circle at 75% 20%,rgba(255,209,102,.9),transparent 25%),
+      linear-gradient(135deg,var(--primary),var(--green));
+  }
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{
+    display:inline-block;background:rgba(255,255,255,.24);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);
+  }
+  .hero h1{
+    font-size:clamp(46px,8vw,102px);line-height:1.1;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);
+  }
+  .hero p{font-size:clamp(18px,2.4vw,24px)}
+  .hero .icons{font-size:clamp(54px,9vw,118px);margin-top:22px;filter:drop-shadow(0 8px 0 rgba(0,0,0,.12))}
+  .scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1120px;margin:0 auto}
+  .section-label{
+    display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;
+  }
+  h2{font-size:clamp(32px,5vw,50px);color:var(--primary);line-height:1.2;margin-bottom:8px}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--green);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:8px}
+  .feature{text-align:center;transition:transform .15s}
+  .feature:hover{transform:translateY(-3px)}
+  .feature .emoji{font-size:62px;line-height:1;margin-bottom:10px}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 14px;
+    font-weight:bold;margin:4px;background:white;border:2px solid var(--primary);color:var(--primary);
+  }
+  .rule{
+    background:white;border-radius:18px;padding:22px;box-shadow:var(--shadow);
+    border-left:8px solid var(--green);font-size:18px;
+  }
+  .quiz{background:white;border-radius:20px;padding:26px;box-shadow:var(--shadow)}
+  .quiz h3{font-size:26px;margin-bottom:12px;color:var(--primary)}
+  .choices{display:grid;gap:10px;margin-top:14px}
+  .choice{
+    border:3px solid #DDE4F2;background:white;border-radius:14px;padding:14px;
+    text-align:left;cursor:pointer;color:var(--dark);transition:transform .12s,border-color .12s,background .12s;
+  }
+  .choice:hover{transform:translateY(-2px);border-color:var(--primary)}
+  .choice.correct{background:#E9FFF8;border-color:var(--green)}
+  .choice.wrong{background:#FFF0F4;border-color:var(--accent)}
+  .result{margin-top:12px;font-weight:bold;min-height:28px}
+  .result.ok{color:#048A67}.result.ng{color:var(--accent)}
+
+  .scratch-map{
+    display:grid;grid-template-columns:1fr 1fr;gap:18px;
+  }
+  .scratch-card{
+    background:#F5F7FB;border-radius:20px;padding:18px;box-shadow:var(--shadow);
+  }
+  .blocks{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .block{
+    color:white;border-radius:12px;padding:10px 14px;font-weight:bold;
+    box-shadow:0 3px 0 rgba(0,0,0,.12);
+  }
+  .b-event{background:var(--secondary);color:#5B4100}
+  .b-motion{background:var(--blue)}
+  .b-sense{background:var(--purple)}
+  .b-var{background:var(--orange)}
+  .b-control{background:#FF9F1C}
+
+  .game-shell{background:white;border-radius:22px;padding:22px;box-shadow:var(--shadow)}
+  .game-grid{display:grid;grid-template-columns:1fr 330px;gap:18px;align-items:start}
+  .game-stage{
+    height:430px;border-radius:20px;position:relative;overflow:hidden;outline:none;
+    background:linear-gradient(#BCEBFF 0 62%,#8EE09E 62% 100%);
+    border:4px solid #DDE4F2;touch-action:none;
+  }
+  .game-stage:focus{box-shadow:0 0 0 4px rgba(17,138,178,.18)}
+  .sky-item{position:absolute;font-size:44px;line-height:1}
+  .sun{right:28px;top:24px}
+  .cloud{left:28px;top:44px}
+  .item{
+    position:absolute;font-size:46px;line-height:1;left:50%;top:20px;
+    transform:translate(-50%,-50%);filter:drop-shadow(0 5px 0 rgba(0,0,0,.12));
+  }
+  .basket{
+    position:absolute;font-size:64px;line-height:1;bottom:22px;left:50%;
+    transform:translateX(-50%);filter:drop-shadow(0 8px 0 rgba(0,0,0,.12));
+  }
+  .hud{
+    position:absolute;top:12px;left:12px;display:flex;gap:8px;flex-wrap:wrap;z-index:2;
+  }
+  .hud-pill{
+    background:rgba(255,255,255,.92);border:2px solid var(--primary);border-radius:999px;
+    padding:6px 12px;font-weight:bold;
+  }
+  .game-over{
+    position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;
+    background:rgba(36,50,61,.72);color:white;padding:24px;z-index:3;
+  }
+  .game-over.show{display:flex}
+  .game-over h3{font-size:40px;margin-bottom:8px}
+  .side-panel{display:grid;gap:14px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px}
+  .btn{
+    border:none;border-radius:14px;padding:12px 18px;color:white;background:var(--primary);
+    font-weight:bold;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn:active{transform:translateY(2px)}
+  .btn.green{background:var(--green);color:#06382E}
+  .btn.gray{background:var(--muted)}
+  .move-pad{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .move-btn{
+    border:none;border-radius:16px;background:var(--secondary);padding:18px;
+    font-size:28px;font-weight:bold;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.12);
+  }
+  .status{
+    background:#FFFBEA;border:2px solid var(--secondary);border-radius:14px;
+    padding:12px;font-weight:bold;min-height:54px;
+  }
+  .var-box{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .var-card{
+    background:white;border:3px solid #DDE4F2;border-radius:16px;padding:14px;text-align:center;
+  }
+  .var-card .num{font-size:34px;color:var(--primary);font-weight:bold}
+  .checklist{display:grid;gap:10px}
+  .check{
+    display:flex;align-items:center;gap:10px;background:white;border-radius:14px;padding:14px;
+    box-shadow:var(--shadow);cursor:pointer;
+  }
+  .check input{width:22px;height:22px;accent-color:var(--green)}
+  .danger{border-left:8px solid var(--accent)}
+  footer{padding:50px 20px;text-align:center;color:var(--muted)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center}
+    .scratch-map,.game-grid{grid-template-columns:1fr}
+    .section{padding:64px 16px}
+    .game-stage{height:390px}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>第5回</span> <b>Scratchでゲームをつくろう</b></div>
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>トップ</span></a>
+  <a href="#parts">2<span>ゲームの部品</span></a>
+  <a href="#logic">3<span>条件と変数</span></a>
+  <a href="#play">4<span>ミニゲーム</span></a>
+  <a href="#test">5<span>テスト</span></a>
+</nav>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">小学生プログラミング教室 ／ 第5回</div>
+    <h1>Scratchで<br>ゲームをつくろう</h1>
+    <p>条件分岐と変数を使って、スコアつきのキャッチゲームへ。</p>
+    <div class="icons">🧺🍎⭐</div>
+  </div>
+  <div class="scroll-hint">下へすすむ</div>
+</header>
+
+<section class="section" id="parts" data-snav-target>
+  <span class="section-label">1. ゲームの部品</span>
+  <h2>キャッチゲームは何でできている？</h2>
+  <p class="lead">画面の見た目からではなく、ゲームの状態を作るデータから考えます。</p>
+  <div class="grid grid-4">
+    <div class="card feature"><div class="emoji">🧺</div><h3>プレイヤー</h3><p>左右に動くかご。</p></div>
+    <div class="card feature"><div class="emoji">🍎</div><h3>アイテム</h3><p>上から落ちてくるもの。</p></div>
+    <div class="card feature"><div class="emoji">⭐</div><h3>スコア</h3><p>何個取れたかを覚える数。</p></div>
+    <div class="card feature"><div class="emoji">⏱️</div><h3>時間</h3><p>ゲームの終わりを決める数。</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="rule">
+    <strong>今日のルール</strong><br>
+    りんごが落ちる。かごに触れたらスコアを1ふやす。りんごは上にもどる。時間までくりかえす。
+  </div>
+</section>
+
+<section class="section">
+  <div class="quiz" data-answer="score">
+    <h3>クイズ：スコアは何を覚える？</h3>
+    <div class="choices">
+      <button class="choice" data-choice="url">Webサイトの住所</button>
+      <button class="choice" data-choice="score">何個キャッチしたか</button>
+      <button class="choice" data-choice="folder">フォルダの場所</button>
+    </div>
+    <div class="result" aria-live="polite"></div>
+  </div>
+</section>
+
+<div class="divider" id="logic" data-snav-target>
+  <div class="num">2. Logic</div>
+  <h2>変数と条件分岐</h2>
+</div>
+
+<section class="section">
+  <div class="scratch-map">
+    <div class="scratch-card">
+      <h3>スコア変数</h3>
+      <p>変数は、ゲームが覚えておく数字の箱です。</p>
+      <div class="blocks">
+        <div class="block b-event">🟡 旗が押されたとき</div>
+        <div class="block b-var">⭐ スコアを 0 にする</div>
+        <div class="block b-var">⭐ スコアを 1 ずつ変える</div>
+      </div>
+    </div>
+    <div class="scratch-card">
+      <h3>もし触れたなら</h3>
+      <p>キャッチしたかどうかを調べて、動きを分けます。</p>
+      <div class="blocks">
+        <div class="block b-control">🔁 ずっと</div>
+        <div class="block b-sense">❓ もし りんごが かごに触れたなら</div>
+        <div class="block b-var">⭐ スコアを 1 ずつ変える</div>
+        <div class="block b-motion">🔵 りんごを上にもどす</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="quiz" data-answer="condition">
+    <h3>クイズ：「もし りんごが かごに触れたなら」はどれ？</h3>
+    <div class="choices">
+      <button class="choice" data-choice="sequence">じゅんばん</button>
+      <button class="choice" data-choice="condition">もしも</button>
+      <button class="choice" data-choice="storage">ストレージ</button>
+    </div>
+    <div class="result" aria-live="polite"></div>
+  </div>
+</section>
+
+<div class="divider" id="play" data-snav-target>
+  <div class="num">3. Play</div>
+  <h2>キャッチゲームを体験しよう</h2>
+</div>
+
+<section class="section">
+  <p class="lead">左右キー、またはボタンでかごを動かします。Scratchで作る前に、ゲームのルールを体で確認します。</p>
+  <div class="game-shell">
+    <div class="game-grid">
+      <div class="game-stage" id="gameStage" tabindex="0" aria-label="キャッチゲーム">
+        <div class="hud">
+          <div class="hud-pill">⭐ スコア: <span id="scoreText">0</span></div>
+          <div class="hud-pill">⏱️ 時間: <span id="timeText">30</span></div>
+        </div>
+        <div class="sky-item sun">☀️</div>
+        <div class="sky-item cloud">☁️</div>
+        <div class="item" id="item">🍎</div>
+        <div class="basket" id="basket">🧺</div>
+        <div class="game-over" id="gameOver">
+          <div>
+            <h3>ゲーム終了！</h3>
+            <p id="finalText">スコア: 0</p>
+          </div>
+        </div>
+      </div>
+      <div class="side-panel">
+        <div class="card">
+          <h3>操作</h3>
+          <div class="controls">
+            <button class="btn green" id="startBtn">▶ スタート</button>
+            <button class="btn gray" id="resetBtn">リセット</button>
+          </div>
+          <div class="move-pad" style="margin-top:12px">
+            <button class="move-btn" id="leftBtn">←</button>
+            <button class="move-btn" id="rightBtn">→</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>変数の中身</h3>
+          <div class="var-box">
+            <div class="var-card"><div>スコア</div><div class="num" id="scoreVar">0</div></div>
+            <div class="var-card"><div>残り時間</div><div class="num" id="timeVar">30</div></div>
+          </div>
+        </div>
+        <div class="status" id="status">スタートを押して、りんごをキャッチしよう。</div>
+        <div class="card danger">
+          <h3>Scratchで作るとき</h3>
+          <p>点が増え続けるときは、キャッチ後にアイテムを上へ戻すブロックを確認します。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="test" data-snav-target>
+  <span class="section-label">4. テスト</span>
+  <h2>ゲームは作ったあとに確かめる</h2>
+  <p class="lead">動いたら完成、ではなく、ルールどおりに動くかをチェックします。</p>
+  <div class="checklist">
+    <label class="check"><input type="checkbox"> 左右キーでプレイヤーが動く</label>
+    <label class="check"><input type="checkbox"> アイテムが上から落ちる</label>
+    <label class="check"><input type="checkbox"> 触れたときだけスコアが増える</label>
+    <label class="check"><input type="checkbox"> キャッチ後にアイテムが上へ戻る</label>
+    <label class="check"><input type="checkbox"> 速さがちょうどよく、遊んで楽しい</label>
+  </div>
+</section>
+
+<section class="section">
+  <span class="section-label">安全</span>
+  <h2>共有するときの約束</h2>
+  <div class="grid grid-3">
+    <div class="card"><h3>名前</h3><p>作品名に本名や学校名を入れない。</p></div>
+    <div class="card"><h3>確認</h3><p>公開や共有は、先生や家の人に確認する。</p></div>
+    <div class="card"><h3>参考</h3><p>友だちの作品を参考にしたら、ありがとうを伝える。</p></div>
+  </div>
+</section>
+
+<footer>第5回｜Scratchでゲームをつくろう</footer>
+
+<script>
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY / max) * 100) + '%';
+    const y = window.scrollY + window.innerHeight * 0.32;
+    let cur = 0;
+    targets.forEach((el,i)=>{
+      if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i;
+    });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i === cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  document.querySelectorAll('.quiz').forEach(quiz=>{
+    const answer = quiz.dataset.answer;
+    const result = quiz.querySelector('.result');
+    quiz.querySelectorAll('.choice').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        quiz.querySelectorAll('.choice').forEach(b=>b.classList.remove('correct','wrong'));
+        if(btn.dataset.choice === answer){
+          btn.classList.add('correct');
+          result.textContent = answer === 'score'
+            ? 'せいかい！スコアはゲームが覚える数字です。'
+            : 'せいかい！条件で動きが変わるので「もしも」です。';
+          result.className = 'result ok';
+        }else{
+          btn.classList.add('wrong');
+          result.textContent = 'もう一度考えてみよう。ゲームの中で変わるものに注目！';
+          result.className = 'result ng';
+        }
+      });
+    });
+  });
+
+  const stage = document.getElementById('gameStage');
+  const basket = document.getElementById('basket');
+  const item = document.getElementById('item');
+  const scoreText = document.getElementById('scoreText');
+  const timeText = document.getElementById('timeText');
+  const scoreVar = document.getElementById('scoreVar');
+  const timeVar = document.getElementById('timeVar');
+  const statusEl = document.getElementById('status');
+  const gameOver = document.getElementById('gameOver');
+  const finalText = document.getElementById('finalText');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+  let score = 0;
+  let timeLeft = 30;
+  let running = false;
+  let basketX = 0;
+  let itemX = 0;
+  let itemY = 0;
+  let velocity = 2.8;
+  let lastTick = 0;
+  let timerId = null;
+  let rafId = null;
+  const keys = {left:false,right:false};
+  const itemChoices = ['🍎','🍓','🍊','⭐'];
+
+  function stageSize(){
+    return {w:stage.clientWidth, h:stage.clientHeight};
+  }
+  function setStatus(text){statusEl.textContent = text}
+  function syncVars(){
+    scoreText.textContent = score;
+    scoreVar.textContent = score;
+    timeText.textContent = timeLeft;
+    timeVar.textContent = timeLeft;
+  }
+  function resetItem(){
+    const {w} = stageSize();
+    itemX = 42 + Math.random() * Math.max(20, w - 84);
+    itemY = 70;
+    velocity = Math.min(6.2, 2.8 + score * 0.08);
+    item.textContent = itemChoices[Math.floor(Math.random() * itemChoices.length)];
+    placeThings();
+  }
+  function resetGame(){
+    const {w} = stageSize();
+    score = 0;
+    timeLeft = 30;
+    running = false;
+    basketX = w / 2;
+    gameOver.classList.remove('show');
+    clearInterval(timerId);
+    cancelAnimationFrame(rafId);
+    resetItem();
+    syncVars();
+    setStatus('スタートを押して、りんごをキャッチしよう。');
+    startBtn.disabled = false;
+  }
+  function placeThings(){
+    const {w} = stageSize();
+    basketX = Math.max(46, Math.min(w - 46, basketX));
+    basket.style.left = basketX + 'px';
+    item.style.left = itemX + 'px';
+    item.style.top = itemY + 'px';
+  }
+  function moveBasket(delta){
+    const {w} = stageSize();
+    basketX = Math.max(46, Math.min(w - 46, basketX + delta));
+    placeThings();
+  }
+  function intersects(){
+    const basketRect = basket.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    return !(itemRect.right < basketRect.left + 12 ||
+      itemRect.left > basketRect.right - 12 ||
+      itemRect.bottom < basketRect.top + 12 ||
+      itemRect.top > basketRect.bottom - 8);
+  }
+  function endGame(){
+    running = false;
+    clearInterval(timerId);
+    cancelAnimationFrame(rafId);
+    finalText.textContent = `スコア: ${score}`;
+    gameOver.classList.add('show');
+    setStatus('ゲーム終了。Scratchではここで「ゲームオーバー」と言わせてもOK。');
+    startBtn.disabled = false;
+  }
+  function loop(ts){
+    if(!running) return;
+    if(!lastTick) lastTick = ts;
+    const dt = Math.min(32, ts - lastTick);
+    lastTick = ts;
+    if(keys.left) moveBasket(-7);
+    if(keys.right) moveBasket(7);
+    itemY += velocity * (dt / 16);
+    const {h} = stageSize();
+    if(intersects()){
+      score += 1;
+      syncVars();
+      setStatus('キャッチ！スコアを1ふやして、アイテムを上にもどします。');
+      resetItem();
+    }else if(itemY > h - 35){
+      setStatus('取りそこねた。アイテムを上にもどします。');
+      resetItem();
+    }
+    placeThings();
+    rafId = requestAnimationFrame(loop);
+  }
+  function startGame(){
+    if(running) return;
+    resetGame();
+    running = true;
+    startBtn.disabled = true;
+    stage.focus();
+    setStatus('ゲームスタート。左右キーでかごを動かそう。');
+    timerId = setInterval(()=>{
+      timeLeft -= 1;
+      syncVars();
+      if(timeLeft <= 0) endGame();
+    },1000);
+    lastTick = 0;
+    rafId = requestAnimationFrame(loop);
+  }
+  startBtn.addEventListener('click', startGame);
+  resetBtn.addEventListener('click', resetGame);
+  leftBtn.addEventListener('click',()=>moveBasket(-34));
+  rightBtn.addEventListener('click',()=>moveBasket(34));
+  document.addEventListener('keydown',(e)=>{
+    if(e.target.matches('input,button')) return;
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); keys.left = true; moveBasket(-7); }
+    if(e.key === 'ArrowRight'){ e.preventDefault(); keys.right = true; moveBasket(7); }
+    const active = navLinks.findIndex(a=>a.classList.contains('active'));
+    const goto = (idx)=>{
+      idx = Math.max(0, Math.min(targets.length - 1, idx));
+      targets[idx].scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    if(['ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(active + 1); }
+    if(['ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(active - 1); }
+  });
+  document.addEventListener('keyup',(e)=>{
+    if(e.key === 'ArrowLeft') keys.left = false;
+    if(e.key === 'ArrowRight') keys.right = false;
+  });
+  window.addEventListener('resize',()=>{
+    placeThings();
+  });
+  resetGame();
+</script>
+</body>
+</html>
