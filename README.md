@@ -70,16 +70,13 @@ flowchart TD
 ├── 00_カリキュラム概要.md
 ├── 01_パソコンってなんだろう/
 │   ├── lesson.md
-│   ├── interactive.html
-│   └── lesson.pptx
+│   └── interactive.html
 ├── 02_インターネットとWebサイト/
 │   ├── lesson.md
-│   ├── interactive.html
-│   └── lesson.pptx
+│   └── interactive.html
 ├── 03_プログラミングってなんだろう/
 │   ├── lesson.md
-│   ├── interactive.html
-│   └── lesson.pptx
+│   └── interactive.html
 ├── 04_AIってなんだろう/
 │   ├── lesson.md
 │   └── interactive.html
@@ -101,8 +98,8 @@ flowchart TD
 新しい講義回の基本構成:
 
 ```text
-<対象者>_<レベル>/
-└── <NN_タイトル>/
+{{AUDIENCE}}_{{LEVEL}}/
+└── {{NN_TITLE}}/
     ├── lesson.md
     └── interactive.html
 ```
@@ -122,9 +119,9 @@ flowchart TD
 |---|---|---|
 | `lesson.md` | スライド原本 | VS Code + Marp で表示・編集 |
 | `interactive.html` | 体験教材原本 | ブラウザで直接開く |
-| `lesson.pptx` | 派生物 | 必要な場合のみ投影・印刷・共有に使う |
+| PPTX | 生成物 | 必要な場合のみMarpから `_generated/` 配下へ出力 |
 
-PowerPointは原本ではありません。内容を更新する場合は、まず `lesson.md` と `interactive.html` を更新してください。
+PowerPointは原本ではなく、Git管理しない生成物です。内容を更新する場合は、まず `lesson.md` と `interactive.html` を更新し、必要なときだけ `_generated/` 配下へPPTXを書き出してください。
 
 ## 使い方
 
@@ -133,10 +130,19 @@ PowerPointは原本ではありません。内容を更新する場合は、ま�
 1. VS Codeで対象回の `lesson.md` を開く
 2. Marp拡張でプレビューする
 3. 必要に応じてPDFやPowerPointへ書き出す
+4. PowerPointを書き出す場合は `_generated/` 配下に保存する
 
 ### 体験教材を使う
 
 対象回の `interactive.html` をブラウザで開きます。ローカルファイルとして開けるように作っています。
+
+第2回「インターネットとWebサイト」は、以下の外部サイトを新規タブで開くハンズオンがあります。授業前に、教室のネットワークで表示できること、不適切な広告や想定外コンテンツが表示されないこと、表示できない場合に見せる代替画面を確認してください。
+
+- Yahoo!きっず: `https://kids.yahoo.co.jp/`
+- NHK for School: `https://www.nhk.or.jp/school/`
+- 国立科学博物館: `https://www.kahaku.go.jp/`
+
+外部サイトが使えない場合は、教材内のURL説明とサーバー体験だけで進行します。
 
 ### 授業で使う
 
@@ -150,18 +156,21 @@ PowerPointは原本ではありません。内容を更新する場合は、ま�
 4. ハンズオン
 5. 発表・振り返り
 
+授業前に、講師名、教室名、自己紹介、外部リンク、ネットワーク、投影環境を確認してください。
+
 ## 設計方針
 
 - データモデル先行で、対象者、レベル、教材形式、講義トピックを分けて管理する
 - `lesson.md` をスライド原本、`interactive.html` を体験教材原本にする
-- PowerPointは必要時に出力する派生物として扱う
+- PowerPointは必要時に `_generated/` 配下へ出力する生成物として扱い、Git管理しない
 - Scratchは小学生初級の必須回ではなく、発展・体験用オプションとして扱う
-- AI教材では、実AIサービスへの送信に依存しない安全な体験を優先する
+- AI教材では、実AIサービスへの送信に依存しない疑似AI体験とプロンプト練習を優先する
 
 ## セキュリティ・共有時の注意
 
 - APIキー、パスワード、個人情報を教材に書かない
 - AI体験で本名、住所、学校名、電話番号、顔写真、友だちの情報を入力しない
+- 実AIサービスで実演する場合は講師判断とし、年齢制限、アカウント、保護者同意、入力してよい情報を事前に確認する
 - 外部AIサービスやScratch本体を使う場合は、年齢制限、アカウント、保護者同意、保存方法を確認する
 - GitHubで外部共有する場合は、このリポジトリへのアクセス権限を必要な相手だけに付与する
 

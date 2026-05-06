@@ -3,8 +3,8 @@ marp: true
 theme: default
 paginate: true
 size: 16:9
-header: '<対象者> ／ 第<回>'
-footer: '<タイトル>'
+header: '{{AUDIENCE}} ／ 第{{LESSON_NUMBER}}'
+footer: '{{TITLE}}'
 style: |
   :root {
     --c-primary: #3A86FF;
@@ -53,19 +53,19 @@ style: |
 
 <!-- _class: title -->
 
-# <タイトル>
+# {{TITLE}}
 
-### 第<回> ／ <対象者・コース名>
+### 第{{LESSON_NUMBER}} ／ {{COURSE_NAME}}
 
-<今日の授業を一言で表す導入文>
+{{INTRO_TEXT}}
 
 ---
 
 ## まえの回の復習
 
-- <復習ポイント1>
-- <復習ポイント2>
-- <復習ポイント3>
+- {{REVIEW_POINT_1}}
+- {{REVIEW_POINT_2}}
+- {{REVIEW_POINT_3}}
 
 ---
 
@@ -79,19 +79,19 @@ style: |
 
 <div class="card">
 
-### ✅ <ゴール1>
+### ✅ {{GOAL_1}}
 
 </div>
 
 <div class="card">
 
-### ✅ <ゴール2>
+### ✅ {{GOAL_2}}
 
 </div>
 
 <div class="card">
 
-### ✅ <ゴール3>
+### ✅ {{GOAL_3}}
 
 </div>
 
@@ -99,13 +99,13 @@ style: |
 
 <!-- _class: section -->
 
-# 1. <テーマ1>
+# 1. {{TOPIC_1}}
 
 ---
 
-## <見出し>
+## {{SECTION_HEADING}}
 
-<説明を書く>
+{{DESCRIPTION}}
 
 ---
 
@@ -113,25 +113,25 @@ style: |
 
 ## クイズ
 
-<問いを書く>
+{{QUESTION}}
 
 ---
 
 ## こたえ
 
-<答えと理由を書く>
+{{ANSWER_AND_REASON}}
 
 ---
 
 <!-- _class: section -->
 
-# 2. <テーマ2>
+# 2. {{TOPIC_2}}
 
 ---
 
-## <見出し>
+## {{SECTION_HEADING}}
 
-<説明を書く>
+{{DESCRIPTION}}
 
 ---
 
@@ -139,9 +139,9 @@ style: |
 
 ## ハンズオン
 
-1. <手順1>
-2. <手順2>
-3. <手順3>
+1. {{STEP_1}}
+2. {{STEP_2}}
+3. {{STEP_3}}
 
 ---
 
@@ -153,9 +153,9 @@ style: |
 
 ## きょう おぼえたこと
 
-1. <まとめ1>
-2. <まとめ2>
-3. <まとめ3>
+1. {{SUMMARY_1}}
+2. {{SUMMARY_2}}
+3. {{SUMMARY_3}}
 
 ---
 
@@ -163,4 +163,4 @@ style: |
 
 # おつかれさまでした
 
-### <次回予告>
+### {{NEXT_LESSON}}

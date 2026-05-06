@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>第<回>｜<タイトル></title>
+<title>第{{LESSON_NUMBER}}｜{{TITLE}}</title>
 <style>
   :root {
     --primary: #3A86FF;
@@ -134,35 +134,35 @@
 </head>
 <body>
 <div class="progress" id="progress"></div>
-<div class="top-status"><span>第<回></span> <b><タイトル></b></div>
+<div class="top-status"><span>第{{LESSON_NUMBER}}</span> <b>{{TITLE}}</b></div>
 
 <header class="hero" id="top">
   <div class="hero-inner">
-    <div class="label"><対象者・コース名> ／ 第<回></div>
-    <h1><タイトル></h1>
-    <p><この教材で体験すること></p>
+    <div class="label">{{COURSE_NAME}} ／ 第{{LESSON_NUMBER}}</div>
+    <h1>{{TITLE}}</h1>
+    <p>{{INTRO_TEXT}}</p>
   </div>
 </header>
 
 <section class="section">
-  <span class="section-label">1. <テーマ></span>
-  <h2><見出し></h2>
-  <p class="lead"><説明文></p>
+  <span class="section-label">1. {{TOPIC}}</span>
+  <h2>{{SECTION_HEADING}}</h2>
+  <p class="lead">{{DESCRIPTION}}</p>
   <div class="grid grid-3">
-    <div class="card"><h3><項目1></h3><p><説明></p></div>
-    <div class="card"><h3><項目2></h3><p><説明></p></div>
-    <div class="card"><h3><項目3></h3><p><説明></p></div>
+    <div class="card"><h3>{{ITEM_1}}</h3><p>{{ITEM_1_DESCRIPTION}}</p></div>
+    <div class="card"><h3>{{ITEM_2}}</h3><p>{{ITEM_2_DESCRIPTION}}</p></div>
+    <div class="card"><h3>{{ITEM_3}}</h3><p>{{ITEM_3_DESCRIPTION}}</p></div>
   </div>
 </section>
 
 <section class="section">
   <div class="quiz" data-answer="a">
     <h3>クイズ</h3>
-    <p><問い></p>
+    <p>{{QUESTION}}</p>
     <div class="choices">
-      <button class="choice" data-choice="a"><選択肢A></button>
-      <button class="choice" data-choice="b"><選択肢B></button>
-      <button class="choice" data-choice="c"><選択肢C></button>
+      <button class="choice" data-choice="a">{{CHOICE_A}}</button>
+      <button class="choice" data-choice="b">{{CHOICE_B}}</button>
+      <button class="choice" data-choice="c">{{CHOICE_C}}</button>
     </div>
     <div class="result" aria-live="polite"></div>
   </div>
@@ -170,14 +170,14 @@
 
 <section class="section">
   <span class="section-label">ハンズオン</span>
-  <h2><体験タイトル></h2>
-  <p class="lead"><体験内容の説明></p>
+  <h2>{{HANDSON_TITLE}}</h2>
+  <p class="lead">{{HANDSON_DESCRIPTION}}</p>
   <div class="card">
-    <p><ここにインタラクションを実装する></p>
+    <p>{{INTERACTION_PLACEHOLDER}}</p>
   </div>
 </section>
 
-<footer>第<回>｜<タイトル></footer>
+<footer>第{{LESSON_NUMBER}}｜{{TITLE}}</footer>
 
 <script>
   const progress = document.getElementById('progress');
