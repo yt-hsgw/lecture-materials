@@ -39,26 +39,81 @@ flowchart TD
 .
 ├── 00_講義資料_全体仕様.md
 ├── README.md
-└── 小学生_初級/
-    ├── 00_カリキュラム概要.md
-    ├── 01_パソコンってなんだろう/
-    │   ├── lesson.md
-    │   ├── interactive.html
-    │   └── lesson.pptx
-    ├── 02_インターネットとWebサイト/
-    │   ├── lesson.md
-    │   ├── interactive.html
-    │   └── lesson.pptx
-    ├── 03_プログラミングってなんだろう/
-    │   ├── lesson.md
-    │   ├── interactive.html
-    │   └── lesson.pptx
-    ├── 04_AIってなんだろう/
-    │   ├── lesson.md
-    │   └── interactive.html
-    └── オプション教材/
-        ├── 04_Scratch入門.html
-        └── 05_Scratchでゲーム.html
+├── _templates/
+│   ├── 00_カリキュラム概要.md
+│   ├── lesson.md
+│   └── interactive.html
+├── 小学生_初級/
+│   └── ...
+├── 小学生_中級/
+│   └── 00_カリキュラム概要.md
+├── 小学生_上級/
+│   └── 00_カリキュラム概要.md
+├── 中学生_初級/
+│   └── 00_カリキュラム概要.md
+├── 中学生_中級/
+│   └── 00_カリキュラム概要.md
+├── 中学生_上級/
+│   └── 00_カリキュラム概要.md
+├── 高齢者_初級/
+│   └── 00_カリキュラム概要.md
+├── 高齢者_中級/
+│   └── 00_カリキュラム概要.md
+└── 高齢者_上級/
+    └── 00_カリキュラム概要.md
+```
+
+小学生初級の詳細:
+
+```text
+小学生_初級/
+├── 00_カリキュラム概要.md
+├── 01_パソコンってなんだろう/
+│   ├── lesson.md
+│   ├── interactive.html
+│   └── lesson.pptx
+├── 02_インターネットとWebサイト/
+│   ├── lesson.md
+│   ├── interactive.html
+│   └── lesson.pptx
+├── 03_プログラミングってなんだろう/
+│   ├── lesson.md
+│   ├── interactive.html
+│   └── lesson.pptx
+├── 04_AIってなんだろう/
+│   ├── lesson.md
+│   └── interactive.html
+└── オプション教材/
+    ├── 04_Scratch入門.html
+    └── 05_Scratchでゲーム.html
+```
+
+## テンプレート
+
+新しい教材を作るときは `_templates/` からコピーして使います。
+
+| テンプレート | 用途 |
+|---|---|
+| `_templates/00_カリキュラム概要.md` | 新しいコースの概要 |
+| `_templates/lesson.md` | Marpスライド原本 |
+| `_templates/interactive.html` | 体験教材HTML |
+
+新しい講義回の基本構成:
+
+```text
+<対象者>_<レベル>/
+└── <NN_タイトル>/
+    ├── lesson.md
+    └── interactive.html
+```
+
+例:
+
+```text
+中学生_初級/
+└── 01_コンピューターと開発環境/
+    ├── lesson.md
+    └── interactive.html
 ```
 
 ## 教材形式
@@ -112,8 +167,9 @@ PowerPointは原本ではありません。内容を更新する場合は、ま�
 
 ## 今後の候補
 
-- 中学生向け初級コース
-- 高齢者向け初級コース
-- 小学生向け中級コース
+- 各未着手コースの `00_カリキュラム概要.md` を具体化
+- 中学生向け初級コースの第1回を作成
+- 高齢者向け初級コースの第1回を作成
+- 小学生向け中級コースの第1回を作成
 - MarpからPowerPointへ出力する手順の整備
 - 授業前チェックリストの追加
