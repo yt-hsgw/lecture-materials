@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第4回｜AIってなんだろう？</title>
+<style>
+  :root{
+    --primary:#3A86FF;
+    --secondary:#FFD166;
+    --accent:#8338EC;
+    --green:#06D6A0;
+    --warn:#EF476F;
+    --dark:#24323D;
+    --light:#F3F8FF;
+    --panel:#FFFFFF;
+    --muted:#66737F;
+    --shadow:0 4px 0 rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;
+  }
+  button,input,select,textarea{font:inherit}
+  .progress{
+    position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--accent),var(--green),var(--secondary));
+    z-index:100;transition:width .15s;
+  }
+  .top-status{
+    position:fixed;top:20px;right:20px;z-index:60;
+    background:rgba(255,255,255,.94);padding:10px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:14px;
+  }
+  .top-status b{color:var(--primary)}
+  .snav{
+    position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;
+  }
+  .snav a{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;
+  }
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a span{
+    position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;
+  }
+  .snav a:hover span,.snav a:focus span{opacity:1;transform:translateY(-50%)}
+
+  .hero{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(circle at 20% 22%,rgba(255,209,102,.9),transparent 24%),
+      linear-gradient(135deg,var(--primary),var(--accent));
+  }
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{
+    display:inline-block;background:rgba(255,255,255,.24);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);
+  }
+  .hero h1{
+    font-size:clamp(48px,8vw,104px);line-height:1.1;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);
+  }
+  .hero p{font-size:clamp(18px,2.4vw,24px)}
+  .hero .bot{font-size:clamp(72px,11vw,136px);margin-top:24px;filter:drop-shadow(0 8px 0 rgba(0,0,0,.12))}
+  .scroll-hint{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1120px;margin:0 auto}
+  .section-label{
+    display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;
+  }
+  h2{font-size:clamp(32px,5vw,50px);color:var(--primary);line-height:1.2;margin-bottom:8px}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--green);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:8px}
+  .feature{text-align:center;transition:transform .15s}
+  .feature:hover{transform:translateY(-3px)}
+  .feature .emoji{font-size:62px;line-height:1;margin-bottom:10px}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 14px;
+    font-weight:bold;margin:4px;background:white;border:2px solid var(--primary);color:var(--primary);
+  }
+  .rule{
+    background:white;border-radius:18px;padding:22px;box-shadow:var(--shadow);
+    border-left:8px solid var(--green);font-size:18px;
+  }
+  .danger{border-left:8px solid var(--warn)}
+  .quiz{background:white;border-radius:20px;padding:26px;box-shadow:var(--shadow)}
+  .quiz h3{font-size:26px;margin-bottom:12px;color:var(--primary)}
+  .choices{display:grid;gap:10px;margin-top:14px}
+  .choice{
+    border:3px solid #DDE4F2;background:white;border-radius:14px;padding:14px;
+    text-align:left;cursor:pointer;color:var(--dark);transition:transform .12s,border-color .12s,background .12s;
+  }
+  .choice:hover{transform:translateY(-2px);border-color:var(--primary)}
+  .choice.correct{background:#E9FFF8;border-color:var(--green)}
+  .choice.wrong{background:#FFF0F4;border-color:var(--warn)}
+  .result{margin-top:12px;font-weight:bold;min-height:28px}
+  .result.ok{color:#048A67}.result.ng{color:var(--warn)}
+
+  .lab{
+    background:white;border-radius:22px;padding:22px;box-shadow:var(--shadow);
+  }
+  .lab-grid{display:grid;grid-template-columns:330px 1fr;gap:18px}
+  .panel{border-radius:18px;padding:18px;background:#F5F7FB}
+  .panel h3{margin-bottom:12px}
+  .field{display:grid;gap:6px;margin-bottom:12px}
+  .field label{font-weight:bold}
+  .field select,.field input,.field textarea{
+    border:3px solid #DDE4F2;border-radius:14px;padding:10px 12px;background:white;width:100%;
+  }
+  textarea{min-height:110px;resize:vertical}
+  .btn{
+    border:none;border-radius:14px;padding:12px 18px;color:white;background:var(--primary);
+    font-weight:bold;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn:active{transform:translateY(2px)}
+  .btn.green{background:var(--green);color:#06382E}
+  .btn.gray{background:var(--muted)}
+  .prompt-box,.answer-box{
+    background:white;border-radius:16px;border:3px solid #DDE4F2;padding:16px;min-height:120px;
+  }
+  .answer-box{border-color:var(--accent)}
+  .answer-box h4,.prompt-box h4{margin-bottom:8px;color:var(--primary)}
+  .fake-image{
+    margin-top:12px;border-radius:18px;min-height:180px;display:flex;align-items:center;justify-content:center;
+    font-size:76px;background:linear-gradient(135deg,#BCEBFF,#F9F2A7,#D8C6FF);
+    border:3px solid white;
+  }
+  .safety-grid{display:grid;gap:10px}
+  .safe-item{
+    background:white;border:3px solid #DDE4F2;border-radius:14px;padding:14px;cursor:pointer;
+    transition:transform .12s,border-color .12s;
+  }
+  .safe-item:hover{transform:translateY(-2px);border-color:var(--primary)}
+  .safe-item.ok{border-color:var(--green);background:#E9FFF8}
+  .safe-item.ng{border-color:var(--warn);background:#FFF0F4}
+  .checklist{display:grid;gap:10px}
+  .check{
+    display:flex;align-items:center;gap:10px;background:white;border-radius:14px;padding:14px;
+    box-shadow:var(--shadow);cursor:pointer;
+  }
+  .check input{width:22px;height:22px;accent-color:var(--green)}
+  footer{padding:50px 20px;text-align:center;color:var(--muted)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center}
+    .lab-grid{grid-template-columns:1fr}
+    .section{padding:64px 16px}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>第4回</span> <b>AIってなんだろう？</b></div>
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>トップ</span></a>
+  <a href="#what">2<span>AIとは</span></a>
+  <a href="#prompt">3<span>プロンプト</span></a>
+  <a href="#lab">4<span>AI体験</span></a>
+  <a href="#safe">5<span>安全</span></a>
+</nav>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">小学生プログラミング教室 ／ 第4回</div>
+    <h1>AIって<br>なんだろう？</h1>
+    <p>AIにたのむ、答えを見る、そして人間がたしかめる。</p>
+    <div class="bot">🤖💬</div>
+  </div>
+  <div class="scroll-hint">下へすすむ</div>
+</header>
+
+<section class="section" id="what" data-snav-target>
+  <span class="section-label">1. AIとは</span>
+  <h2>AIは「考えるまね」ができる道具</h2>
+  <p class="lead">文章、アイデア、絵の説明などを作れます。でも、いつも正しいわけではありません。</p>
+  <div class="grid grid-4">
+    <div class="card feature"><div class="emoji">✍️</div><h3>文章</h3><p>お話や説明の下書きを作る。</p></div>
+    <div class="card feature"><div class="emoji">🎨</div><h3>絵の案</h3><p>どんな絵にするか考える。</p></div>
+    <div class="card feature"><div class="emoji">💡</div><h3>アイデア</h3><p>名前や遊び方を出す。</p></div>
+    <div class="card feature"><div class="emoji">🧩</div><h3>ヒント</h3><p>プログラムの考え方を助ける。</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="quiz" data-answer="mistake">
+    <h3>クイズ：AIはいつも正しい？</h3>
+    <div class="choices">
+      <button class="choice" data-choice="always">いつも正しい</button>
+      <button class="choice" data-choice="mistake">まちがえることもある</button>
+      <button class="choice" data-choice="nothing">何も答えられない</button>
+    </div>
+    <div class="result" aria-live="polite"></div>
+  </div>
+</section>
+
+<div class="divider" id="prompt" data-snav-target>
+  <div class="num">2. Prompt</div>
+  <h2>AIへのお願いを作ろう</h2>
+</div>
+
+<section class="section">
+  <div class="rule">
+    <strong>プロンプト</strong> とは、AIに出すお願い・質問・命令のこと。よいプロンプトには「目的」「条件」「確認」が入っています。
+  </div>
+  <div style="margin-top:18px" class="grid grid-3">
+    <div class="card"><h3>目的</h3><p>何を作りたいか。</p></div>
+    <div class="card"><h3>条件</h3><p>だれ向け、長さ、テーマ。</p></div>
+    <div class="card"><h3>確認</h3><p>答えを人間がたしかめる。</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="quiz" data-answer="good">
+    <h3>クイズ：どちらがよいお願い？</h3>
+    <div class="choices">
+      <button class="choice" data-choice="vague">なんか作って</button>
+      <button class="choice" data-choice="good">小学生向けに、海の生き物クイズを3問作って</button>
+    </div>
+    <div class="result" aria-live="polite"></div>
+  </div>
+</section>
+
+<div class="divider" id="lab" data-snav-target>
+  <div class="num">3. Lab</div>
+  <h2>AI体験ラボ</h2>
+</div>
+
+<section class="section">
+  <p class="lead">この教材は本物のAIには送信しません。入力した内容はこのページの中だけで使い、プロンプトの作り方を練習します。</p>
+  <div class="lab">
+    <div class="lab-grid">
+      <div class="panel">
+        <h3>お願いを作る</h3>
+        <div class="field">
+          <label for="target">だれ向け？</label>
+          <select id="target">
+            <option>小学生向け</option>
+            <option>家族向け</option>
+            <option>はじめての人向け</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="kind">何を作る？</label>
+          <select id="kind">
+            <option value="story">短いお話</option>
+            <option value="quiz">クイズ</option>
+            <option value="slogan">標語</option>
+            <option value="image">絵のアイデア</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="theme">テーマ</label>
+          <input id="theme" value="インターネットの安全">
+        </div>
+        <div class="field">
+          <label for="condition">条件</label>
+          <textarea id="condition">むずかしい言葉を少なくして、楽しい雰囲気にして。</textarea>
+        </div>
+        <button class="btn green" id="makeBtn">プロンプトを作る</button>
+      </div>
+      <div class="grid">
+        <div class="prompt-box">
+          <h4>できたプロンプト</h4>
+          <p id="promptText">左の項目を選んで、プロンプトを作ってみよう。</p>
+        </div>
+        <div class="answer-box">
+          <h4>AIの答えサンプル</h4>
+          <div id="answerText">プロンプトを作ると、サンプルの答えが出ます。</div>
+          <div class="fake-image" id="fakeImage" hidden>🎨</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <span class="section-label">確認</span>
+  <h2>AIの答えをチェックしよう</h2>
+  <p class="lead">AIの答えは便利ですが、最後は人間が確認します。</p>
+  <div class="checklist">
+    <label class="check"><input type="checkbox"> 本当に正しいか、ほかの方法でも確認した</label>
+    <label class="check"><input type="checkbox"> 名前・住所・学校名などの個人情報を入れていない</label>
+    <label class="check"><input type="checkbox"> そのまま使わず、自分の言葉で直した</label>
+  </div>
+</section>
+
+<div class="divider" id="safe" data-snav-target>
+  <div class="num">4. Safety</div>
+  <h2>入れてよい情報？だめな情報？</h2>
+</div>
+
+<section class="section">
+  <p class="lead">カードを押して、AIに入力してよいか考えよう。</p>
+  <div class="safety-grid" id="safetyGrid">
+    <button class="safe-item" data-safe="no">ぼくの名前は山田太郎です。住所は...</button>
+    <button class="safe-item" data-safe="yes">宇宙をテーマにした短いお話を書いて</button>
+    <button class="safe-item" data-safe="no">友だちの電話番号を使って文章を作って</button>
+    <button class="safe-item" data-safe="yes">パスワードを守る標語を3つ考えて</button>
+    <button class="safe-item" data-safe="no">このアカウントのパスワードは...</button>
+  </div>
+  <div class="result" id="safeResult" aria-live="polite"></div>
+</section>
+
+<section class="section">
+  <span class="section-label">まとめ</span>
+  <h2>AIは手伝う道具</h2>
+  <div class="grid grid-3">
+    <div class="card"><h3>たのむ</h3><p>目的と条件を入れてお願いする。</p></div>
+    <div class="card"><h3>たしかめる</h3><p>正しいか、安全かを見る。</p></div>
+    <div class="card"><h3>なおす</h3><p>最後は自分の言葉にする。</p></div>
+  </div>
+</section>
+
+<footer>第4回｜AIってなんだろう？</footer>
+
+<script>
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY / max) * 100) + '%';
+    const y = window.scrollY + window.innerHeight * 0.32;
+    let cur = 0;
+    targets.forEach((el,i)=>{
+      if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i;
+    });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i === cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  document.querySelectorAll('.quiz').forEach(quiz=>{
+    const answer = quiz.dataset.answer;
+    const result = quiz.querySelector('.result');
+    quiz.querySelectorAll('.choice').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        quiz.querySelectorAll('.choice').forEach(b=>b.classList.remove('correct','wrong'));
+        if(btn.dataset.choice === answer){
+          btn.classList.add('correct');
+          result.textContent = answer === 'mistake'
+            ? 'せいかい！AIは便利だけど、まちがえることもあります。'
+            : 'せいかい！だれ向け・テーマ・数が入っているので、お願いがはっきりしています。';
+          result.className = 'result ok';
+        }else{
+          btn.classList.add('wrong');
+          result.textContent = 'もう一度考えてみよう。AIに何をしてほしいか、はっきりしているかな？';
+          result.className = 'result ng';
+        }
+      });
+    });
+  });
+
+  const target = document.getElementById('target');
+  const kind = document.getElementById('kind');
+  const theme = document.getElementById('theme');
+  const condition = document.getElementById('condition');
+  const promptText = document.getElementById('promptText');
+  const answerText = document.getElementById('answerText');
+  const fakeImage = document.getElementById('fakeImage');
+
+  function makePrompt(){
+    const kindLabel = kind.options[kind.selectedIndex].textContent;
+    const prompt = `${target.value}に、${theme.value}をテーマにした${kindLabel}を作って。${condition.value}`;
+    promptText.textContent = prompt;
+    fakeImage.hidden = kind.value !== 'image';
+    if(kind.value === 'story'){
+      answerText.innerHTML = `<p>「${theme.value}」をテーマにした短いお話です。主人公は、困ったときにすぐ大人へ相談し、安全に楽しく学びました。</p><p><strong>確認:</strong> 事実や安全ルールは先生と見直しましょう。</p>`;
+    }else if(kind.value === 'quiz'){
+      answerText.innerHTML = `<ol><li>${theme.value}で大切なことは何でしょう？</li><li>あやしい画面が出たら、だれに相談しますか？</li><li>ひみつの情報を入力してよいですか？</li></ol><p><strong>確認:</strong> 答えが正しいか、人間が見ます。</p>`;
+    }else if(kind.value === 'slogan'){
+      answerText.innerHTML = `<ul><li>まよう前に、まず相談</li><li>ひみつの情報、入力しない</li><li>便利な道具も、確認して使おう</li></ul>`;
+    }else{
+      answerText.innerHTML = `<p>明るい教室、未来の画面、楽しそうに学ぶ子どもたち、安心して見守る先生を入れる案です。</p><p><strong>確認:</strong> 顔写真や本名は入れないようにしましょう。</p>`;
+    }
+  }
+  document.getElementById('makeBtn').addEventListener('click', makePrompt);
+
+  const safeResult = document.getElementById('safeResult');
+  document.querySelectorAll('.safe-item').forEach(item=>{
+    item.addEventListener('click',()=>{
+      const ok = item.dataset.safe === 'yes';
+      item.classList.remove('ok','ng');
+      item.classList.add(ok ? 'ok' : 'ng');
+      safeResult.textContent = ok
+        ? 'これは入力してもよさそうです。ただし、答えは人間が確認します。'
+        : 'これは入れない方がよい情報です。名前・住所・電話番号・パスワードは守ります。';
+      safeResult.className = ok ? 'result ok' : 'result ng';
+    });
+  });
+
+  document.addEventListener('keydown',(e)=>{
+    if(e.target.matches('input,button,select,textarea')) return;
+    const active = navLinks.findIndex(a=>a.classList.contains('active'));
+    const goto = (idx)=>{
+      idx = Math.max(0, Math.min(targets.length - 1, idx));
+      targets[idx].scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(active + 1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(active - 1); }
+  });
+</script>
+</body>
+</html>
