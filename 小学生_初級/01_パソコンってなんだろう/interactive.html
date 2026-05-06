@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第1回｜パソコンってなんだろう？</title>
+<style>
+  :root{
+    --primary:#FF6B6B;
+    --secondary:#FFE66D;
+    --accent:#4ECDC4;
+    --dark:#2A3D45;
+    --light:#FFF8F0;
+    --gray:#6C757D;
+    --shadow:0 4px 0 rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);
+    background:var(--light);
+    line-height:1.7;
+  }
+  .progress{
+    position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;
+  }
+  .nav{
+    position:fixed;top:20px;right:20px;z-index:50;
+    background:white;padding:10px 14px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:14px;
+  }
+  .nav span{color:var(--gray)}
+  .nav b{color:var(--primary)}
+
+  /* hero */
+  .hero{
+    min-height:100vh;
+    background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);
+    color:white;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:40px 20px;position:relative;overflow:hidden;
+  }
+  .hero::before,.hero::after{
+    content:'';position:absolute;border-radius:50%;
+  }
+  .hero::before{width:300px;height:300px;background:var(--accent);opacity:.7;top:-80px;right:-80px}
+  .hero::after{width:200px;height:200px;background:var(--secondary);opacity:.7;bottom:-50px;left:-50px}
+  .hero-inner{position:relative;z-index:2}
+  .hero .label{
+    display:inline-block;background:rgba(255,255,255,.25);
+    padding:8px 24px;border-radius:999px;font-weight:bold;margin-bottom:24px;
+    backdrop-filter:blur(4px);
+  }
+  .hero h1{font-size:clamp(48px,9vw,108px);line-height:1.1;margin-bottom:24px;text-shadow:0 4px 12px rgba(0,0,0,.15)}
+  .hero p{font-size:clamp(18px,2.5vw,24px);opacity:.95}
+  .hero .icons{font-size:clamp(40px,6vw,72px);margin-top:32px;letter-spacing:8px}
+  .scroll-hint{
+    position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+    color:white;font-size:14px;animation:bounce 2s infinite;
+  }
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
+
+  /* sections */
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{
+    display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;
+    margin-bottom:16px;
+  }
+  .section h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px}
+  .section .lead{font-size:18px;color:var(--gray);margin-bottom:40px}
+  .section-divider{
+    text-align:center;padding:60px 20px;background:var(--dark);color:white;
+    margin:0;
+  }
+  .section-divider .num{color:var(--accent);font-size:24px;font-weight:bold}
+  .section-divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  /* cards */
+  .card{
+    background:white;border-radius:20px;padding:24px;
+    box-shadow:var(--shadow);
+  }
+  .grid{display:grid;gap:20px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+
+  .feature-card{text-align:center;transition:transform .2s}
+  .feature-card:hover{transform:translateY(-4px)}
+  .feature-card .emoji{font-size:72px;line-height:1}
+  .feature-card h3{margin:16px 0 8px;color:var(--dark)}
+  .feature-card .ext{font-size:12px;color:var(--gray)}
+
+  /* quiz */
+  .quiz{background:var(--secondary);border-radius:24px;padding:32px;margin:24px 0}
+  .quiz-label{
+    display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;
+  }
+  .quiz h3{font-size:28px;margin:12px 0 24px}
+  .quiz-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
+  .quiz-opt{
+    background:white;border:none;border-radius:16px;padding:20px;
+    cursor:pointer;font-family:inherit;font-size:18px;font-weight:bold;color:var(--dark);
+    transition:all .15s;box-shadow:var(--shadow);
+  }
+  .quiz-opt:hover{transform:translateY(-2px);background:var(--accent);color:white}
+  .quiz-opt.selected{background:var(--primary);color:white}
+  .quiz-opt .em{font-size:48px;display:block;margin-bottom:8px}
+  .quiz-answer{
+    background:white;border-radius:16px;padding:20px;margin-top:16px;
+    display:none;border-left:6px solid var(--primary);
+  }
+  .quiz-answer.show{display:block;animation:slideIn .3s}
+  @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .quiz-answer h4{color:var(--primary);margin-bottom:8px}
+
+  /* parts visualization */
+  .parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:24px}
+  .part{
+    background:white;border-radius:16px;padding:24px 16px;text-align:center;
+    cursor:pointer;transition:all .2s;box-shadow:var(--shadow);
+  }
+  .part:hover{transform:translateY(-4px);background:var(--secondary)}
+  .part .emoji{font-size:64px;line-height:1}
+  .part h4{color:var(--primary);margin:12px 0 4px}
+  .part .desc{font-size:14px;color:var(--gray)}
+
+  /* compare */
+  .compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin:24px 0}
+  .compare .col{background:white;border-radius:20px;padding:24px;box-shadow:var(--shadow)}
+  .compare h3{margin-bottom:12px}
+  .compare ul{list-style:none}
+  .compare li{padding:8px 0;border-bottom:1px solid #eee}
+  .compare li:last-child{border:none}
+
+  /* simulator */
+  .sim{
+    background:white;border-radius:20px;padding:24px;box-shadow:var(--shadow);
+    margin:24px 0;
+  }
+  .sim-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+  .sim-header h3{color:var(--accent)}
+  .sim-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .sim-btn{
+    background:var(--accent);color:white;border:none;padding:10px 18px;
+    border-radius:12px;font-family:inherit;font-weight:bold;cursor:pointer;
+    transition:all .15s;
+  }
+  .sim-btn:hover{background:var(--primary);transform:translateY(-2px)}
+  .sim-btn.danger{background:#999}
+  .sim-display{
+    background:#f0f4f8;border-radius:14px;padding:20px;min-height:300px;
+    border:3px dashed #cbd5e0;
+  }
+  .sim-path{
+    color:var(--gray);font-size:14px;margin-bottom:12px;font-family:Consolas,monospace;
+  }
+  .sim-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
+  .sim-item{
+    background:white;border-radius:12px;padding:16px 8px;text-align:center;
+    cursor:pointer;transition:all .15s;font-size:14px;
+    border:2px solid transparent;user-select:none;
+  }
+  .sim-item:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .sim-item.selected{background:var(--secondary);border-color:var(--primary)}
+  .sim-item .ic{font-size:40px;line-height:1.2;margin-bottom:6px}
+  .sim-item .nm{
+    font-weight:bold;word-break:break-all;
+    overflow-wrap:break-word;
+  }
+  .sim-empty{
+    color:var(--gray);text-align:center;padding:40px;font-size:14px;
+  }
+  .sim-msg{
+    background:var(--secondary);border-radius:12px;padding:12px 16px;
+    margin-top:12px;display:none;font-weight:bold;
+  }
+  .sim-msg.show{display:block;animation:slideIn .3s}
+
+  /* steps */
+  .step{
+    background:white;border-radius:20px;padding:24px;margin-bottom:16px;
+    box-shadow:var(--shadow);
+    border-left:8px solid var(--accent);
+  }
+  .step .num{
+    display:inline-block;background:var(--accent);color:white;
+    padding:4px 14px;border-radius:999px;font-weight:bold;font-size:14px;
+  }
+  .step h3{margin:8px 0;color:var(--dark)}
+  .step .platforms{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px}
+  .step .pf{background:#f8f9fa;border-radius:12px;padding:16px}
+  .step .pf .pflabel{
+    display:inline-block;padding:4px 12px;border-radius:6px;
+    color:white;font-weight:bold;font-size:12px;margin-bottom:8px;
+  }
+  .step .pf.win .pflabel{background:#0078D4}
+  .step .pf.mac .pflabel{background:#333}
+
+  /* summary */
+  .summary{display:grid;gap:16px;margin-top:24px}
+  .summary-row{
+    background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:20px;box-shadow:var(--shadow);
+  }
+  .summary-row .num{
+    flex-shrink:0;width:60px;height:60px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:28px;font-weight:bold;
+  }
+  .summary-row .text h3{color:var(--dark)}
+  .summary-row .text p{color:var(--gray);font-size:14px}
+
+  /* next */
+  .next{
+    background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:60px 24px;border-radius:24px;
+    margin:40px 24px;
+  }
+  .next .em{font-size:96px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,44px);margin:16px 0}
+  .next p{opacity:.95;font-size:18px}
+
+  /* footer */
+  footer{padding:40px;text-align:center;color:var(--gray);font-size:14px}
+
+  /* MODAL */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(42,61,69,.55);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  }
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{
+    background:white;border-radius:28px;padding:32px;
+    max-width:520px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+    animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);
+  }
+  @keyframes popIn{
+    0%{transform:scale(.5) rotate(-3deg);opacity:0}
+    100%{transform:scale(1) rotate(0);opacity:1}
+  }
+  .modal-close{
+    position:absolute;top:-14px;right:-14px;
+    width:44px;height:44px;
+    background:var(--primary);color:white;
+    border:4px solid white;border-radius:50%;
+    font-size:22px;cursor:pointer;
+    font-family:inherit;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    transition:transform .15s;
+  }
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{
+    font-size:88px;text-align:center;line-height:1;
+    margin-bottom:8px;animation:wiggle 1s ease-in-out;
+  }
+  @keyframes wiggle{
+    0%,100%{transform:rotate(0)}
+    25%{transform:rotate(-8deg)}
+    75%{transform:rotate(8deg)}
+  }
+  .modal-title{
+    text-align:center;color:var(--primary);
+    font-size:30px;margin-bottom:14px;font-weight:bold;
+  }
+  .modal-body{
+    font-size:18px;line-height:1.7;color:var(--dark);
+    text-align:center;
+  }
+  .modal-input{
+    display:block;width:100%;padding:14px 18px;
+    border:3px solid var(--accent);
+    border-radius:14px;
+    font-size:20px;font-family:inherit;
+    margin-top:18px;outline:none;
+    text-align:center;
+    background:#F0FCFA;
+    transition:all .15s;
+  }
+  .modal-input:focus{
+    border-color:var(--primary);
+    background:white;
+    box-shadow:0 0 0 4px rgba(255,107,107,.2);
+  }
+  .modal-actions{
+    display:flex;gap:12px;justify-content:center;
+    margin-top:24px;flex-wrap:wrap;
+  }
+  .modal-btn{
+    background:var(--accent);color:white;
+    border:none;padding:14px 32px;
+    border-radius:14px;font-family:inherit;
+    font-size:18px;font-weight:bold;cursor:pointer;
+    transition:all .15s;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);
+  }
+  .modal-btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 rgba(0,0,0,.15)}
+  .modal-btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.15)}
+  .modal-btn.cancel{background:#B0BEC5}
+  .modal-btn.danger{background:var(--primary)}
+
+  /* SIDE NAV (B+E+icons) */
+  .snav{
+    position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;
+    pointer-events:auto;
+  }
+  .snav-badge{
+    position:relative;width:38px;height:38px;border-radius:50%;
+    background:rgba(255,255,255,.92);
+    border:2px solid var(--primary);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-weight:bold;font-size:13px;color:var(--primary);
+    text-decoration:none;transition:all .2s;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);
+    backdrop-filter:blur(6px);
+  }
+  .snav-badge:hover,.snav-badge:focus{
+    transform:translateX(-3px) scale(1.12);outline:none;
+  }
+  .snav-badge.active{
+    background:var(--primary);color:white;
+    transform:scale(1.18);
+    box-shadow:0 4px 14px rgba(255,107,107,.4);
+  }
+  .snav-badge .ic{
+    position:absolute;top:-7px;right:-7px;
+    background:var(--secondary);
+    width:20px;height:20px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;
+    border:1.5px solid white;
+  }
+  .snav-label{
+    position:absolute;right:calc(100% + 14px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);
+    padding:6px 14px;border-radius:999px;
+    font-size:12px;font-weight:bold;color:var(--dark);
+    white-space:nowrap;opacity:0;pointer-events:none;
+    transition:all .2s;
+  }
+  .snav-badge:hover .snav-label,
+  .snav-badge:focus-visible .snav-label{
+    opacity:1;transform:translateY(-50%) translateX(0);
+  }
+  .snav-help{
+    position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.92);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-family:inherit;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);
+  }
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+  @media (max-width:700px){
+    .snav{right:6px;gap:6px}
+    .snav-badge{width:30px;height:30px;font-size:11px}
+    .snav-badge .ic{width:16px;height:16px;font-size:10px;top:-5px;right:-5px}
+    .snav-label{display:none}
+  }
+
+  @media (max-width:600px){
+    .nav{font-size:12px;padding:8px 12px}
+    .section{padding:48px 16px}
+    .modal{padding:24px;border-radius:20px}
+    .modal-emoji{font-size:64px}
+    .modal-title{font-size:24px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="nav"><span>進捗</span> <b id="navP">0%</b></div>
+
+<!-- SIDE NAV -->
+<nav class="snav" id="snav" aria-label="章ナビゲーション">
+  <a href="#sec-1" class="snav-badge" data-snav="1"><span>1</span><span class="ic">🎯</span><span class="snav-label">きょうのゴール</span></a>
+  <a href="#sec-2" class="snav-badge" data-snav="2"><span>2</span><span class="ic">🖥️</span><span class="snav-label">パソコンって？</span></a>
+  <a href="#sec-3" class="snav-badge" data-snav="3"><span>3</span><span class="ic">⚙️</span><span class="snav-label">パソコンの中身</span></a>
+  <a href="#sec-4" class="snav-badge" data-snav="4"><span>4</span><span class="ic">📁</span><span class="snav-label">ファイル／フォルダ</span></a>
+  <a href="#sec-5" class="snav-badge" data-snav="5"><span>5</span><span class="ic">🛠️</span><span class="snav-label">やってみよう</span></a>
+  <a href="#sec-6" class="snav-badge" data-snav="6"><span>6</span><span class="ic">📋</span><span class="snav-label">まとめ</span></a>
+  <a href="#sec-7" class="snav-badge" data-snav="7"><span>7</span><span class="ic">➡️</span><span class="snav-label">つぎは</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="キーボードショートカット (?)" aria-label="キーボードショートカット">?</button>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="bgClose(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="とじる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div id="modal-actions" class="modal-actions"></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 小学生プログラミング教室</div>
+    <h1>パソコンって<br>なんだろう？</h1>
+    <p>きょう、いっしょに <b>パソコンのひみつ</b> をのぞいてみよう！</p>
+    <div class="icons">🖥️ 💻 ⌨️ 🖱️</div>
+  </div>
+  <div class="scroll-hint">⌄ スクロールしてはじめよう ⌄</div>
+</section>
+
+<!-- ゴール -->
+<section id="sec-1" data-snav-target class="section">
+  <div class="section-label">きょうのゴール</div>
+  <h2>このじかんでできるようになること</h2>
+  <p class="lead">3つのこと、できるようになろう！</p>
+  <div class="grid grid-3">
+    <div class="card feature-card">
+      <div class="emoji">💡</div>
+      <h3>パソコンが<br>どんな道具か わかる</h3>
+    </div>
+    <div class="card feature-card">
+      <div class="emoji">⚙️</div>
+      <h3>パソコンの中で<br>なにがうごいているか わかる</h3>
+    </div>
+    <div class="card feature-card">
+      <div class="emoji">📁</div>
+      <h3>フォルダとファイルを<br>じぶんでつくれる</h3>
+    </div>
+  </div>
+</section>
+
+<!-- 1. パソコンって? -->
+<div id="sec-2" data-snav-target class="section-divider">
+  <div class="num">1.</div>
+  <h2>パソコンって どんなもの？</h2>
+</div>
+
+<section class="section">
+  <h2>パソコン ＝ パーソナル コンピューター</h2>
+  <p class="lead">「じぶん用のコンピューター」っていういみ！</p>
+  <div class="card" style="text-align:center;padding:48px;font-size:28px;font-weight:bold;color:var(--primary)">
+    <div style="font-size:120px;line-height:1;margin-bottom:16px">🖥️</div>
+    Personal Computer
+  </div>
+
+  <h3 style="margin:48px 0 16px;color:var(--accent)">こんなのも、ぜんぶパソコンのなかま</h3>
+  <div class="grid grid-4">
+    <div class="card feature-card"><div class="emoji">💻</div><h3>ノートパソコン</h3></div>
+    <div class="card feature-card"><div class="emoji">🖥️</div><h3>デスクトップ</h3></div>
+    <div class="card feature-card"><div class="emoji">📱</div><h3>スマートフォン</h3></div>
+    <div class="card feature-card"><div class="emoji">📲</div><h3>タブレット</h3></div>
+  </div>
+
+  <div class="quiz">
+    <span class="quiz-label">クイズ ①</span>
+    <h3>これはパソコンのなかま？</h3>
+    <p>あてはまりそうなものを、ぜんぶえらんでみよう！</p>
+    <div class="quiz-options" id="q1">
+      <button class="quiz-opt" data-correct="true"><span class="em">🎮</span>ゲーム機</button>
+      <button class="quiz-opt" data-correct="true"><span class="em">📺</span>テレビ</button>
+      <button class="quiz-opt" data-correct="true"><span class="em">🚗</span>くるま</button>
+      <button class="quiz-opt" data-correct="false"><span class="em">🍎</span>りんご</button>
+    </div>
+    <button class="sim-btn" onclick="checkQ1()" style="background:var(--primary)">こたえをみる</button>
+    <div class="quiz-answer" id="q1-answer">
+      <h4>こたえ：「りんご」いがい、ぜんぶ「コンピューター入り」！</h4>
+      <p>ゲーム機もテレビも、くるまの中にもコンピューターが入っているんだ。<br>いまの世の中、コンピューターは <b>どこにでも</b> はいっているよ。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 中身 -->
+<div id="sec-3" data-snav-target class="section-divider">
+  <div class="num">2.</div>
+  <h2>パソコンの中はどうなってる？</h2>
+</div>
+
+<section class="section">
+  <h2>パソコンは「人間のからだ」とにている</h2>
+  <p class="lead">タップして、それぞれのパーツをくらべてみよう！</p>
+  <div class="compare">
+    <div class="col">
+      <h3 style="color:var(--accent)">👤 人間</h3>
+      <ul>
+        <li>🧠 あたま（考える）</li>
+        <li>📋 つくえ（さぎょうする）</li>
+        <li>📚 本だな（おぼえておく）</li>
+        <li>👀 目（見る）</li>
+        <li>✋ 手（うごかす）</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3 style="color:var(--primary)">💻 パソコン</h3>
+      <ul>
+        <li><b>CPU</b>（考える）</li>
+        <li><b>メモリ</b>（さぎょうする）</li>
+        <li><b>ストレージ</b>（おぼえておく）</li>
+        <li><b>がめん</b>（見せる）</li>
+        <li><b>キーボード／マウス</b>（うごかす）</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin:48px 0 16px;color:var(--accent)">5つのパーツをタップしてみよう</h3>
+  <div class="parts" id="parts"></div>
+
+  <div class="quiz" style="margin-top:48px">
+    <span class="quiz-label">クイズ ②</span>
+    <h3>パソコンが「重くなる」のはなぜ？</h3>
+    <p>つかっているうちに、パソコンが おそくなる… それはなぜ？</p>
+    <div class="quiz-options" id="q2">
+      <button class="quiz-opt" data-correct="false"><span class="em">🌧️</span>雨がふったから</button>
+      <button class="quiz-opt" data-correct="true"><span class="em">📋</span>つくえ（メモリ）が ぱんぱん</button>
+      <button class="quiz-opt" data-correct="false"><span class="em">😴</span>パソコンがねむい</button>
+    </div>
+    <button class="sim-btn" onclick="checkQ2()" style="background:var(--primary)">こたえをみる</button>
+    <div class="quiz-answer" id="q2-answer">
+      <h4>こたえ：つくえ（メモリ）が ぱんぱん！</h4>
+      <p>たくさんのアプリをひらきっぱなしにしていると、つくえ（メモリ）が ぐちゃぐちゃになって、CPUが うまく さぎょうできなくなるよ。</p>
+      <p style="margin-top:12px;color:var(--accent);font-weight:bold">💡 つかわないアプリは とじよう！</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. ファイルとフォルダ -->
+<div id="sec-4" data-snav-target class="section-divider">
+  <div class="num">3.</div>
+  <h2>ファイルとフォルダ</h2>
+</div>
+
+<section class="section">
+  <h2>ファイル ＝ いちまいの紙</h2>
+  <p class="lead">しゃしんも、どうがも、おてがみも、ぜんぶ「ファイル」！</p>
+  <div class="grid grid-4">
+    <div class="card feature-card">
+      <div class="emoji">📷</div><h3>しゃしん</h3><div class="ext">.jpg / .png</div>
+    </div>
+    <div class="card feature-card">
+      <div class="emoji">🎬</div><h3>どうが</h3><div class="ext">.mp4 / .mov</div>
+    </div>
+    <div class="card feature-card">
+      <div class="emoji">📝</div><h3>もじ</h3><div class="ext">.txt / .docx</div>
+    </div>
+    <div class="card feature-card">
+      <div class="emoji">🎵</div><h3>おんがく</h3><div class="ext">.mp3 / .wav</div>
+    </div>
+  </div>
+  <p style="margin-top:24px;text-align:center">ファイルのうしろの「<b>.〇〇〇</b>」が しゅるいをあらわすよ。</p>
+
+  <h2 style="margin-top:64px">フォルダ ＝ はこ</h2>
+  <p class="lead">ファイルを しまっておく「はこ」のこと。フォルダの中にフォルダもOK！</p>
+  <div class="card" style="font-family:Consolas,monospace;font-size:18px;line-height:2">
+    📁 がっこう<br>
+    &nbsp;&nbsp;&nbsp;├─ 📁 こくご<br>
+    &nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;├─ 📄 さくぶん.docx<br>
+    &nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;└─ 📄 ことばあつめ.txt<br>
+    &nbsp;&nbsp;&nbsp;├─ 📁 さんすう<br>
+    &nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;└─ 📄 けいさんドリル.docx<br>
+    &nbsp;&nbsp;&nbsp;└─ 📁 ずこう<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ 📷 さくひん.jpg
+  </div>
+</section>
+
+<!-- 4. ハンズオン -->
+<div id="sec-5" data-snav-target class="section-divider">
+  <div class="num">4.</div>
+  <h2>やってみよう！</h2>
+</div>
+
+<section class="section">
+  <h2>フォルダとファイルを つくってみよう</h2>
+  <p class="lead">下のシミュレーターで れんしゅうしてから、じっさいのパソコンでもやってみよう！</p>
+
+  <div class="sim">
+    <div class="sim-header">
+      <h3>🖥️ デスクトップ シミュレーター</h3>
+      <div class="sim-toolbar">
+        <button class="sim-btn" onclick="addFolder()">📁 フォルダをつくる</button>
+        <button class="sim-btn" onclick="addFile()">📄 ファイルをつくる</button>
+        <button class="sim-btn" onclick="renameSelected()">✏️ なまえをかえる</button>
+        <button class="sim-btn" onclick="deleteSelected()">🗑️ けす</button>
+        <button class="sim-btn danger" onclick="goBack()">← もどる</button>
+      </div>
+    </div>
+    <div class="sim-display">
+      <div class="sim-path" id="path">📁 デスクトップ</div>
+      <div class="sim-items" id="items"></div>
+    </div>
+    <div class="sim-msg" id="msg"></div>
+  </div>
+
+  <h3 style="margin:48px 0 16px;color:var(--accent)">じっさいのパソコンでのやりかた</h3>
+
+  <div class="step">
+    <span class="num">ステップ 1</span>
+    <h3>デスクトップに じぶんのフォルダ をつくる</h3>
+    <p>名前は「○○のれんしゅう」にしてみよう。</p>
+    <div class="platforms">
+      <div class="pf win">
+        <span class="pflabel">Windows</span>
+        <ol style="margin-left:20px">
+          <li>デスクトップで <b>みぎクリック</b></li>
+          <li>「新規作成」→「フォルダー」</li>
+          <li>名前をいれて <b>Enter</b></li>
+        </ol>
+      </div>
+      <div class="pf mac">
+        <span class="pflabel">Mac</span>
+        <ol style="margin-left:20px">
+          <li>デスクトップで <b>みぎクリック</b>（または control＋クリック）</li>
+          <li>「新規フォルダ」</li>
+          <li>名前をいれて <b>return</b></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">ステップ 2</span>
+    <h3>そのなかに 3つのフォルダ をつくる</h3>
+    <p>「<b>しゃしん</b>」「<b>もじ</b>」「<b>おんがく</b>」の3つ。</p>
+    <p>つくったフォルダを <b>ダブルクリック</b> であけて、おなじやりかたで中につくるよ。</p>
+  </div>
+
+  <div class="step">
+    <span class="num">ステップ 3</span>
+    <h3>もじファイルをつくる</h3>
+    <div class="platforms">
+      <div class="pf win">
+        <span class="pflabel">Windows</span>
+        <ol style="margin-left:20px">
+          <li>みぎクリック →「新規作成」→「テキスト ドキュメント」</li>
+          <li>ひらいて、なにか かいてみよう</li>
+          <li>「ファイル」→「保存」</li>
+        </ol>
+      </div>
+      <div class="pf mac">
+        <span class="pflabel">Mac</span>
+        <ol style="margin-left:20px">
+          <li>「メモ」または「テキストエディット」をひらく</li>
+          <li>なにか かいてみよう</li>
+          <li>「ファイル」→「保存」→「もじ」フォルダをえらぶ</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <span class="num">ステップ 4</span>
+    <h3>ファイルの なまえをかえる</h3>
+    <p>ファイルを <b>1かいだけクリック</b> → ちょっと待って もういちどクリック<br>
+    または みぎクリック →「名前の変更」</p>
+    <div class="card" style="background:var(--secondary);margin-top:12px">
+      <h4>💡 なまえのつけかたコツ</h4>
+      <ul style="margin-left:20px;margin-top:8px">
+        <li>あとで見ても じぶんが わかる名前 にしよう</li>
+        <li>スペースのかわりに「_」や「-」をつかう</li>
+        <li>日本語OK！ でも英語のほうがトラブルがすくない</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- まとめ -->
+<div id="sec-6" data-snav-target class="section-divider">
+  <h2>まとめ</h2>
+</div>
+<section class="section">
+  <h2>きょう おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row">
+      <div class="num">1</div>
+      <div class="text">
+        <h3>パソコンは コンピューター のなかま</h3>
+        <p>スマホもタブレットも、なかま！</p>
+      </div>
+    </div>
+    <div class="summary-row">
+      <div class="num">2</div>
+      <div class="text">
+        <h3>パソコンの中には 5つのぶぶん がある</h3>
+        <p>CPU・メモリ・ストレージ・がめん・キーボード／マウス</p>
+      </div>
+    </div>
+    <div class="summary-row">
+      <div class="num">3</div>
+      <div class="text">
+        <h3>ファイルとフォルダで きれいに整理 できる</h3>
+        <p>「箱の中に紙」「箱の中に箱」</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- next -->
+<div id="sec-7" data-snav-target class="next">
+  <div class="em">🌐</div>
+  <h2>つぎは…インターネットってなんだろう？</h2>
+  <p>パソコン同士がどうつながっているか、Webサイトはどこから来ているか、たんけんしてみよう！</p>
+</div>
+
+<footer>
+  <p>小学生プログラミング教室 ／ 初級 第1回｜パソコンってなんだろう？</p>
+  <p>© 2026</p>
+</footer>
+
+<script>
+  // progress bar
+  function updateProgress(){
+    const h = document.documentElement;
+    const scrolled = h.scrollTop;
+    const max = h.scrollHeight - h.clientHeight;
+    const pct = Math.min(100, Math.round((scrolled/max)*100));
+    document.getElementById('progress').style.width = pct + '%';
+    document.getElementById('navP').textContent = pct + '%';
+  }
+  window.addEventListener('scroll', updateProgress);
+  window.addEventListener('resize', updateProgress);
+
+  // ===== CUSTOM MODAL =====
+  const modalBg = document.getElementById('modal-bg');
+  const modalEmoji = document.getElementById('modal-emoji');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const modalActions = document.getElementById('modal-actions');
+
+  function openModal({emoji='', title='', bodyHTML='', actionsHTML=''}){
+    modalEmoji.textContent = emoji;
+    modalEmoji.style.display = emoji ? 'block' : 'none';
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHTML;
+    modalActions.innerHTML = actionsHTML;
+    modalBg.classList.add('show');
+  }
+  function closeModal(){ modalBg.classList.remove('show'); }
+  function bgClose(e){ if(e.target === modalBg) closeModal(); }
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape' && modalBg.classList.contains('show')) closeModal();
+  });
+
+  function showInfo({emoji,title,bodyHTML}){
+    openModal({
+      emoji, title, bodyHTML,
+      actionsHTML:'<button class="modal-btn" onclick="closeModal()">わかった！</button>'
+    });
+  }
+  function showInput({emoji,title,defaultValue='',onOk}){
+    openModal({
+      emoji, title,
+      bodyHTML:`<input class="modal-input" id="modal-input" value="${(defaultValue+'').replace(/"/g,'&quot;')}" maxlength="40" />`,
+      actionsHTML:
+        '<button class="modal-btn cancel" onclick="closeModal()">やめる</button>'+
+        '<button class="modal-btn" id="modal-ok-btn">けってい</button>'
+    });
+    const input = document.getElementById('modal-input');
+    setTimeout(()=>{input.focus();input.select();},50);
+    const submit = ()=>{
+      const v = input.value.trim();
+      if(!v){ input.focus(); input.style.borderColor='var(--primary)'; return; }
+      closeModal();
+      onOk && onOk(v);
+    };
+    document.getElementById('modal-ok-btn').onclick = submit;
+    input.addEventListener('keydown',(e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); submit(); }
+    });
+  }
+  function showConfirm({emoji,title,bodyHTML='',okLabel='そうする',cancelLabel='やめる',onOk}){
+    openModal({
+      emoji, title, bodyHTML,
+      actionsHTML:
+        `<button class="modal-btn cancel" onclick="closeModal()">${cancelLabel}</button>`+
+        `<button class="modal-btn danger" id="modal-ok-btn">${okLabel}</button>`
+    });
+    document.getElementById('modal-ok-btn').onclick = ()=>{
+      closeModal();
+      onOk && onOk();
+    };
+  }
+
+  // PARTS
+  const parts = [
+    {icon:'🧠', name:'CPU', sub:'パソコンの「あたま」', long:'けいさんしたり、かんがえたりするぶぶんだよ。<br><b>あたまがいいCPU</b> がはいっているパソコンほど、はやくうごく！'},
+    {icon:'📋', name:'メモリ', sub:'つくえの「ひろさ」', long:'いまやっていることを いちじてきに ひろげておくばしょ。<br><b>つくえがひろい</b> ほど、たくさんのことが いっぺんにできる！'},
+    {icon:'📚', name:'ストレージ', sub:'おおきな「本だな」', long:'しゃしん・どうが・ファイルを <b>しまっておく</b> ばしょ。<br>電げんを切っても、なかみは消えないよ！'},
+    {icon:'👀', name:'がめん', sub:'目のかわり', long:'CPUが かんがえたことを、わたしたちに <b>見せてくれる</b> ぶぶん。'},
+    {icon:'⌨️', name:'キーボード／マウス', sub:'口と手のかわり', long:'わたしたちの <b>命令</b> を、パソコンに つたえる どうぐ。<br>パソコンの「目」じゃなくて、わたしたちの「手」がわなんだよ。'},
+  ];
+  const partsEl = document.getElementById('parts');
+  parts.forEach(p=>{
+    const div = document.createElement('div');
+    div.className='part';
+    div.innerHTML = `<div class="emoji">${p.icon}</div><h4>${p.name}</h4><div class="desc">${p.sub}</div>`;
+    div.onclick = ()=> showInfo({
+      emoji: p.icon,
+      title: p.name + ' ＝ ' + p.sub,
+      bodyHTML: p.long
+    });
+    partsEl.appendChild(div);
+  });
+
+  // QUIZ
+  document.querySelectorAll('.quiz-options').forEach(box=>{
+    box.querySelectorAll('.quiz-opt').forEach(b=>{
+      b.onclick = ()=>{ b.classList.toggle('selected'); };
+    });
+  });
+  function checkQ1(){ document.getElementById('q1-answer').classList.add('show'); }
+  function checkQ2(){ document.getElementById('q2-answer').classList.add('show'); }
+
+  // SIMULATOR
+  const fs = {
+    name:'デスクトップ',
+    type:'folder',
+    children:[]
+  };
+  let cwd = fs;          // current folder
+  const stack = [];      // path stack
+
+  let folderCount = 0;
+  let fileCount = 0;
+  let selected = null;
+
+  function showMsg(text){
+    const m = document.getElementById('msg');
+    m.textContent = text;
+    m.classList.add('show');
+    clearTimeout(m._t);
+    m._t = setTimeout(()=>m.classList.remove('show'), 2500);
+  }
+
+  function render(){
+    const path = ['📁 デスクトップ', ...stack.map(f=>'📁 '+f.name)].join(' / ');
+    document.getElementById('path').textContent = path;
+    const items = document.getElementById('items');
+    items.innerHTML = '';
+    if(cwd.children.length===0){
+      const e = document.createElement('div');
+      e.className='sim-empty';
+      e.style.gridColumn='1 / -1';
+      e.textContent='まだ なにもないよ。「フォルダをつくる」をおしてみよう！';
+      items.appendChild(e);
+      return;
+    }
+    cwd.children.forEach((it,i)=>{
+      const d = document.createElement('div');
+      d.className='sim-item';
+      if(selected===it) d.classList.add('selected');
+      const ic = it.type==='folder' ? '📁' : '📄';
+      d.innerHTML = `<div class="ic">${ic}</div><div class="nm">${it.name}</div>`;
+      d.onclick = (e)=>{
+        e.stopPropagation();
+        if(selected===it){
+          if(it.type==='folder'){
+            // open
+            stack.push(cwd);
+            cwd = it;
+            selected = null;
+            render();
+          }
+        } else {
+          selected = it;
+          render();
+        }
+      };
+      items.appendChild(d);
+    });
+  }
+
+  function addFolder(){
+    folderCount++;
+    showInput({
+      emoji:'📁',
+      title:'あたらしいフォルダ',
+      defaultValue:'新しいフォルダ' + folderCount,
+      onOk:(name)=>{
+        cwd.children.push({name, type:'folder', children:[]});
+        showMsg('📁 フォルダ「' + name + '」をつくりました！');
+        render();
+      }
+    });
+  }
+  function addFile(){
+    fileCount++;
+    showInput({
+      emoji:'📄',
+      title:'あたらしいファイル',
+      defaultValue:'メモ' + fileCount + '.txt',
+      onOk:(name)=>{
+        cwd.children.push({name, type:'file'});
+        showMsg('📄 ファイル「' + name + '」をつくりました！');
+        render();
+      }
+    });
+  }
+  function renameSelected(){
+    if(!selected){
+      showInfo({emoji:'🤔', title:'まず えらんでね', bodyHTML:'なまえをかえたいフォルダかファイルを<br>1かいクリックで えらんでから、もういちど おしてみよう！'});
+      return;
+    }
+    showInput({
+      emoji:'✏️',
+      title:'なまえをかえる',
+      defaultValue:selected.name,
+      onOk:(newName)=>{
+        selected.name = newName;
+        showMsg('✏️ なまえをかえました！');
+        render();
+      }
+    });
+  }
+  function deleteSelected(){
+    if(!selected){
+      showInfo({emoji:'🤔', title:'まず えらんでね', bodyHTML:'けしたいフォルダかファイルを<br>1かいクリックで えらんでから、もういちど おしてみよう！'});
+      return;
+    }
+    const target = selected;
+    showConfirm({
+      emoji:'🗑️',
+      title:'けしますか？',
+      bodyHTML:'<b>「' + target.name + '」</b> を けしちゃうよ。<br>ほんとに いい？',
+      okLabel:'けす',
+      cancelLabel:'やめとく',
+      onOk:()=>{
+        cwd.children = cwd.children.filter(c=>c!==target);
+        selected = null;
+        showMsg('🗑️ けしました');
+        render();
+      }
+    });
+  }
+  function goBack(){
+    if(stack.length===0){
+      showInfo({emoji:'🚪', title:'ここがいちばん上だよ', bodyHTML:'もう これいじょう もどれないよ。<br>ここが「デスクトップ」のいちばん上！'});
+      return;
+    }
+    cwd = stack.pop();
+    selected = null;
+    render();
+  }
+
+  render();
+  updateProgress();
+
+  // ===== SIDE NAV: scroll-spy + keyboard =====
+  const snavTargets = [...document.querySelectorAll('[data-snav-target]')];
+  const snavBadges = [...document.querySelectorAll('.snav-badge')];
+
+  function updateSnav(){
+    const y = window.scrollY + window.innerHeight * 0.3;
+    let cur = 0;
+    snavTargets.forEach((el,i)=>{
+      if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i;
+    });
+    snavBadges.forEach((b,i)=>b.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateSnav, {passive:true});
+  window.addEventListener('resize', updateSnav);
+  updateSnav();
+
+  // smooth scroll on click
+  snavBadges.forEach((b,i)=>{
+    b.addEventListener('click',(e)=>{
+      e.preventDefault();
+      snavTargets[i] && snavTargets[i].scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+
+  // keyboard shortcuts
+  function showHelp(){
+    showInfo({
+      emoji:'⌨️',
+      title:'キーボードショートカット',
+      bodyHTML:`
+        <div style="text-align:left;font-size:15px;line-height:2">
+          <div><b>←  ↑  PageUp</b>　前の章へ</div>
+          <div><b>→  ↓  PageDown  Space</b>　つぎの章へ</div>
+          <div><b>1 〜 ${snavTargets.length}</b>　章番号で直行</div>
+          <div><b>Home</b>　いちばん上へ</div>
+          <div><b>End</b>　いちばん下へ</div>
+          <div><b>?</b>　このヘルプ</div>
+        </div>`
+    });
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+
+  document.addEventListener('keydown',(e)=>{
+    if(e.target.matches('input,textarea')) return;
+    if(modalBg.classList.contains('show')) return;
+    const cur = snavBadges.findIndex(b=>b.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{
+      i = Math.max(0, Math.min(snavTargets.length-1, i));
+      snavTargets[i].scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    if(e.key==='?' || (e.key==='/' && e.shiftKey)){ e.preventDefault(); showHelp(); }
+    else if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10)-1;
+      if(i < snavTargets.length){ e.preventDefault(); goto(i); }
+    }
+    else if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){
+      e.preventDefault(); goto(idx+1);
+    }
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){
+      e.preventDefault(); goto(idx-1);
+    }
+    else if(e.key==='Home'){ e.preventDefault(); goto(0); }
+    else if(e.key==='End'){ e.preventDefault(); goto(snavTargets.length-1); }
+  });
+</script>
+</body>
+</html>
