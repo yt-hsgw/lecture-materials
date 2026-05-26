@@ -273,14 +273,14 @@
   <a href="#color">5<span>色ラボ</span><span class="ic">🎨</span></a>
   <a href="#layout">6<span>レイアウト</span><span class="ic">📐</span></a>
   <a href="#maker">7<span>自己紹介メーカー</span><span class="ic">🪪</span></a>
-  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#sec-quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
   <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
 </nav>
 <button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
 
 <div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal()">×</button>
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
     <div id="modal-emoji" class="modal-emoji"></div>
     <h3 id="modal-title" class="modal-title"></h3>
     <div id="modal-body" class="modal-body"></div>
@@ -545,7 +545,7 @@
 </section>
 
 <!-- 7. たしかめクイズ -->
-<div class="divider" id="quiz" data-snav-target>
+<div class="divider" id="sec-quiz" data-snav-target>
   <div class="num">7.</div>
   <h2>たしかめクイズ</h2>
 </div>

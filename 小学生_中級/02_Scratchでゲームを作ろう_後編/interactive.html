@@ -192,8 +192,8 @@
 
 <nav class="snav" aria-label="ページ内ナビゲーション">
   <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
-  <a href="#score">2<span>スコア変数</span><span class="ic">🏆</span></a>
-  <a href="#timer">3<span>タイマー</span><span class="ic">⏱️</span></a>
+  <a href="#sec-score">2<span>スコア変数</span><span class="ic">🏆</span></a>
+  <a href="#sec-timer">3<span>タイマー</span><span class="ic">⏱️</span></a>
   <a href="#sound">4<span>効果音</span><span class="ic">🔊</span></a>
   <a href="#gameover">5<span>ゲームオーバー</span><span class="ic">💥</span></a>
   <a href="#play">6<span>完成版で遊ぶ</span><span class="ic">🎮</span></a>
@@ -203,7 +203,7 @@
 
 <div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal()">×</button>
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
     <div id="modal-emoji" class="modal-emoji"></div>
     <h3 id="modal-title" class="modal-title"></h3>
     <div id="modal-body" class="modal-body"></div>
@@ -233,7 +233,7 @@
 </section>
 
 <!-- スコア -->
-<div class="divider" id="score" data-snav-target>
+<div class="divider" id="sec-score" data-snav-target>
   <div class="num">1.</div>
   <h2>変数で スコアを 表示</h2>
 </div>
@@ -279,7 +279,7 @@
 </section>
 
 <!-- タイマー -->
-<div class="divider" id="timer" data-snav-target>
+<div class="divider" id="sec-timer" data-snav-target>
   <div class="num">2.</div>
   <h2>タイマーで 時間制限</h2>
 </div>
