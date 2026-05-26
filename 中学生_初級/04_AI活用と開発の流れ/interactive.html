@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第4回｜AI活用と開発の流れ</title>
+<style>
+  :root{
+    --primary:#8B5CF6; --secondary:#F59E0B; --accent:#10B981;
+    --warn:#EF4444; --dark:#1E293B; --light:#F5F3FF;
+    --panel:#FFFFFF; --muted:#64748B;
+    --code-bg:#0F172A; --code-fg:#E2E8F0;
+    --shadow:0 4px 0 rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Sans','Yu Gothic',sans-serif;color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,select,textarea{font:inherit}
+  code,pre,.mono{font-family:'JetBrains Mono','Consolas','Menlo',monospace}
+
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--accent),var(--secondary));z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:999px;box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);text-decoration:none;
+    font-weight:bold;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,41,59,.6);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:520px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;background:var(--warn);
+    color:white;border:4px solid white;border-radius:50%;font-size:20px;cursor:pointer;
+    font-family:inherit;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;line-height:1;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.7;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;border-radius:12px;
+    font-family:inherit;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;}
+  .modal-btn:hover{transform:translateY(-2px)}
+
+  .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#8B5CF6 0%,#10B981 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:8px 20px;
+    border-radius:999px;font-weight:bold;margin-bottom:18px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:18px;text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(16px,2.2vw,22px);opacity:.95}
+  .hero .bot{font-size:clamp(72px,11vw,136px);margin-top:24px;filter:drop-shadow(0 8px 0 rgba(0,0,0,.12))}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:13px;margin-bottom:14px;}
+  h2{font-size:clamp(30px,4.5vw,46px);color:var(--primary);line-height:1.2;margin-bottom:8px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:60px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:20px}
+  .divider h2{color:var(--secondary);font-size:clamp(34px,5.5vw,58px);margin-top:6px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:22px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:6px}
+  .card.warn{border-left:8px solid var(--warn)}
+  .card.ok{border-left:8px solid var(--accent)}
+
+  /* Token predictor */
+  .pred{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin:18px 0}
+  .pred-text{
+    background:var(--code-bg);color:var(--code-fg);border-radius:10px;
+    padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:16px;
+    line-height:1.8;min-height:48px;
+  }
+  .pred-text .gen{color:#86EFAC}
+  .pred-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+  .pred-opt{background:white;border:2px solid var(--primary);border-radius:10px;
+    padding:10px 14px;cursor:pointer;text-align:left;font-family:inherit;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+    transition:transform .12s,background .12s,color .12s;}
+  .pred-opt:hover{transform:translateY(-2px);background:var(--primary);color:white}
+  .pred-opt .pct{color:var(--accent);font-weight:bold}
+  .pred-opt:hover .pct{color:var(--secondary)}
+  .pred-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+  .btn{background:var(--accent);color:white;border:none;padding:10px 22px;border-radius:10px;
+    font-family:inherit;font-size:14px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.gray{background:var(--muted)}
+  .btn.warn{background:var(--warn)}
+
+  /* Prompt builder */
+  .pb{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin:18px 0}
+  .pb-row{display:grid;grid-template-columns:120px 1fr;gap:14px;margin-bottom:14px;align-items:center}
+  .pb-row label{font-weight:bold;color:var(--primary)}
+  .pb-row select,.pb-row input,.pb-row textarea{
+    border:2px solid #DDD6FE;border-radius:10px;padding:10px 14px;
+    font-family:inherit;font-size:14px;width:100%;outline:none;
+  }
+  .pb-row select:focus,.pb-row input:focus,.pb-row textarea:focus{border-color:var(--primary)}
+  .pb-output{background:var(--code-bg);color:var(--code-fg);border-radius:10px;
+    padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;
+    min-height:140px;white-space:pre-wrap;margin-top:10px;}
+  .pb-score{margin-top:14px;padding:14px 18px;border-radius:10px;font-weight:bold;background:#FEF3C7;color:#92400E;}
+  .pb-score.high{background:#D1FAE5;color:#065F46}
+  .pb-score.low{background:#FEE2E2;color:#991B1B}
+
+  /* Dev flow */
+  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:18px 0}
+  .flow-step{background:white;border-radius:14px;padding:18px;box-shadow:var(--shadow);
+    cursor:pointer;text-align:center;transition:transform .12s,border-color .12s;
+    border:3px solid transparent;}
+  .flow-step:hover{transform:translateY(-3px);border-color:var(--primary)}
+  .flow-step.active{border-color:var(--accent);background:#ECFDF5}
+  .flow-step .em{font-size:48px;line-height:1;margin-bottom:8px}
+  .flow-step h3{color:var(--dark);font-size:18px}
+  .flow-detail{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    min-height:160px;line-height:1.8;}
+  .flow-detail.empty{color:var(--muted);text-align:center}
+
+  /* Code review */
+  .review{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+  .review-pane{background:var(--code-bg);color:var(--code-fg);border-radius:10px;
+    padding:18px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;
+    min-height:240px;white-space:pre;overflow-x:auto;}
+  .review-pane.before{border:2px solid var(--warn)}
+  .review-pane.after{border:2px solid var(--accent)}
+  .review-actions{display:flex;justify-content:center;margin-top:14px;gap:8px}
+
+  /* Don't list */
+  .dont-list{display:grid;gap:10px;margin:18px 0}
+  .dont-item{background:white;border-radius:12px;padding:14px 18px;
+    border-left:6px solid var(--warn);display:flex;gap:14px;align-items:center;box-shadow:var(--shadow);}
+  .dont-item .em{font-size:32px;flex-shrink:0}
+  .dont-item h4{color:var(--warn);font-size:16px;margin-bottom:2px}
+  .dont-item p{color:var(--muted);font-size:13px}
+
+  /* Summary */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:14px;padding:18px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+
+  .next{background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next h2{color:white;font-size:clamp(26px,4.5vw,40px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .pb-row{grid-template-columns:1fr}
+    .review{grid-template-columns:1fr}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>第4回</span> <b>AI活用と開発の流れ</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>トップ</span><span class="ic">🎯</span></a>
+  <a href="#llm">2<span>LLMの仕組み</span><span class="ic">🧠</span></a>
+  <a href="#prompt">3<span>プロンプト</span><span class="ic">📝</span></a>
+  <a href="#flow">4<span>開発の流れ</span><span class="ic">🔄</span></a>
+  <a href="#review">5<span>AIレビュー体験</span><span class="ic">🔍</span></a>
+  <a href="#donts">6<span>やってはいけないこと</span><span class="ic">🚫</span></a>
+  <a href="#wrap">7<span>まとめ</span><span class="ic">📋</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="キーボードショートカット (?)" aria-label="キーボードショートカット">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 中学生プログラミング塾 ・ 初級</div>
+    <h1>AI活用と<br>開発の流れ</h1>
+    <p>AIを道具として使いこなす。「便利」と「確認」を、両方ちゃんと。</p>
+    <div class="bot">🤖💬🛠️</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>5つのことができるようになる</h2>
+  <div class="grid grid-3">
+    <div class="card"><h3>🧠 仕組み</h3><p style="color:var(--muted);margin-top:6px">LLMはどう動く？</p></div>
+    <div class="card"><h3>📝 プロンプト</h3><p style="color:var(--muted);margin-top:6px">だれに・なに・どう</p></div>
+    <div class="card"><h3>🔄 開発の流れ</h3><p style="color:var(--muted);margin-top:6px">設計→実装→テスト→改善</p></div>
+    <div class="card"><h3>🔍 レビュー</h3><p style="color:var(--muted);margin-top:6px">AIをペアプロ相手に</p></div>
+    <div class="card"><h3>🚫 注意</h3><p style="color:var(--muted);margin-top:6px">入れてはいけない情報</p></div>
+  </div>
+</section>
+
+<!-- LLM -->
+<div class="divider" id="llm" data-snav-target>
+  <div class="num">1.</div>
+  <h2>LLMの仕組み体験</h2>
+</div>
+
+<section class="section">
+  <h2>「次の単語を予測する」 を 体験する</h2>
+  <p class="lead">下の文の "次の単語" を選ぶと、続きが生成される。「考えている」のではなく、確率を見て選んでいるだけ。</p>
+  <div class="pred">
+    <div class="pred-text" id="predText">むかしむかし、あるところに <span class="gen" id="predGen"></span></div>
+    <h4 style="color:var(--muted);font-size:13px;margin:14px 0 8px">候補（確率つき）</h4>
+    <div class="pred-options" id="predOpts"></div>
+    <div class="pred-actions">
+      <button class="btn gray" id="predReset">↺ リセット</button>
+      <button class="btn" id="predAuto">▶ AI まかせで続ける</button>
+    </div>
+  </div>
+  <div class="card warn" style="margin-top:18px">
+    <h3 style="color:var(--warn)">💡 これが「ハルシネーション」のもと</h3>
+    <p style="margin-top:6px">確率が高そうに見える単語を選び続けるだけなので、<b>「もっともらしいけど嘘」</b>の文が混ざることがある。だから人間が確認する。</p>
+  </div>
+</section>
+
+<!-- Prompt builder -->
+<div class="divider" id="prompt" data-snav-target>
+  <div class="num">2.</div>
+  <h2>プロンプトビルダー</h2>
+</div>
+
+<section class="section">
+  <h2>「だれに・なに・どう」 で組み立てる</h2>
+  <p class="lead">4つの項目を埋めると、下に「良いプロンプト」が組み上がる。スコアも自動でつく。</p>
+  <div class="pb">
+    <div class="pb-row">
+      <label>👤 だれに</label>
+      <input id="pbAudience" placeholder="例：中学生にも分かるように" value="">
+    </div>
+    <div class="pb-row">
+      <label>🎭 役割</label>
+      <input id="pbRole" placeholder="例：熟練のPythonエンジニアとして" value="">
+    </div>
+    <div class="pb-row">
+      <label>📋 やりたい</label>
+      <textarea id="pbTask" rows="2" placeholder="例：1〜100の FizzBuzz を Python で書いてください"></textarea>
+    </div>
+    <div class="pb-row">
+      <label>🎨 形式</label>
+      <input id="pbFormat" placeholder="例：コメントを日本語でつけて、説明とコードを分けて" value="">
+    </div>
+    <h4 style="color:var(--muted);font-size:13px;margin:10px 0 6px">📜 組み上がったプロンプト</h4>
+    <pre class="pb-output" id="pbOutput">（4つを埋めると、ここに表示されます）</pre>
+    <div class="pb-score" id="pbScore">入力すると採点します</div>
+  </div>
+</section>
+
+<!-- Dev flow -->
+<div class="divider" id="flow" data-snav-target>
+  <div class="num">3.</div>
+  <h2>開発の流れ：4ステップ</h2>
+</div>
+
+<section class="section">
+  <h2>クリックで各ステップの中身を見る</h2>
+  <p class="lead">「動いたら終わり」じゃなくて、このループを何回も回すのがエンジニアの仕事。</p>
+  <div class="flow" id="flowSteps">
+    <div class="flow-step active" data-step="design"><div class="em">✏️</div><h3>① 設計</h3></div>
+    <div class="flow-step" data-step="impl"><div class="em">⌨️</div><h3>② 実装</h3></div>
+    <div class="flow-step" data-step="test"><div class="em">🧪</div><h3>③ テスト</h3></div>
+    <div class="flow-step" data-step="improve"><div class="em">✨</div><h3>④ 改善</h3></div>
+  </div>
+  <div class="flow-detail" id="flowDetail"></div>
+</section>
+
+<!-- AI Review -->
+<div class="divider" id="review" data-snav-target>
+  <div class="num">4.</div>
+  <h2>AIにコードレビューを依頼</h2>
+</div>
+
+<section class="section">
+  <h2>「Before / After」 を 見比べる</h2>
+  <p class="lead">あなたが書いたコードを、AIにレビューしてもらった想定の改善前後を切り替えて見てみよう。</p>
+  <div style="text-align:center;margin-bottom:18px">
+    <div style="display:inline-flex;gap:6px;background:white;border-radius:14px;padding:4px;box-shadow:var(--shadow)">
+      <button class="btn gray" id="reviewBtn1" data-case="0" style="padding:8px 18px">課題① FizzBuzz</button>
+      <button class="btn gray" id="reviewBtn2" data-case="1" style="padding:8px 18px">課題② スペル判定</button>
+      <button class="btn gray" id="reviewBtn3" data-case="2" style="padding:8px 18px">課題③ 平均値</button>
+    </div>
+  </div>
+  <div class="review">
+    <div>
+      <h4 style="color:var(--warn);font-size:13px;margin-bottom:6px">⚠ Before（あなたの実装）</h4>
+      <pre class="review-pane before" id="reviewBefore"></pre>
+    </div>
+    <div>
+      <h4 style="color:var(--accent);font-size:13px;margin-bottom:6px">✨ After（AI提案の改善版）</h4>
+      <pre class="review-pane after" id="reviewAfter"></pre>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px;background:#FEFCE8;border-left:6px solid var(--secondary)" id="reviewNote">
+    <h3 style="color:var(--secondary)">💡 AIの提案</h3>
+    <p id="reviewNoteText" style="margin-top:6px"></p>
+  </div>
+</section>
+
+<!-- Donts -->
+<div class="divider" id="donts" data-snav-target>
+  <div class="num">5.</div>
+  <h2>やってはいけないこと</h2>
+</div>
+
+<section class="section">
+  <h2>5つのルール</h2>
+  <div class="dont-list">
+    <div class="dont-item"><div class="em">🪪</div><div><h4>個人情報を入れない</h4><p>本名・住所・学校名・電話番号・友だちの名前</p></div></div>
+    <div class="dont-item"><div class="em">🔑</div><div><h4>APIキー・パスワードを入れない</h4><p>公開リポジトリにも、AIへのプロンプトにも</p></div></div>
+    <div class="dont-item"><div class="em">📝</div><div><h4>学校の宿題をそのまま投げない</h4><p>学校・先生のポリシーを必ず確認</p></div></div>
+    <div class="dont-item"><div class="em">⚠️</div><div><h4>事実として鵜呑みにしない</h4><p>数字・日付・人名・出典は自分で確認</p></div></div>
+    <div class="dont-item"><div class="em">📋</div><div><h4>コピペで提出しない</h4><p>自分のスキルが育たない。最低1行は自分で書ける状態に</p></div></div>
+  </div>
+  <div class="card ok" style="margin-top:18px">
+    <h3 style="color:var(--accent)">💡 「使う」と「依存する」は違う</h3>
+    <p style="margin-top:6px">電卓が使えても、暗算ができる人とできない人がいる。AIも同じ — 「読めて、自分で直せる」状態を保とう。</p>
+  </div>
+</section>
+
+<!-- まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>LLM＝次の単語を予測する機械</h3><p style="color:var(--muted)">「考えている」のではない。ハルシネーション注意</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>プロンプトは「だれに・なに・どう」</h3><p style="color:var(--muted)">役割・例・形式で精度が上がる</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>開発は 設計→実装→テスト→改善 のループ</h3><p style="color:var(--muted)">動いたら終わり、ではない</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>AIはペアプロ相手として使う</h3><p style="color:var(--muted)">書かせきるのではなく、対話する</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>個人情報・APIキー・パスワードはNG</h3><p style="color:var(--muted)">「使う」と「依存する」は違う</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div style="font-size:84px">🎓</div>
+  <h2>コース修了！ おつかれさまでした</h2>
+  <p>次は中級コース or オプション教材へ。いちばん大事なのは「もう1個、自分で作る」こと。</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 初級 第4回｜AI活用と開発の流れ</footer>
+
+<script>
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  const me = document.getElementById('modal-emoji');
+  const mt = document.getElementById('modal-title');
+  const mbody = document.getElementById('modal-body');
+  function showInfo({emoji='', title='', bodyHTML=''}){
+    me.textContent = emoji; me.style.display = emoji ? 'block' : 'none';
+    mt.textContent = title; mbody.innerHTML = bodyHTML;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  // ===== Token predictor =====
+  // Predefined branching candidates by current state
+  const tokenTree = {
+    'むかしむかし、あるところに ': [
+      {t:'おじいさんとおばあさん', p:42},
+      {t:'おじいさん', p:24},
+      {t:'桃太郎', p:8},
+      {t:'金魚', p:3},
+    ],
+    'むかしむかし、あるところに おじいさんとおばあさん': [
+      {t:'がいました。', p:62},
+      {t:'が住んでいました。', p:25},
+      {t:'が暮らしていました。', p:10},
+    ],
+    'むかしむかし、あるところに おじいさん': [
+      {t:'が住んでいました。', p:48},
+      {t:'がいました。', p:38},
+      {t:'と犬がいました。', p:7},
+    ],
+    'むかしむかし、あるところに 桃太郎': [
+      {t:'がいました。', p:34},
+      {t:'という男の子がいました。', p:55},
+      {t:'と仲間たちがいました。', p:6},
+    ],
+    'むかしむかし、あるところに 金魚': [
+      {t:'がいました。', p:60},
+      {t:'のことを話す者がいました。', p:18},
+      {t:'を飼う男がいました。', p:15},
+    ],
+  };
+  const predText = document.getElementById('predText');
+  const predGen = document.getElementById('predGen');
+  const predOpts = document.getElementById('predOpts');
+  let currentSeed = 'むかしむかし、あるところに ';
+  let generated = '';
+  function renderPredOpts(){
+    const key = currentSeed + generated;
+    const opts = tokenTree[key] || tokenTree[key.trim() + ' '] || null;
+    predOpts.innerHTML = '';
+    if(!opts){
+      predOpts.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted)">これ以上の続きは予測できません（END）</div>';
+      return;
+    }
+    opts.forEach(o=>{
+      const b = document.createElement('button');
+      b.className = 'pred-opt';
+      b.innerHTML = `<span>${o.t}</span><span class="pct">${o.p}%</span>`;
+      b.addEventListener('click', ()=>{
+        generated = (generated ? generated : '') + o.t;
+        predGen.textContent = generated;
+        renderPredOpts();
+      });
+      predOpts.appendChild(b);
+    });
+  }
+  document.getElementById('predReset').addEventListener('click', ()=>{ generated=''; predGen.textContent=''; renderPredOpts(); });
+  document.getElementById('predAuto').addEventListener('click', ()=>{
+    // pick highest probability available
+    const key = currentSeed + generated;
+    const opts = tokenTree[key];
+    if(!opts) return;
+    const best = opts.reduce((a,b)=>a.p>=b.p?a:b);
+    generated += best.t;
+    predGen.textContent = generated;
+    renderPredOpts();
+  });
+  renderPredOpts();
+
+  // ===== Prompt builder =====
+  const pbAudience = document.getElementById('pbAudience');
+  const pbRole = document.getElementById('pbRole');
+  const pbTask = document.getElementById('pbTask');
+  const pbFormat = document.getElementById('pbFormat');
+  const pbOutput = document.getElementById('pbOutput');
+  const pbScore = document.getElementById('pbScore');
+  function updatePB(){
+    const audience = pbAudience.value.trim();
+    const role = pbRole.value.trim();
+    const task = pbTask.value.trim();
+    const format = pbFormat.value.trim();
+    if(!audience && !role && !task && !format){
+      pbOutput.textContent = '（4つを埋めると、ここに表示されます）';
+      pbScore.textContent = '入力すると採点します';
+      pbScore.classList.remove('high','low');
+      return;
+    }
+    let text = '';
+    if(role) text += role + '\n';
+    if(task){
+      if(audience) text += audience + '、' + task;
+      else text += task;
+    }
+    if(format) text += '\n\n' + format;
+    pbOutput.textContent = text || '(プロンプトが空です)';
+
+    const filled = [audience,role,task,format].filter(Boolean).length;
+    const taskBonus = task.length >= 20 ? 1 : 0;
+    const score = filled * 20 + taskBonus * 20;
+    pbScore.classList.remove('high','low');
+    if(score >= 80){
+      pbScore.classList.add('high');
+      pbScore.innerHTML = `🎉 <b>${score}点 / 100点</b> — とても具体的で良いプロンプトです。`;
+    } else if(score >= 40){
+      pbScore.innerHTML = `🟡 <b>${score}点 / 100点</b> — もう少し具体的にすると精度が上がります。`;
+    } else {
+      pbScore.classList.add('low');
+      pbScore.innerHTML = `🔴 <b>${score}点 / 100点</b> — 「だれに・なに・どう」の3点が足りていないかも。`;
+    }
+  }
+  [pbAudience,pbRole,pbTask,pbFormat].forEach(el=>el.addEventListener('input', updatePB));
+
+  // ===== Dev flow detail =====
+  const flowDetails = {
+    design: `<h3 style="color:var(--primary);margin-bottom:8px">✏️ 設計</h3>
+      <p>何を・どう作るかを <b>紙とエンピツで</b> 整理する。</p>
+      <pre style="margin-top:10px;background:var(--code-bg);color:var(--code-fg);padding:14px 18px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px">入力：整数 n
+処理：n が
+  - 15 の倍数 → "FizzBuzz"
+  - 3 の倍数  → "Fizz"
+  - 5 の倍数  → "Buzz"
+  - それ以外  → n をそのまま
+出力：上の結果（文字列）</pre>`,
+    impl: `<h3 style="color:var(--primary);margin-bottom:8px">⌨️ 実装</h3>
+      <p>設計どおりに、コードを書く。<b>写し書きに近い</b> 作業になる。</p>
+      <pre style="margin-top:10px;background:var(--code-bg);color:var(--code-fg);padding:14px 18px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px">def fizzbuzz(n):
+    if n % 15 == 0:
+        return "FizzBuzz"
+    elif n % 3 == 0:
+        return "Fizz"
+    elif n % 5 == 0:
+        return "Buzz"
+    else:
+        return str(n)</pre>`,
+    test: `<h3 style="color:var(--primary);margin-bottom:8px">🧪 テスト</h3>
+      <p>「期待値」と「実際の結果」を比べる。<b>書き残せば自動化できる</b>。</p>
+      <pre style="margin-top:10px;background:var(--code-bg);color:var(--code-fg);padding:14px 18px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px">assert fizzbuzz(3) == "Fizz"
+assert fizzbuzz(5) == "Buzz"
+assert fizzbuzz(15) == "FizzBuzz"
+assert fizzbuzz(7) == "7"
+print("全部OK！")</pre>`,
+    improve: `<h3 style="color:var(--primary);margin-bottom:8px">✨ 改善</h3>
+      <p>動いてから「もっと良くするには？」を考える。</p>
+      <ul style="margin-left:20px;margin-top:10px">
+        <li>関数名は分かりやすい？</li>
+        <li>同じことを繰り返してないか？</li>
+        <li><b>負の数や 0 が来たら</b> どうなる？</li>
+        <li>文字列が来たら？</li>
+      </ul>
+      <p style="margin-top:10px;color:var(--accent);font-weight:bold">AIに「エッジケースに強くする方法を教えて」と聞いてみよう。</p>`
+  };
+  const flowDetail = document.getElementById('flowDetail');
+  function selectStep(s){
+    document.querySelectorAll('.flow-step').forEach(o=>o.classList.toggle('active', o.dataset.step===s));
+    flowDetail.innerHTML = flowDetails[s];
+    flowDetail.classList.remove('empty');
+  }
+  document.querySelectorAll('.flow-step').forEach(s=>{
+    s.addEventListener('click', ()=>selectStep(s.dataset.step));
+  });
+  selectStep('design');
+
+  // ===== Review cases =====
+  const reviewCases = [
+    {
+      title:'FizzBuzz',
+      before:`def fb(n):
+    if n % 3 == 0:
+        return "Fizz"
+    if n % 5 == 0:
+        return "Buzz"
+    if n % 15 == 0:
+        return "FizzBuzz"
+    return str(n)`,
+      after:`def fizzbuzz(n: int) -> str:
+    """1〜100のFizzBuzz判定を行う。"""
+    if n % 15 == 0:
+        return "FizzBuzz"
+    elif n % 3 == 0:
+        return "Fizz"
+    elif n % 5 == 0:
+        return "Buzz"
+    else:
+        return str(n)`,
+      note:'15 の倍数を先に判定しないと "FizzBuzz" まで届かない。関数名を fb → fizzbuzz に、型ヒントと docstring も追加。'
+    },
+    {
+      title:'スペル判定',
+      before:`def check(a, b):
+    if a == b:
+        return "OK"
+    else:
+        return "NG"`,
+      after:`def check_answer(correct: str, user_input: str) -> str:
+    """大文字小文字を区別せずに答え合わせをする。"""
+    return "Correct" if correct.lower() == user_input.lower() else "Try again"`,
+      note:'引数名を具体的に、 .lower() で大文字小文字を区別なくする、戻り値も「OK/NG」より「Correct/Try again」のほうが意味が分かる。'
+    },
+    {
+      title:'平均値',
+      before:`def avg(nums):
+    sum = 0
+    for n in nums:
+        sum = sum + n
+    return sum / len(nums)`,
+      after:`def average(nums: list[float]) -> float:
+    """空リストの場合は None を返す。"""
+    if not nums:
+        return None
+    return sum(nums) / len(nums)`,
+      note:'sum は組み込み関数の名前なので変数として使うと混乱する。空リストで ZeroDivisionError になる問題も修正。'
+    }
+  ];
+  function loadReview(i){
+    const c = reviewCases[i];
+    document.getElementById('reviewBefore').textContent = c.before;
+    document.getElementById('reviewAfter').textContent = c.after;
+    document.getElementById('reviewNoteText').textContent = c.note;
+    document.querySelectorAll('[id^=reviewBtn]').forEach((b,idx)=>{
+      b.style.background = idx===i ? 'var(--primary)' : 'var(--muted)';
+    });
+  }
+  document.querySelectorAll('[id^=reviewBtn]').forEach(b=>{
+    b.addEventListener('click', ()=>loadReview(+b.dataset.case));
+  });
+  loadReview(0);
+
+  // Help & keyboard
+  function showHelp(){
+    showInfo({
+      emoji:'⌨️',
+      title:'キーボードショートカット',
+      bodyHTML:`
+        <div style="text-align:left;font-size:14px;line-height:2">
+          <div><b>← ↑ PageUp</b>　前の章へ</div>
+          <div><b>→ ↓ PageDown Space</b>　次の章へ</div>
+          <div><b>1 〜 ${targets.length}</b>　章番号で直行</div>
+          <div><b>Home / End</b>　最初／最後</div>
+          <div><b>?</b>　このヘルプ</div>
+        </div>`
+    });
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0, Math.min(targets.length-1, i)); targets[i].scrollIntoView({behavior:'smooth', block:'start'}); };
+    if(e.key==='?' || (e.key==='/' && e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i = parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key === 'Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key === 'End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); return; }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); return; }
+  });
+</script>
+</body>
+</html>

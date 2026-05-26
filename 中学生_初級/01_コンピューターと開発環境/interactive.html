@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第1回｜コンピューターと開発環境</title>
+<style>
+  :root{
+    --primary:#2563EB;
+    --secondary:#F59E0B;
+    --accent:#10B981;
+    --warn:#EF4444;
+    --dark:#1E293B;
+    --light:#F8FAFC;
+    --panel:#FFFFFF;
+    --muted:#64748B;
+    --code-bg:#0F172A;
+    --code-fg:#E2E8F0;
+    --shadow:0 4px 0 rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;
+  }
+  button,input,select,textarea{font:inherit}
+  code,pre,.mono{font-family:'JetBrains Mono','Consolas','Menlo',monospace}
+
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--accent),var(--secondary));z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.95);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* SIDE NAV */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;
+  }
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){
+    position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;
+  }
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{
+    position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;
+    padding:0;border-radius:50%;border:1.5px solid white;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;
+    opacity:1;pointer-events:none;transform:none;color:var(--dark);
+  }
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-family:inherit;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);transition:transform .15s,background .15s,color .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(30,41,59,.6);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;
+    max-width:520px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+    animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;
+    width:42px;height:42px;background:var(--warn);color:white;
+    border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-family:inherit;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;line-height:1;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.7;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-family:inherit;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;}
+  .modal-btn:hover{transform:translateY(-2px)}
+
+  /* Hero */
+  .hero{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#2563EB 0%,#1E293B 100%);
+  }
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:8px 20px;
+    border-radius:999px;font-weight:bold;margin-bottom:18px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:18px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(16px,2.2vw,22px);opacity:.95}
+  .hero .terminal{
+    margin-top:32px;background:rgba(0,0,0,.4);border-radius:8px;padding:16px 22px;
+    font-family:'JetBrains Mono',monospace;font-size:18px;color:#86EFAC;
+    text-align:left;max-width:560px;margin-left:auto;margin-right:auto;
+    border:1px solid rgba(255,255,255,.2);
+  }
+  .hero .terminal .prompt{color:var(--secondary)}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  /* Sections */
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:13px;margin-bottom:14px;}
+  h2{font-size:clamp(30px,4.5vw,46px);color:var(--primary);line-height:1.2;margin-bottom:8px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:60px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:20px}
+  .divider h2{color:var(--secondary);font-size:clamp(34px,5.5vw,58px);margin-top:6px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:22px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:6px}
+  .feature{text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s}
+  .feature:hover{transform:translateY(-3px)}
+  .feature .emoji{font-size:54px;line-height:1;margin-bottom:8px}
+  .feature .desc{color:var(--muted);font-size:14px;margin-top:8px;display:none}
+  .feature.open .desc{display:block;animation:slide-down .2s}
+  @keyframes slide-down{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Path tree */
+  .tree{
+    background:var(--code-bg);color:var(--code-fg);
+    border-radius:10px;padding:18px 22px;
+    font-family:inherit;font-size:15px;line-height:2;
+  }
+  .tree .folder{color:var(--secondary)}
+  .tree .file{color:#93C5FD}
+  .path-quiz{margin-top:18px}
+  .path-quiz code{
+    background:#FEF3C7;color:var(--dark);padding:3px 8px;border-radius:6px;font-weight:bold;
+  }
+  .path-buttons{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .path-btn{
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    padding:8px 18px;border-radius:10px;cursor:pointer;font-weight:bold;font-size:14px;
+    transition:all .12s;
+  }
+  .path-btn.correct{background:var(--accent);color:white;border-color:var(--accent)}
+  .path-btn.wrong{background:var(--warn);color:white;border-color:var(--warn)}
+
+  /* Code playground */
+  .play{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .play-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .play-tab{
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:bold;font-size:13px;
+  }
+  .play-tab.active{background:var(--primary);color:white}
+  .play-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+  .play-pane{
+    background:var(--code-bg);color:var(--code-fg);border-radius:10px;
+    padding:18px 22px;font-size:14px;line-height:1.7;
+    min-height:240px;white-space:pre;overflow-x:auto;
+  }
+  .play-pane.output{background:#0B1220;color:#86EFAC;border:1px solid rgba(134,239,172,.18)}
+  .play-pane.output.empty{color:var(--muted)}
+  .play-pane.output.error{color:#FCA5A5;border-color:rgba(252,165,165,.25)}
+  .play-actions{display:flex;justify-content:flex-end;margin-top:14px;gap:8px}
+  .btn{
+    background:var(--accent);color:white;border:none;padding:11px 24px;
+    border-radius:12px;font-family:inherit;font-size:14px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn.gray{background:var(--muted)}
+  .play-note{margin-top:12px;color:var(--muted);font-size:13px}
+
+  /* Error reader */
+  .error-card{
+    background:#FEF2F2;border-left:6px solid var(--warn);
+    border-radius:10px;padding:18px 22px;
+    font-family:'JetBrains Mono',monospace;font-size:14px;
+    color:#7F1D1D;line-height:1.7;white-space:pre;overflow-x:auto;
+  }
+  .error-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
+  .error-step{
+    background:white;border-radius:12px;padding:18px;box-shadow:var(--shadow);
+    cursor:pointer;transition:transform .12s,border-color .12s;
+    border:3px solid transparent;
+  }
+  .error-step:hover{transform:translateY(-2px);border-color:var(--secondary)}
+  .error-step.revealed{border-color:var(--accent);background:#ECFDF5}
+  .error-step .label{font-weight:bold;color:var(--primary);font-size:13px}
+  .error-step .ans{display:none;margin-top:8px}
+  .error-step.revealed .ans{display:block}
+
+  /* Summary */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{
+    background:white;border-radius:14px;padding:18px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);
+  }
+  .summary-row .num{
+    flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;
+  }
+
+  .next{background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next h2{color:white;font-size:clamp(26px,4.5vw,40px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .play-grid{grid-template-columns:1fr}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>第1回</span> <b>コンピューターと開発環境</b></div>
+
+<!-- side nav -->
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>トップ</span><span class="ic">🎯</span></a>
+  <a href="#parts">2<span>コンピューターの役者</span><span class="ic">🧠</span></a>
+  <a href="#fs">3<span>ファイルとパス</span><span class="ic">📁</span></a>
+  <a href="#tools">4<span>エディタ／実行環境</span><span class="ic">⚙️</span></a>
+  <a href="#play">5<span>コードを動かす</span><span class="ic">▶️</span></a>
+  <a href="#errors">6<span>エラーを読む</span><span class="ic">🐛</span></a>
+  <a href="#wrap">7<span>まとめ</span><span class="ic">📋</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="キーボードショートカット (?)" aria-label="キーボードショートカット">?</button>
+
+<!-- modal -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 中学生プログラミング塾 ・ 初級</div>
+    <h1>コンピューターと<br>開発環境</h1>
+    <p>「コンピューターは、命令を順番に実行する機械」 — その正体を見にいこう。</p>
+    <div class="terminal">
+<span class="prompt">$</span> python3 hello.py
+Hello, World!
+    </div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<!-- ゴール -->
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4つのことができるようになる</h2>
+  <p class="lead">最後の章までで、Pythonを自分の手で1度動かす。</p>
+  <div class="grid grid-4">
+    <div class="card feature"><div class="emoji">🧠</div><h3>役割分担</h3><p>OSと部品の関係を説明できる</p></div>
+    <div class="card feature"><div class="emoji">📁</div><h3>パス</h3><p>絶対と相対の違いがわかる</p></div>
+    <div class="card feature"><div class="emoji">⚙️</div><h3>エディタと実行</h3><p>VS CodeとPythonの関係</p></div>
+    <div class="card feature"><div class="emoji">▶️</div><h3>Hello, World!</h3><p>自分のコードを動かす</p></div>
+  </div>
+</section>
+
+<!-- SECTION 1: 役者 -->
+<div class="divider" id="parts" data-snav-target>
+  <div class="num">1.</div>
+  <h2>コンピューターの役者紹介</h2>
+</div>
+
+<section class="section">
+  <h2>4 つの役者</h2>
+  <p class="lead">カードをクリックすると、それぞれの役割が見えるよ。</p>
+  <div class="grid grid-4" id="actors">
+    <div class="card feature" data-info="cpu">
+      <div class="emoji">🧠</div>
+      <h3>CPU</h3>
+      <p>計算する人</p>
+      <div class="desc">秒間に何十億回もの計算を実行。プログラムの命令を一つひとつ解釈して動かす。"何GHz" はざっくり「1秒に何回計算できるか」のヒント。</div>
+    </div>
+    <div class="card feature" data-info="memory">
+      <div class="emoji">📋</div>
+      <h3>メモリ (RAM)</h3>
+      <p>作業机</p>
+      <div class="desc">いま動いているアプリやデータを一時的に置く場所。広いほど同時に多くのことができる。電源を切ると中身は消える。</div>
+    </div>
+    <div class="card feature" data-info="storage">
+      <div class="emoji">📚</div>
+      <h3>ストレージ</h3>
+      <p>本だな</p>
+      <div class="desc">SSDやHDD。ファイル・写真・OS本体を保管する場所。電源を切っても残る。SSDのほうが圧倒的に速い。</div>
+    </div>
+    <div class="card feature" data-info="os">
+      <div class="emoji">🪟</div>
+      <h3>OS</h3>
+      <p>店長</p>
+      <div class="desc">Windows / macOS / Linux など。アプリ・ファイル・ユーザー・ハードウェアの間を取り持つ。OSの上で君のプログラムも動く。</div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: ファイルシステム -->
+<div class="divider" id="fs" data-snav-target>
+  <div class="num">2.</div>
+  <h2>ファイルとパス</h2>
+</div>
+
+<section class="section">
+  <h2>パスはファイルの「住所」</h2>
+  <p class="lead">下のフォルダ構造を見てから、クイズに挑戦してみよう。</p>
+  <div class="tree">
+<span class="folder">📁 Users/</span>
+  <span class="folder">📁 yuta/</span>
+    <span class="folder">📁 work/</span>
+      <span class="folder">📁 intro-python/</span>
+        <span class="file">📄 hello.py</span>
+        <span class="file">📄 calc.py</span>
+      <span class="folder">📁 web/</span>
+        <span class="file">📄 index.html</span>
+  </div>
+
+  <div class="path-quiz">
+    <h3 style="color:var(--primary);margin:18px 0 8px">クイズ：いま <code>intro-python/</code> にいる。<code>index.html</code> への <b>相対パス</b> は？</h3>
+    <div class="path-buttons" id="pathQuiz1">
+      <button class="path-btn" data-correct="false">./index.html</button>
+      <button class="path-btn" data-correct="false">/Users/yuta/work/web/index.html</button>
+      <button class="path-btn" data-correct="true">../web/index.html</button>
+      <button class="path-btn" data-correct="false">../../index.html</button>
+    </div>
+    <p class="play-note" id="pathQuiz1Result"></p>
+  </div>
+
+  <div class="path-quiz">
+    <h3 style="color:var(--primary);margin:24px 0 8px">クイズ：<b>絶対パス</b> はどれ？</h3>
+    <div class="path-buttons" id="pathQuiz2">
+      <button class="path-btn" data-correct="false">./hello.py</button>
+      <button class="path-btn" data-correct="true">/Users/yuta/work/intro-python/hello.py</button>
+      <button class="path-btn" data-correct="false">../web/index.html</button>
+      <button class="path-btn" data-correct="false">hello.py</button>
+    </div>
+    <p class="play-note" id="pathQuiz2Result"></p>
+  </div>
+</section>
+
+<!-- SECTION 3: エディタと実行環境 -->
+<div class="divider" id="tools" data-snav-target>
+  <div class="num">3.</div>
+  <h2>エディタと実行環境</h2>
+</div>
+
+<section class="section">
+  <h2>「書く」と「動かす」は別の道具</h2>
+  <p class="lead">エディタはコードを書く道具、実行環境はコードを動かす道具。</p>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>✏️ エディタ（書く）</h3>
+      <p style="color:var(--muted);margin-top:6px">VS Code、Vim、Notepad++ など。色分け・補完・エラー検知でミスを減らす。</p>
+    </div>
+    <div class="card">
+      <h3>⚙️ 実行環境（動かす）</h3>
+      <p style="color:var(--muted);margin-top:6px">Python、Node.js、Java など。書かれたコードを解釈して実行する。</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px;background:#FEFCE8;border-left:6px solid var(--secondary)">
+    <h3 style="color:var(--secondary)">💡 なぜ別なの？</h3>
+    <p style="margin-top:6px">分かれていると、好きなエディタを選べる、複数の言語を同じエディタで書ける、エディタを変えても動かし方は同じ — みたいに、組み合わせの自由がきく。</p>
+  </div>
+</section>
+
+<!-- SECTION 4: コードを動かす -->
+<div class="divider" id="play" data-snav-target>
+  <div class="num">4.</div>
+  <h2>コードを動かしてみよう</h2>
+</div>
+
+<section class="section">
+  <h2>Python コード「読み解き」プレイグラウンド</h2>
+  <p class="lead">サンプルを切り替えて、コードを読んでから「▶ 実行」ボタンで結果を確認。実機がない場合の予習にも使えるよ。</p>
+  <div class="play">
+    <div class="play-tabs" id="playTabs">
+      <button class="play-tab active" data-id="hello">① Hello, World!</button>
+      <button class="play-tab" data-id="calc">② 計算してみる</button>
+      <button class="play-tab" data-id="loop">③ for で繰り返し</button>
+      <button class="play-tab" data-id="if">④ もし～なら</button>
+      <button class="play-tab" data-id="error">⑤ わざとエラー</button>
+    </div>
+    <div class="play-grid">
+      <div>
+        <h3 style="color:var(--muted);font-size:13px;margin-bottom:6px">📝 hello.py</h3>
+        <pre class="play-pane" id="playCode">print("Hello, World!")</pre>
+      </div>
+      <div>
+        <h3 style="color:var(--muted);font-size:13px;margin-bottom:6px">⚙️ ターミナルの出力</h3>
+        <pre class="play-pane output empty" id="playOutput">$ python3 hello.py
+（▶ 実行 を押すと結果が出ます）</pre>
+      </div>
+    </div>
+    <div class="play-actions">
+      <button class="btn gray" id="playReset">↺ リセット</button>
+      <button class="btn" id="playRun">▶ 実行</button>
+    </div>
+    <p class="play-note" id="playNote">最初は <b>print("Hello, World!")</b> から。実行してみよう。</p>
+  </div>
+</section>
+
+<!-- SECTION 5: エラーを読む -->
+<div class="divider" id="errors" data-snav-target>
+  <div class="num">5.</div>
+  <h2>エラーを読む練習</h2>
+</div>
+
+<section class="section">
+  <h2>エラーは敵じゃなくて味方</h2>
+  <p class="lead">エラーメッセージは「どこ」「何」「どう」の3点でできてる。下のカードをクリックすると正解が見える。</p>
+  <div class="error-card">File "hello.py", line 1
+    print("Hello, World!"
+         ^
+SyntaxError: '(' was never closed</div>
+  <div class="error-steps" id="errSteps">
+    <div class="error-step" data-step="1">
+      <div class="label">① どこ？</div>
+      <div class="ans"><b>hello.py の 1 行目。</b><br>"File ... line 1" の部分。</div>
+      <div class="hint">クリックしてこたえを見る</div>
+    </div>
+    <div class="error-step" data-step="2">
+      <div class="label">② 何？</div>
+      <div class="ans"><b>SyntaxError（構文エラー）。</b><br>Pythonの文法に従っていない。</div>
+      <div class="hint">クリックしてこたえを見る</div>
+    </div>
+    <div class="error-step" data-step="3">
+      <div class="label">③ どう直す？</div>
+      <div class="ans"><b>"(" が閉じられていない。</b><br>行末に <code>)</code> を足す → <code>print("Hello, World!")</code></div>
+      <div class="hint">クリックしてこたえを見る</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:24px;background:#ECFDF5;border-left:6px solid var(--accent)">
+    <h3 style="color:var(--accent)">💡 毎回この3つを声に出す</h3>
+    <p style="margin-top:6px">3週間続けると、英語のエラーでも怖くなくなる。「読めない」と「読み慣れていない」は違う。</p>
+  </div>
+</section>
+
+<!-- SECTION 6: まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>コンピューター ＝ 命令を順番に実行する機械</h3><p style="color:var(--muted)">CPU・メモリ・ストレージ・OS が役割分担している</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>ファイル＝バイト列、フォルダ＝整理棚、パス＝住所</h3><p style="color:var(--muted)">絶対パスと相対パスの違いを使い分ける</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>エディタ（書く）と実行環境（動かす）は別物</h3><p style="color:var(--muted)">VS Code＋Python の組み合わせを自分のPCに</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>エラーは「どこ・何・どう」の3点で読む</h3><p style="color:var(--muted)">最初は読めなくて当然。毎回3点を声に出す</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div style="font-size:84px">🌐</div>
+  <h2>次回 ｜ Webとインターネットのしくみ</h2>
+  <p>ブラウザにURLを入れた瞬間、何が起きているのか？</p>
+</div>
+
+<footer>
+  中学生プログラミング塾 ／ 初級 第1回｜コンピューターと開発環境
+</footer>
+
+<script>
+  // progress + scroll-spy
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  // Modal
+  const mb = document.getElementById('modal-bg');
+  const me = document.getElementById('modal-emoji');
+  const mt = document.getElementById('modal-title');
+  const mbody = document.getElementById('modal-body');
+  function showInfo({emoji='', title='', bodyHTML=''}){
+    me.textContent = emoji; me.style.display = emoji ? 'block' : 'none';
+    mt.textContent = title; mbody.innerHTML = bodyHTML;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  // Actor cards (toggle desc)
+  document.querySelectorAll('#actors .feature').forEach(c=>{
+    c.addEventListener('click',()=>c.classList.toggle('open'));
+  });
+
+  // Path quiz
+  function bindPathQuiz(quizId, resultId, hint){
+    const buttons = document.querySelectorAll('#'+quizId+' .path-btn');
+    const result = document.getElementById(resultId);
+    buttons.forEach(b=>{
+      b.addEventListener('click',()=>{
+        buttons.forEach(o=>o.classList.remove('correct','wrong'));
+        if(b.dataset.correct === 'true'){
+          b.classList.add('correct');
+          result.innerHTML = '✅ <b>せいかい！</b> ' + hint;
+          result.style.color = 'var(--accent)';
+        } else {
+          b.classList.add('wrong');
+          result.textContent = '❌ もう一度。' + hint;
+          result.style.color = 'var(--warn)';
+        }
+      });
+    });
+  }
+  bindPathQuiz('pathQuiz1', 'pathQuiz1Result', '一つ上に上がって web/ に入る、なので ../web/index.html。');
+  bindPathQuiz('pathQuiz2', 'pathQuiz2Result', '絶対パスは / または ドライブ文字（C:\\）から始まる。');
+
+  // Play samples
+  const samples = {
+    hello: {
+      file: 'hello.py',
+      code: 'print("Hello, World!")',
+      cmd: '$ python3 hello.py',
+      out: 'Hello, World!',
+      note: '最もシンプルなプログラム。print() は画面に文字を出す関数。',
+      error: false,
+    },
+    calc: {
+      file: 'calc.py',
+      code:
+`price = 120
+count = 8
+total = price * count
+print("合計", total, "円")`,
+      cmd: '$ python3 calc.py',
+      out: '合計 960 円',
+      note: '変数 (price, count, total) で計算。* は掛け算。',
+      error: false,
+    },
+    loop: {
+      file: 'loop.py',
+      code:
+`for i in range(1, 4):
+    print(i, "回目")`,
+      cmd: '$ python3 loop.py',
+      out:
+`1 回目
+2 回目
+3 回目`,
+      note: 'for ... in range(1,4) は「1から3まで（4は含まない）」。インデント（先頭の空白）が大事。',
+      error: false,
+    },
+    if: {
+      file: 'judge.py',
+      code:
+`score = 75
+if score >= 80:
+    print("合格")
+else:
+    print("もう少し")`,
+      cmd: '$ python3 judge.py',
+      out: 'もう少し',
+      note: 'if ～ else で条件分岐。: の後はインデント。',
+      error: false,
+    },
+    error: {
+      file: 'broken.py',
+      code: 'print("Hello, World!"',
+      cmd: '$ python3 broken.py',
+      out:
+`File "broken.py", line 1
+    print("Hello, World!"
+         ^
+SyntaxError: '(' was never closed`,
+      note: 'わざとエラー。( を閉じていない。エラーは「どこ／何／どう」の3点で読む。',
+      error: true,
+    },
+  };
+
+  let currentId = 'hello';
+  function loadSample(id){
+    currentId = id;
+    const s = samples[id];
+    document.querySelectorAll('.play-tab').forEach(t=>t.classList.toggle('active', t.dataset.id===id));
+    document.querySelector('.play-grid h3').innerHTML = '📝 ' + s.file;
+    document.getElementById('playCode').textContent = s.code;
+    const out = document.getElementById('playOutput');
+    out.textContent = s.cmd + '\n（▶ 実行 を押すと結果が出ます）';
+    out.classList.remove('error');
+    out.classList.add('empty');
+    document.getElementById('playNote').innerHTML = s.note;
+  }
+  document.querySelectorAll('.play-tab').forEach(t=>{
+    t.addEventListener('click',()=>loadSample(t.dataset.id));
+  });
+  document.getElementById('playRun').addEventListener('click',()=>{
+    const s = samples[currentId];
+    const out = document.getElementById('playOutput');
+    out.textContent = s.cmd + '\n' + s.out;
+    out.classList.remove('empty');
+    out.classList.toggle('error', !!s.error);
+  });
+  document.getElementById('playReset').addEventListener('click',()=>loadSample(currentId));
+
+  // Error steps
+  document.querySelectorAll('#errSteps .error-step').forEach(c=>{
+    c.addEventListener('click',()=>c.classList.toggle('revealed'));
+  });
+
+  // Help & keyboard
+  function showHelp(){
+    showInfo({
+      emoji:'⌨️',
+      title:'キーボードショートカット',
+      bodyHTML:`
+        <div style="text-align:left;font-size:14px;line-height:2">
+          <div><b>← ↑ PageUp</b>　前の章へ</div>
+          <div><b>→ ↓ PageDown Space</b>　次の章へ</div>
+          <div><b>1 〜 ${targets.length}</b>　章番号で直行</div>
+          <div><b>Home / End</b>　最初／最後</div>
+          <div><b>?</b>　このヘルプ</div>
+        </div>`
+    });
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0, Math.min(targets.length-1, i)); targets[i].scrollIntoView({behavior:'smooth', block:'start'}); };
+    if(e.key==='?' || (e.key==='/' && e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(i < targets.length){ e.preventDefault(); goto(i); return; }
+    }
+    if(e.key === 'Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key === 'End'){ e.preventDefault(); goto(targets.length - 1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); return; }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); return; }
+  });
+</script>
+</body>
+</html>

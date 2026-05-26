@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第3回｜プログラミング基本構文</title>
+<style>
+  :root{
+    --primary:#2563EB; --secondary:#F59E0B; --accent:#10B981;
+    --warn:#EF4444; --dark:#1E293B; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B;
+    --code-bg:#0F172A; --code-fg:#E2E8F0;
+    --shadow:0 4px 0 rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Sans','Yu Gothic',sans-serif;color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,select,textarea{font:inherit}
+  code,pre,.mono{font-family:'JetBrains Mono','Consolas','Menlo',monospace}
+
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:999px;box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* SIDE NAV */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);text-decoration:none;
+    font-weight:bold;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){
+    position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(30,41,59,.6);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:520px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;background:var(--warn);
+    color:white;border:4px solid white;border-radius:50%;font-size:20px;cursor:pointer;
+    font-family:inherit;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;line-height:1;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.7;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;border-radius:12px;
+    font-family:inherit;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;}
+  .modal-btn:hover{transform:translateY(-2px)}
+
+  /* Hero */
+  .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#2563EB 0%,#F59E0B 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:8px 20px;
+    border-radius:999px;font-weight:bold;margin-bottom:18px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:18px;text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(16px,2.2vw,22px);opacity:.95}
+  .hero .terminal{margin-top:30px;background:rgba(0,0,0,.4);border-radius:8px;padding:14px 22px;
+    font-family:'JetBrains Mono',monospace;font-size:16px;color:#86EFAC;
+    text-align:left;max-width:560px;margin-left:auto;margin-right:auto;border:1px solid rgba(255,255,255,.2);}
+  .hero .terminal .prompt{color:var(--secondary)}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:13px;margin-bottom:14px;}
+  h2{font-size:clamp(30px,4.5vw,46px);color:var(--primary);line-height:1.2;margin-bottom:8px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:60px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:20px}
+  .divider h2{color:var(--secondary);font-size:clamp(34px,5.5vw,58px);margin-top:6px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:22px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:6px}
+
+  /* Sample blocks */
+  .sample{
+    background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);margin:14px 0;
+  }
+  .sample h3{color:var(--primary);font-size:20px;margin-bottom:10px}
+  .sample-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
+  .sample-pane{
+    background:var(--code-bg);color:var(--code-fg);border-radius:10px;
+    padding:16px 18px;font-size:14px;line-height:1.7;
+    min-height:180px;white-space:pre;overflow-x:auto;
+  }
+  .sample-pane.output{background:#0B1220;color:#86EFAC;border:1px solid rgba(134,239,172,.18)}
+  .sample-pane.output.empty{color:var(--muted)}
+  .sample-pane.output.error{color:#FCA5A5;border-color:rgba(252,165,165,.25)}
+  .sample-actions{display:flex;justify-content:flex-end;margin-top:10px;gap:8px}
+  .btn{background:var(--accent);color:white;border:none;padding:10px 22px;border-radius:10px;
+    font-family:inherit;font-size:14px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.gray{background:var(--muted)}
+  .btn.warn{background:var(--warn)}
+  .sample-note{margin-top:10px;color:var(--muted);font-size:13px}
+
+  /* FizzBuzz challenge */
+  .fb{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin:18px 0}
+  .fb-template{background:var(--code-bg);color:var(--code-fg);border-radius:10px;
+    padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:15px;line-height:2;}
+  .fb-template select{
+    background:#1E293B;color:#FBBF24;border:2px solid var(--secondary);
+    padding:4px 8px;border-radius:6px;font-family:inherit;font-size:14px;font-weight:bold;
+    margin:0 4px;cursor:pointer;
+  }
+  .fb-template select.correct{border-color:var(--accent);background:#064E3B;color:#86EFAC}
+  .fb-template select.wrong{border-color:var(--warn);background:#7F1D1D;color:#FCA5A5}
+  .fb-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .fb-result{margin-top:14px;padding:14px 18px;border-radius:10px;font-weight:bold;
+    background:#FEF3C7;color:#92400E;display:none;}
+  .fb-result.show{display:block;animation:fadeIn .2s}
+  .fb-result.ok{background:#D1FAE5;color:#065F46}
+  .fb-result.ng{background:#FEE2E2;color:#991B1B}
+  .fb-output{
+    background:#0B1220;color:#86EFAC;border-radius:10px;padding:14px 18px;
+    font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;
+    margin-top:12px;display:none;white-space:pre;overflow-x:auto;
+  }
+  .fb-output.show{display:block;animation:fadeIn .2s}
+
+  /* Summary */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:14px;padding:18px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+
+  .next{background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next h2{color:white;font-size:clamp(26px,4.5vw,40px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .sample-grid{grid-template-columns:1fr}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>第3回</span> <b>プログラミング基本構文</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>トップ</span><span class="ic">🎯</span></a>
+  <a href="#vars">2<span>変数</span><span class="ic">📦</span></a>
+  <a href="#ifs">3<span>条件分岐</span><span class="ic">🔀</span></a>
+  <a href="#loops">4<span>繰り返し</span><span class="ic">🔁</span></a>
+  <a href="#funcs">5<span>関数</span><span class="ic">🧩</span></a>
+  <a href="#fizzbuzz">6<span>FizzBuzz</span><span class="ic">🎯</span></a>
+  <a href="#wrap">7<span>まとめ</span><span class="ic">📋</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="キーボードショートカット (?)" aria-label="キーボードショートカット">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 中学生プログラミング塾 ・ 初級</div>
+    <h1>プログラミング<br>基本構文</h1>
+    <p>変数・条件・繰り返し・関数 ＋ FizzBuzz チャレンジ</p>
+    <div class="terminal">
+<span class="prompt">&gt;&gt;&gt;</span> def fizzbuzz(n):
+<span class="prompt">...</span>     return "Fizz" if n%3==0 else str(n)
+<span class="prompt">&gt;&gt;&gt;</span> fizzbuzz(9)
+'Fizz'
+    </div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>5つの道具を使えるように</h2>
+  <div class="grid grid-3">
+    <div class="card"><h3>📦 変数</h3><p style="color:var(--muted);margin-top:6px">値に名前をつけて使い回す</p></div>
+    <div class="card"><h3>🔀 条件分岐</h3><p style="color:var(--muted);margin-top:6px">if / elif / else で枝分かれ</p></div>
+    <div class="card"><h3>🔁 繰り返し</h3><p style="color:var(--muted);margin-top:6px">for ／ while ／ for-in</p></div>
+    <div class="card"><h3>🧩 関数</h3><p style="color:var(--muted);margin-top:6px">まとまりに名前をつけて再利用</p></div>
+    <div class="card"><h3>🎯 FizzBuzh</h3><p style="color:var(--muted);margin-top:6px">5つを組み合わせて完成</p></div>
+  </div>
+</section>
+
+<!-- 変数 -->
+<div class="divider" id="vars" data-snav-target>
+  <div class="num">1.</div>
+  <h2>変数</h2>
+</div>
+<section class="section">
+  <h2>値に名前をつけて、使い回す</h2>
+  <p class="lead">▶ 実行 を押すと結果が見える。サンプルを切り替えてみよう。</p>
+  <div class="sample" data-sample="varBasic">
+    <h3>① 基本</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">price = 120
+count = 8
+total = price * count
+print(total)</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行 を押すと結果が出ます）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">price と count に値を入れて、total で計算する。</p>
+  </div>
+
+  <div class="sample" data-sample="varReuse">
+    <h3>② 値を変えて再計算</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">price = 200
+count = 5
+total = price * count
+print(price, "円 ×", count, "個 =", total, "円")</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行 を押すと結果が出ます）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">変数を使えば、値を1か所変えるだけで全体の計算が変わる。</p>
+  </div>
+</section>
+
+<!-- 条件 -->
+<div class="divider" id="ifs" data-snav-target>
+  <div class="num">2.</div>
+  <h2>条件分岐</h2>
+</div>
+<section class="section">
+  <h2>「もし〜なら」 で動きを変える</h2>
+  <div class="sample" data-sample="ifBasic">
+    <h3>① if / else</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">score = 75
+if score &gt;= 80:
+    print("合格！")
+else:
+    print("もう少し")</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note"><code>:</code> の後はインデント（半角スペース4つ）。</p>
+  </div>
+
+  <div class="sample" data-sample="ifElif">
+    <h3>② elif で 3 つ以上の枝</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">score = 75
+if score &gt;= 90:
+    print("A")
+elif score &gt;= 80:
+    print("B")
+elif score &gt;= 70:
+    print("C")
+else:
+    print("もう少し")</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">上から順に判定 → 最初に当たった枝だけ実行される。</p>
+  </div>
+</section>
+
+<!-- 繰り返し -->
+<div class="divider" id="loops" data-snav-target>
+  <div class="num">3.</div>
+  <h2>繰り返し</h2>
+</div>
+<section class="section">
+  <h2>同じことを 何回も</h2>
+  <div class="sample" data-sample="forRange">
+    <h3>① for ＋ range</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">for i in range(5):
+    print(i, "回目")</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">range(5) は 0〜4 の5回。range(1,6) なら 1〜5。</p>
+  </div>
+
+  <div class="sample" data-sample="forList">
+    <h3>② リストを for で回す</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">fruits = ["りんご", "みかん", "バナナ"]
+for fruit in fruits:
+    print(fruit, "が好き")</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">リストの要素を1つずつ取り出す Python らしい書き方。</p>
+  </div>
+
+  <div class="sample" data-sample="whileBasic">
+    <h3>③ while</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">count = 0
+while count &lt; 3:
+    print("カウント:", count)
+    count = count + 1</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">条件が False になるまで続く。無限ループに注意！</p>
+  </div>
+</section>
+
+<!-- 関数 -->
+<div class="divider" id="funcs" data-snav-target>
+  <div class="num">4.</div>
+  <h2>関数</h2>
+</div>
+<section class="section">
+  <h2>まとまりに名前をつけて 再利用</h2>
+  <div class="sample" data-sample="funcGreet">
+    <h3>① 関数を定義して呼ぶ</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">def greet(name):
+    print("こんにちは、" + name + "さん！")
+
+greet("ゆうた")
+greet("はるか")</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">def 関数名(引数): で定義 → 何度でも呼び出せる。</p>
+  </div>
+
+  <div class="sample" data-sample="funcReturn">
+    <h3>② return で値を返す</h3>
+    <div class="sample-grid">
+      <pre class="sample-pane">def add(a, b):
+    return a + b
+
+result = add(3, 4)
+print(result)</pre>
+      <pre class="sample-pane output empty">$ python3 sample.py
+（▶ 実行）</pre>
+    </div>
+    <div class="sample-actions"><button class="btn run">▶ 実行</button></div>
+    <p class="sample-note">入力 → 計算 → 結果を返す。これが関数の3点セット。</p>
+  </div>
+</section>
+
+<!-- FizzBuzz -->
+<div class="divider" id="fizzbuzz" data-snav-target>
+  <div class="num">5.</div>
+  <h2>FizzBuzz チャレンジ</h2>
+</div>
+<section class="section">
+  <h2>条件の "順番" を選んで 完成させる</h2>
+  <p class="lead">下のドロップダウンに正しい数字を入れて、「▶ 実行 ＆ 採点」を押すと、結果が判定されるよ。</p>
+
+  <div class="card" style="background:#FEFCE8;border-left:6px solid var(--secondary);margin-bottom:18px">
+    <h3 style="color:var(--secondary)">📋 ルール</h3>
+    <p style="margin-top:6px">1〜15 を順に表示。3の倍数なら <b>Fizz</b>、5の倍数なら <b>Buzz</b>、両方の倍数（15の倍数）なら <b>FizzBuzz</b>。</p>
+  </div>
+
+  <div class="fb">
+    <h3 style="color:var(--primary);margin-bottom:14px">📝 コードを完成させて</h3>
+    <div class="fb-template" id="fbTpl">for i in range(1, 16):
+    if i % <select id="fbA"><option value="">?</option><option>3</option><option>5</option><option>15</option></select> == 0:
+        print("FizzBuzz")
+    elif i % <select id="fbB"><option value="">?</option><option>3</option><option>5</option><option>15</option></select> == 0:
+        print("Fizz")
+    elif i % <select id="fbC"><option value="">?</option><option>3</option><option>5</option><option>15</option></select> == 0:
+        print("Buzz")
+    else:
+        print(i)</div>
+    <div class="fb-actions">
+      <button class="btn gray" id="fbReset">↺ リセット</button>
+      <button class="btn" id="fbCheck">▶ 実行 ＆ 採点</button>
+    </div>
+    <div class="fb-output" id="fbOutput"></div>
+    <div class="fb-result" id="fbResult"></div>
+  </div>
+
+  <div class="card" style="margin-top:18px;background:#ECFDF5;border-left:6px solid var(--accent)">
+    <h3 style="color:var(--accent)">💡 ヒント</h3>
+    <p style="margin-top:6px">「より厳しい条件から」を意識すると、上から順に正しい結果になる。15は3でも5でも割り切れるから、<b>最初に判定</b> しないと "Fizz" で当たって "FizzBuzz" まで届かない。</p>
+  </div>
+</section>
+
+<!-- まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>変数 — 名前のついた箱</h3><p style="color:var(--muted)">name = value で値を保存</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>条件分岐 — if / elif / else</h3><p style="color:var(--muted)">「より厳しい条件から」が鉄則</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>繰り返し — for / while / for-in</h3><p style="color:var(--muted)">同じ処理をまとめられる</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>関数 — まとまりに名前をつける</h3><p style="color:var(--muted)">入力 → 計算 → return</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>FizzBuzz が書けた！</h3><p style="color:var(--muted)">条件・繰り返し・% を組み合わせる</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div style="font-size:84px">🤖</div>
+  <h2>次回 ｜ AI活用と開発の流れ</h2>
+  <p>AIをペアプロ相手に、設計→実装→テスト→改善を体験</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 初級 第3回｜プログラミング基本構文</footer>
+
+<script>
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  const me = document.getElementById('modal-emoji');
+  const mt = document.getElementById('modal-title');
+  const mbody = document.getElementById('modal-body');
+  function showInfo({emoji='', title='', bodyHTML=''}){
+    me.textContent = emoji; me.style.display = emoji ? 'block' : 'none';
+    mt.textContent = title; mbody.innerHTML = bodyHTML;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  // Sample outputs
+  const expected = {
+    varBasic: '960',
+    varReuse: '200 円 × 5 個 = 1000 円',
+    ifBasic: 'もう少し',
+    ifElif: 'C',
+    forRange: '0 回目\n1 回目\n2 回目\n3 回目\n4 回目',
+    forList: 'りんご が好き\nみかん が好き\nバナナ が好き',
+    whileBasic: 'カウント: 0\nカウント: 1\nカウント: 2',
+    funcGreet: 'こんにちは、ゆうたさん！\nこんにちは、はるかさん！',
+    funcReturn: '7',
+  };
+  document.querySelectorAll('.sample').forEach(s=>{
+    const id = s.dataset.sample;
+    s.querySelector('.btn.run').addEventListener('click',()=>{
+      const out = s.querySelector('.sample-pane.output');
+      out.textContent = '$ python3 sample.py\n' + (expected[id] || '');
+      out.classList.remove('empty');
+    });
+  });
+
+  // FizzBuzz challenge
+  const fbA = document.getElementById('fbA');
+  const fbB = document.getElementById('fbB');
+  const fbC = document.getElementById('fbC');
+  const fbResult = document.getElementById('fbResult');
+  const fbOutput = document.getElementById('fbOutput');
+  function fizzbuzz(a,b,c){
+    const out = [];
+    for(let i=1;i<=15;i++){
+      if(i % a === 0) out.push('FizzBuzz');
+      else if(i % b === 0) out.push('Fizz');
+      else if(i % c === 0) out.push('Buzz');
+      else out.push(String(i));
+    }
+    return out.join('\n');
+  }
+  document.getElementById('fbCheck').addEventListener('click',()=>{
+    const a = parseInt(fbA.value,10);
+    const b = parseInt(fbB.value,10);
+    const c = parseInt(fbC.value,10);
+    [fbA,fbB,fbC].forEach(s=>s.classList.remove('correct','wrong'));
+    fbResult.classList.remove('show','ok','ng');
+    fbOutput.classList.remove('show');
+
+    if(!a || !b || !c){
+      fbResult.textContent = '⚠️ 3つすべて選んでね';
+      fbResult.classList.add('show');
+      return;
+    }
+    const expected = fizzbuzz(15,3,5);
+    const got = fizzbuzz(a,b,c);
+    fbOutput.textContent = '$ python3 fizzbuzz.py\n' + got;
+    fbOutput.classList.add('show');
+
+    const correctMap = {fbA:15, fbB:3, fbC:5};
+    [['fbA',a],['fbB',b],['fbC',c]].forEach(([id,v])=>{
+      const el = document.getElementById(id);
+      el.classList.add(correctMap[id] === v ? 'correct' : 'wrong');
+    });
+
+    if(got === expected){
+      fbResult.innerHTML = '🎉 <b>せいかい！</b> FizzBuzz が完成しました。<br>「より厳しい条件から」のルールが守れている証拠。';
+      fbResult.classList.add('show','ok');
+    } else {
+      fbResult.innerHTML = '❌ 出力が違うよ。15 のとき、3 や 5 で先に当たって "FizzBuzz" まで届いていないかも。';
+      fbResult.classList.add('show','ng');
+    }
+  });
+  document.getElementById('fbReset').addEventListener('click',()=>{
+    [fbA,fbB,fbC].forEach(s=>{s.value='';s.classList.remove('correct','wrong')});
+    fbResult.classList.remove('show','ok','ng');
+    fbOutput.classList.remove('show');
+  });
+
+  // Help & keyboard
+  function showHelp(){
+    showInfo({
+      emoji:'⌨️',
+      title:'キーボードショートカット',
+      bodyHTML:`
+        <div style="text-align:left;font-size:14px;line-height:2">
+          <div><b>← ↑ PageUp</b>　前の章へ</div>
+          <div><b>→ ↓ PageDown Space</b>　次の章へ</div>
+          <div><b>1 〜 ${targets.length}</b>　章番号で直行</div>
+          <div><b>Home / End</b>　最初／最後</div>
+          <div><b>?</b>　このヘルプ</div>
+        </div>`
+    });
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0, Math.min(targets.length-1, i)); targets[i].scrollIntoView({behavior:'smooth', block:'start'}); };
+    if(e.key==='?' || (e.key==='/' && e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i = parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key === 'Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key === 'End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); return; }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); return; }
+  });
+</script>
+</body>
+</html>
