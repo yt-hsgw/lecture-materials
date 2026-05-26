@@ -414,25 +414,25 @@
     <div class="colorprev" id="colorPrev">こんにちは！</div>
     <div class="ctrls">
       <div>
-        <label>文字の色 (color)</label>
+        <label for="ctxt">文字の色 (color)</label>
         <input type="color" id="ctxt" value="#2D3436">
       </div>
       <div>
-        <label>背景の色 (background)</label>
+        <label for="cbg">背景の色 (background)</label>
         <input type="color" id="cbg" value="#FCBD19">
       </div>
       <div>
-        <label>文字の大きさ <span id="cszLbl">28</span>px</label>
+        <label for="csz">文字の大きさ <span id="cszLbl">28</span>px</label>
         <input type="range" id="csz" min="14" max="60" value="28">
       </div>
       <div>
-        <label>丸み <span id="crdLbl">12</span>px</label>
+        <label for="crd">丸み <span id="crdLbl">12</span>px</label>
         <input type="range" id="crd" min="0" max="40" value="12">
       </div>
     </div>
 
     <div style="margin-top:14px">
-      <label style="display:block;font-weight:bold;font-size:13px;color:var(--muted);margin-bottom:6px">人気の色見本（クリックで 背景に）</label>
+      <label style="display:block;font-weight:bold;font-size:13px;color:var(--muted);margin-bottom:6px" for="lp">人気の色見本（クリックで 背景に）</label>
       <div class="swatches" id="swatches"></div>
     </div>
 
@@ -457,11 +457,11 @@
         <input type="range" id="lp" min="0" max="80" value="20">
       </div>
       <div>
-        <label>横はば (width) <span id="lwLbl">80</span>%</label>
+        <label for="lw">横はば (width) <span id="lwLbl">80</span>%</label>
         <input type="range" id="lw" min="30" max="100" value="80">
       </div>
       <div>
-        <label>文字ぞろえ (text-align)</label>
+        <label for="pmName">文字ぞろえ (text-align)</label>
         <select id="lalign">
           <option value="left">左 (left)</option>
           <option value="center" selected>中央 (center)</option>
@@ -498,23 +498,23 @@
         <input type="text" id="pmName" maxlength="20" value="ゆうた" placeholder="ゆうた">
       </div>
       <div>
-        <label>あいさつ・ひとこと</label>
+        <label for="pmHello">あいさつ・ひとこと</label>
         <input type="text" id="pmHello" maxlength="40" value="こんにちは！カレーがすきです" placeholder="こんにちは！">
       </div>
       <div>
-        <label>好きなもの①</label>
+        <label for="pm1">好きなもの①</label>
         <input type="text" id="pm1" maxlength="20" value="マインクラフト">
       </div>
       <div>
-        <label>好きなもの②</label>
+        <label for="pm2">好きなもの②</label>
         <input type="text" id="pm2" maxlength="20" value="ねこ">
       </div>
       <div>
-        <label>好きなもの③</label>
+        <label for="pm3">好きなもの③</label>
         <input type="text" id="pm3" maxlength="20" value="カレーライス">
       </div>
       <div>
-        <label>しょうらいの ゆめ（任意）</label>
+        <label for="pmDream">しょうらいの ゆめ（任意）</label>
         <input type="text" id="pmDream" maxlength="40" value="ゲームクリエイター">
       </div>
       <div>
