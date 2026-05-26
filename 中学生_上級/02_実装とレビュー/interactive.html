@@ -492,6 +492,16 @@
       </div>
     </div>
 
+    <div id="hashFallbackNote" role="status" aria-live="polite"
+         style="display:none;margin-top:10px;padding:10px 14px;background:#FFFBEB;
+                border-left:4px solid var(--secondary);border-radius:6px;font-size:13px;line-height:1.6">
+      ⚠️ <b>このブラウザ で は SHA-256（crypto.subtle）が 使えません</b>。
+      file:// で 開いている 場合 は ブラウザ の セキュリティ 制限 が 原因 です。
+      教材デモ は <b>DJB2 ベース の 簡易ハッシュ</b> で 動作 しています（実運用 NG）。
+      本物 の SHA-256 で 動かす に は:
+      <code>python3 -m http.server</code> で <code>http://localhost:8000/</code> から アクセス して ください。
+    </div>
+
     <div class="hashdemo-note">
       <b>💡 ポイント：</b><br>
       ・ハッシュは <b>一方向</b> ＝ 元に戻せない<br>
@@ -801,21 +811,68 @@
     update();
   })();
 
-  /* パスワードハッシュ デモ */
+  /* パスワードハッシュ デモ
+   *
+   * crypto.subtle は file:// で 動かない ブラウザ がある（Chrome の secure context 制限）。
+   * その場合 は DJB2 ベース の 簡易 ハッシュ で フォールバック（教材デモ 用途、 実運用 NG）。
+   */
+  const HAS_SUBTLE = typeof crypto !== 'undefined'
+                    && crypto.subtle
+                    && typeof crypto.subtle.digest === 'function';
+
+  function djb2Hex(text){
+    // DJB2 ＋ 文字位置 混ぜで 64桁hex 風 文字列 を 生成（教材デモ 専用）
+    let h1 = 5381, h2 = 52711;
+    for (let i = 0; i < text.length; i++) {
+      const c = text.charCodeAt(i);
+      h1 = ((h1 << 5) + h1 + c) | 0;
+      h2 = ((h2 << 5) + h2 + (c ^ i)) | 0;
+    }
+    // 32bit x 2 を 16桁ずつ、 さらに 同じ 32bit を 別シードで 回す
+    let h3 = 0xC6A4A793, h4 = 0x9E3779B9;
+    for (let i = 0; i < text.length; i++) {
+      h3 = ((h3 ^ text.charCodeAt(i)) * 0x01000193) | 0;
+      h4 = ((h4 + text.charCodeAt(i)) * 0x85ebca6b) | 0;
+    }
+    const u = (n) => (n >>> 0).toString(16).padStart(8, '0');
+    return (u(h1) + u(h2) + u(h3) + u(h4) + u(h1 ^ h3) + u(h2 ^ h4) + u(h1 + h4) + u(h2 + h3));
+  }
+
   async function sha256hex(text){
-    const buf = new TextEncoder().encode(text);
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2,'0')).join('');
+    if (HAS_SUBTLE) {
+      try {
+        const buf = new TextEncoder().encode(text);
+        const hash = await crypto.subtle.digest('SHA-256', buf);
+        return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2,'0')).join('');
+      } catch (e) {
+        // file:// プロトコル等で secure context 例外 → フォールバック
+        console.warn('crypto.subtle 利用不可、 DJB2 フォールバック を 使用:', e.message);
+        return djb2Hex(text);
+      }
+    }
+    return djb2Hex(text);
   }
   async function doHash(){
     const pw = $('hashInput').value;
     $('hashPlain').textContent = pw;
     // salt付き ハッシュ風 を 生成（bcrypt風 のプレフィックス）
     const salt = Math.random().toString(36).slice(2, 12);
-    const fullHash = await sha256hex(salt + pw);
+    let usedFallback = !HAS_SUBTLE;
+    let fullHash;
+    try {
+      fullHash = await sha256hex(salt + pw);
+    } catch (e) {
+      // sha256hex 内 で 既に フォールバック するが、 念のため
+      fullHash = djb2Hex(salt + pw);
+      usedFallback = true;
+    }
     const display = `$bcrypt$10$${salt}${fullHash.slice(0, 31)}`;
     $('hashOut').textContent = display;
-    showToast('🔐 ハッシュ化 完了！ 毎回 違う ハッシュ');
+    const note = document.getElementById('hashFallbackNote');
+    if (note) note.style.display = usedFallback ? 'block' : 'none';
+    showToast(usedFallback
+      ? '⚠️ DJB2 で 生成（教材デモ）'
+      : '🔐 ハッシュ化 完了！ 毎回 違う ハッシュ');
   }
   async function doVerify(){
     const pw = $('hashInput').value;

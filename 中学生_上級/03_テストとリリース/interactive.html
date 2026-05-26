@@ -336,6 +336,14 @@
   <h2>関数 ＋ テスト を 書いて 実行</h2>
   <p class="lead">左で 関数を 定義、 右で テストを 書く。 「<b>テスト実行</b>」 で 結果が 下に 表示！<br>本物の pytest / Jest と同じ感覚で 試せます。</p>
 
+  <div id="runnerBrowserNote" role="status" aria-live="polite"
+       style="display:none;margin-bottom:12px;padding:10px 14px;background:#FFFBEB;
+              border-left:4px solid var(--secondary);border-radius:6px;font-size:13px;line-height:1.6">
+    ⚠️ <b>このブラウザ で は 一部 の ES2020+ 構文 が 動かない 可能性 が あります</b>。
+    Chrome 91+ / Safari 14+ / Firefox 90+ / Edge 91+ を 推奨。
+    動作 が おかしい 場合 は 最新版 ブラウザ で 開き直して ください。
+  </div>
+
   <div class="runner">
     <div class="runner-head">
       <span class="title">📝 jest-like runner（in browser）</span>
@@ -696,7 +704,20 @@ await expect(page).toHaveURL('/dashboard');</pre></div>`},
       const fn = new Function('results', wrapper);
       fn(results);
     } catch (e) {
-      results.push({ name: '実行エラー', status: 'fail', error: e.message });
+      // ES2020+ 構文（?. ?? 等）対応していない 古いブラウザ の 検出
+      const msg = (e && e.message) || String(e);
+      const isSyntaxError = e instanceof SyntaxError
+        || /Unexpected token|Unexpected identifier|Unexpected end of input/i.test(msg);
+      if (isSyntaxError) {
+        results.push({
+          name: '構文エラー（古いブラウザ の 可能性）',
+          status: 'fail',
+          error: msg + ' / Chrome 91+ / Safari 14+ / Firefox 90+ / Edge 91+ で 開いてください。'
+                     + ' Optional chaining (?.) や Nullish coalescing (??) など ES2020+ 構文 は 古い ブラウザ で 動きません。',
+        });
+      } else {
+        results.push({ name: '実行エラー', status: 'fail', error: msg });
+      }
     }
 
     // 結果表示
@@ -808,6 +829,18 @@ test('markDone: 完了フラグ', () => {
     showToast('📚 ' + k + ' プリセットを 読み込み');
     setTimeout(runTests, 100);
   }
+
+  // ブラウザ対応 事前チェック（ES2020+ 構文 が 動くか）
+  (function checkBrowser(){
+    try {
+      // eval を 使わず Function コンストラクタ で ES2020+ 構文 を 試す
+      new Function('const a = {}; return a?.b ?? "ok";')();
+    } catch (e) {
+      const note = document.getElementById('runnerBrowserNote');
+      if (note) note.style.display = 'block';
+    }
+  })();
+
   runTests();
 
   /* テストケース表 */
