@@ -5,9 +5,67 @@
 
 ---
 
-## 🎓 [Feature] 高校生向け講座（初級／中級／上級）の作成
+## ✅ 完了済み（2026-05-26）
 
-**Labels:** `enhancement`, `new-course`, `priority/high`
+### ✅ [Feature] 高校生向け講座 lesson.md ＝ **完了**
+
+- 高校生・初級／中級／上級 × 各4回 = **12本 の lesson.md** を 作成（合計 ~9,700行）
+- 各コース に `00_カリキュラム概要.md` ＝ 3本（合計 ~470行）
+- 配色テーマ採用: 初級スレートグレー / 中級ミッドナイトブルー / 上級ブラック×ゴールド
+- 「interactive.html を 全12回 で 実装」 は **別 Issue として 残置**（下記の 🖥️ 参照）
+
+### ✅ [Task] CI/CD（GitHub Actions） ＝ **完了**
+
+- `.github/workflows/check.yml` 構築
+- markdown-lint / html-validate / inline-JS構文 / id重複 / lychee / a11y静的 の 6ジョブ
+- 既存 ID重複 4件 検出 → 全件修正済み
+
+### ✅ [Task] アクセシビリティ強化（B4） ＝ **第一弾完了**
+
+- `docs/A11Y.md` チェックリスト 作成
+- `modal-close`（× ボタン）全39ファイル に `aria-label="閉じる"` 一括付与
+- `<input>` ラベル付与・icon-only button の 個別対応 は 漸進改善（warning として 検出継続）
+
+---
+
+## 🖥️ [Feature] 高校生向けコース の interactive.html 実装
+
+**Labels:** `enhancement`, `new-course`, `priority/medium`
+
+### 背景
+
+高校生 12回 の `lesson.md` は 完成済み だが、 各回 に 対応する 体験型 `interactive.html` が 未実装。
+中学生・上級 第4回 / 高齢者・上級 第4回 と 同等 の 多機能 ツール集 を 揃えたい。
+
+### 想定 する 主な ツール（回別）
+
+| 回 | ツール 案 |
+|---|---|
+| 高初1 開発環境 | Docker Compose 設計 シミュレータ / dotfiles 構成 ビルダー |
+| 高初2 型 | TS Playground（ts→js 変換 体験） / Zod スキーマ ビジュアライザー |
+| 高初3 TDD | in-browser jest ランナー（中・上級 第3回 を 流用 / 拡張） |
+| 高初4 Issue駆動 | カンバン ボード ＋ プランニング ポーカー |
+| 高中1 チーム開発 | 良い PR / 悪い PR 比較 ビューア |
+| 高中2 FE | React Hooks シミュレータ / Server vs Client 境界 ビジュアライザー |
+| 高中3 BE スケール | N+1 体感 ベンチ / Redis キャッシュ ヒット率 グラフ |
+| 高中4 DevOps | CI/CD パイプライン エディタ / SLO エラー予算 ダッシュボード |
+| 高上1 アーキ | C4 図 エディタ / DDD 集約 設計 ツール |
+| 高上2 AI/ML | scikit-learn デモ（ブラウザ TF.js）/ プロンプト エディタ |
+| 高上3 キャリア | キャリアシート ジェネレータ / GitHub プロフィール プレビュー |
+| 高上4 卒業発表会 | 発表 タイマー / 修了証 ジェネレータ |
+
+### 受け入れ基準
+
+- 12回 × interactive.html ＝ **12ファイル** 追加
+- 既存 配色テーマ（初級スレート×オレンジ / 中級ネイビー×イエロー / 上級ブラック×ゴールド）を 適用
+- `_templates/interactive.html` の パターン に 準拠
+- 各回 に **対話型 ツール 4個以上**
+
+---
+
+## ~~🎓 [完了] 高校生向け講座（初級／中級／上級）の作成~~ （参考: 元の Issue）
+
+~~**Labels:** `enhancement`, `new-course`, `priority/high`~~ **— 完了 2026-05-26**
 
 ### 背景
 
@@ -127,7 +185,7 @@ README には現在 SVG 模式図しかない。実画面の **スクリーン�
 
 ---
 
-## ♿ [Task] アクセシビリティ強化
+## ~~♿ [Task] アクセシビリティ強化~~ — **第一弾完了 2026-05-26**
 
 **Labels:** `accessibility`, `priority/medium`
 
@@ -135,13 +193,14 @@ README には現在 SVG 模式図しかない。実画面の **スクリーン�
 
 interactive.html は 視覚的に 充実 しているが、 アクセシビリティ 観点で 改善余地。
 
-### やること
+### やること（完了 / 残作業）
 
-- スクリーンリーダー対応（`aria-label` / `role` 属性 追加）
-- 色だけに 頼らない 表現（チェック表示は ✓ アイコンも 併用済み だが 統一）
-- キーボード操作 完全対応（既に大半 対応済み、要 監査）
-- コントラスト比 検証（WCAG AA：4.5:1 以上）
-- 特に **高齢者向け** は 既に 大きい 文字＋高コントラスト 配慮済みだが、 再確認
+- ✅ `docs/A11Y.md` チェックリスト 作成
+- ✅ `modal-close`（× ボタン）全39ファイル に `aria-label="閉じる"` 一括付与
+- ✅ a11y 静的チェック を CI に 統合（`scripts/check-a11y-static.mjs`）
+- ⏳ **残**: インタラクティブツール内 `<input>` の ラベル付与（漸進）
+- ⏳ **残**: icon-only `<button>` 残り 6件 の aria-label（教材ツール 固有）
+- ⏳ **残**: WAVE / Lighthouse での 各回 数値計測
 
 ### 検証ツール
 
@@ -151,7 +210,7 @@ interactive.html は 視覚的に 充実 しているが、 アクセシビリ�
 
 ---
 
-## 🧪 [Task] CI/CD の追加（HTML構文・リンク切れ検出）
+## ~~🧪 [Task] CI/CD の追加（HTML構文・リンク切れ検出）~~ — **完了 2026-05-26**
 
 **Labels:** `infrastructure`, `priority/medium`
 
@@ -159,18 +218,16 @@ interactive.html は 視覚的に 充実 しているが、 アクセシビリ�
 
 72ファイル の HTML/Markdown を 安全に 保守するため、 自動チェックを 入れたい。
 
-### やること
+### 実装（完了）
 
-GitHub Actions に 以下を 設定：
+`.github/workflows/check.yml` に 以下 6ジョブ を 設定:
 
-```yaml
-# .github/workflows/check.yml
-- HTML 構文チェック（html-validate / htmlhint）
-- Markdown lint（markdownlint）
-- リンク切れ チェック（lychee）
-- interactive.html の JS 構文チェック（vm.Script で 全72ファイル）
-- ID 重複検出（実DOM で id duplicates が ないか）
-```
+- ✅ HTML 構文チェック（html-validate, `scripts/html-validate.config.json`）
+- ✅ Markdown lint（markdownlint-cli2, `.markdownlint-cli2.jsonc`）
+- ✅ リンク切れ チェック（lychee, warning扱い）
+- ✅ JS 構文チェック（`scripts/check-inline-js.mjs`、 全40ファイル × 39 inline script）
+- ✅ ID 重複検出（`scripts/check-id-duplicates.mjs`、 既存 4件 検出 → 全件 修正済み）
+- ✅ a11y 静的チェック（`scripts/check-a11y-static.mjs`）
 
 ### 期待効果
 
@@ -257,11 +314,11 @@ GitHub Actions に 以下を 設定：
 
 ### やること
 
-- 9コース × 4回 ＝ 36項目 の チェックリスト
+- 12コース × 4回 ＝ 48項目 の チェックリスト
 - 修了証 を **自動発行**
 - 履修済み スキルの「**バッジ**」コレクション
 
-→ これ自体が **中学生・上級コース の 卒業 課題** になりうる！
+→ これ自体が **中学生・上級コース or 高校生・上級コース の 卒業 課題** になりうる！
 
 ---
 
@@ -278,5 +335,6 @@ GitHub Actions に 以下を 設定：
 ## 📝 メタ情報
 
 - 作成日：2026年5月
-- 状態：全9コース完成後の初版
+- 状態：高校生コース MD 12本 完成・CI/CD 構築・A11Y 第一弾 完了
+- 改訂：2026年5月26日（高校生コース追加 / CI/CD / A11Y 反映）
 - 担当：（記入）
