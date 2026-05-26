@@ -61,6 +61,60 @@
     opacity:0;pointer-events:none;transition:all .15s;font-size:12px;
   }
   .snav a:hover span,.snav a:focus span{opacity:1;transform:translateY(-50%)}
+  .snav a .ic{
+    position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;
+    padding:0;border-radius:50%;border:1.5px solid white;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;
+    opacity:1;pointer-events:none;transform:none;color:var(--dark);
+  }
+  .snav a:hover .ic,.snav a:focus .ic{opacity:1;transform:none}
+  .snav-help{
+    position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-family:inherit;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);transition:transform .15s,background .15s,color .15s;
+  }
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+  /* Modal */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(36,50,61,.55);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  }
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{
+    background:white;border-radius:28px;padding:32px;
+    max-width:520px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+    animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);
+  }
+  @keyframes popIn{0%{transform:scale(.5) rotate(-3deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+  .modal-close{
+    position:absolute;top:-14px;right:-14px;
+    width:44px;height:44px;background:var(--accent);color:white;
+    border:4px solid white;border-radius:50%;
+    font-size:22px;cursor:pointer;font-family:inherit;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;
+  }
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:88px;text-align:center;line-height:1;margin-bottom:8px;animation:wiggle 1s ease-in-out;}
+  @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+  .modal-title{text-align:center;color:var(--primary);font-size:30px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.7;color:var(--dark);text-align:center;}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+  .modal-btn{
+    background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:14px;font-family:inherit;font-size:18px;font-weight:bold;cursor:pointer;
+    transition:all .15s;box-shadow:0 4px 0 rgba(0,0,0,.15);
+  }
+  .modal-btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 rgba(0,0,0,.15)}
 
   .hero{
     min-height:100vh;
@@ -262,12 +316,24 @@
 <div class="progress" id="progress"></div>
 <div class="top-status"><span>OP1</span> <b>Scratch入門</b></div>
 <nav class="snav" aria-label="ページ内ナビゲーション">
-  <a href="#top" class="active">1<span>トップ</span></a>
-  <a href="#what">2<span>Scratchとは</span></a>
-  <a href="#screen">3<span>画面の見方</span></a>
-  <a href="#lab">4<span>ブロック体験</span></a>
-  <a href="#save">5<span>保存と発表</span></a>
+  <a href="#top" class="active">1<span>トップ</span><span class="ic">🐱</span></a>
+  <a href="#what">2<span>Scratchとは</span><span class="ic">🧱</span></a>
+  <a href="#screen">3<span>画面の見方</span><span class="ic">🖥️</span></a>
+  <a href="#lab">4<span>ブロック体験</span><span class="ic">🎮</span></a>
+  <a href="#save">5<span>保存と発表</span><span class="ic">💾</span></a>
 </nav>
+<button class="snav-help" id="snav-help" title="キーボードショートカット (?)" aria-label="キーボードショートカット">?</button>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="とじる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
 
 <header class="hero" id="top" data-snav-target>
   <div class="hero-inner">
@@ -651,19 +717,52 @@
       out.style.color = 'var(--primary)';
     }
   });
+  // Modal
+  const mb = document.getElementById('modal-bg');
+  const me = document.getElementById('modal-emoji');
+  const mt = document.getElementById('modal-title');
+  const mbody = document.getElementById('modal-body');
+  function showInfo({emoji='', title='', bodyHTML=''}){
+    me.textContent = emoji; me.style.display = emoji ? 'block' : 'none';
+    mt.textContent = title; mbody.innerHTML = bodyHTML;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function showHelp(){
+    showInfo({
+      emoji:'⌨️',
+      title:'キーボードショートカット',
+      bodyHTML:`
+        <div style="text-align:left;font-size:15px;line-height:2">
+          <div><b>← ↑ PageUp</b>　前の章へ</div>
+          <div><b>→ ↓ PageDown Space</b>　つぎの章へ</div>
+          <div><b>1 〜 ${targets.length}</b>　章番号で直行</div>
+          <div><b>Home / End</b>　いちばん上／下へ</div>
+          <div><b>?</b>　このヘルプ</div>
+        </div>`
+    });
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+
   document.addEventListener('keydown',(e)=>{
-    if(e.target.matches('input,button')) return;
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
     const active = navLinks.findIndex(a=>a.classList.contains('active'));
+    const cur = active < 0 ? 0 : active;
     const goto = (idx)=>{
       idx = Math.max(0, Math.min(targets.length - 1, idx));
       targets[idx].scrollIntoView({behavior:'smooth', block:'start'});
     };
-    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){
-      e.preventDefault(); goto(active + 1);
+    if(e.key==='?' || (e.key==='/' && e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(i < targets.length){ e.preventDefault(); goto(i); return; }
     }
-    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){
-      e.preventDefault(); goto(active - 1);
-    }
+    if(e.key === 'Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key === 'End'){ e.preventDefault(); goto(targets.length - 1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(cur + 1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(cur - 1); }
   });
   renderProgram();
   resetSprite();
