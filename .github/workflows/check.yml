@@ -1,0 +1,138 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # ────────────────────────────────────────────────
+  # 1. Markdown lint
+  # ────────────────────────────────────────────────
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Lint Markdown
+        run: |
+          markdownlint-cli2 \
+            "**/*.md" \
+            "#node_modules" \
+            "#_generated" \
+            "#.git"
+
+  # ────────────────────────────────────────────────
+  # 2. HTML 構文チェック
+  # ────────────────────────────────────────────────
+  html-validate:
+    name: HTML validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install html-validate
+        run: npm install -g html-validate
+
+      - name: Validate HTML files
+        run: |
+          # interactive.html / *.html を対象
+          find . \
+            -name '*.html' \
+            -not -path './node_modules/*' \
+            -not -path './_generated/*' \
+            -not -path './.git/*' \
+            -print0 | xargs -0 html-validate --config scripts/html-validate.config.json
+
+  # ────────────────────────────────────────────────
+  # 3. JS 構文チェック（interactive.html 内 script）
+  # ────────────────────────────────────────────────
+  js-syntax:
+    name: JS syntax (inline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check inline JS syntax
+        run: node scripts/check-inline-js.mjs
+
+  # ────────────────────────────────────────────────
+  # 4. ID 重複検出（同一 HTML 内）
+  # ────────────────────────────────────────────────
+  id-duplicates:
+    name: HTML id duplicates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check id duplicates
+        run: node scripts/check-id-duplicates.mjs
+
+  # ────────────────────────────────────────────────
+  # 5. リンク切れ検出
+  # ────────────────────────────────────────────────
+  link-check:
+    name: Link check (lychee)
+    runs-on: ubuntu-latest
+    continue-on-error: true  # 外部ネット起因で落ちうるので警告扱い
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --exclude-mail
+            --exclude '^https?://(localhost|127\.0\.0\.1|example\.com)'
+            --max-concurrency 4
+            --timeout 20
+            './**/*.md'
+          fail: false
+          output: ./lychee-report.md
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lychee-report
+          path: lychee-report.md
+
+  # ────────────────────────────────────────────────
+  # 6. アクセシビリティ簡易チェック
+  # ────────────────────────────────────────────────
+  a11y-static:
+    name: A11y static check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run a11y static checks
+        run: node scripts/check-a11y-static.mjs
