@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・上級 第1回｜要件定義と設計</title>
+<style>
+  :root{
+    --primary:#6D28D9; --secondary:#06B6D4; --accent:#10B981;
+    --warn:#DC2626; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --code-key:#C4B5FD; --code-str:#FDBA74; --code-num:#6EE7B7;
+    --code-com:#64748B; --code-fn:#67E8F9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#6D28D9 0%,#0E7490 50%,#0F172A 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#ECFEFF}
+
+  /* Code blocks */
+  .code{background:var(--code-bg);color:var(--code-text);border-radius:10px;
+    padding:18px 22px;font-family:'JetBrains Mono','SF Mono','Menlo',monospace;font-size:14px;
+    line-height:1.7;box-shadow:var(--shadow);overflow-x:auto;white-space:pre;}
+  .code .key{color:var(--code-key)} .code .str{color:var(--code-str)}
+  .code .num{color:var(--code-num)} .code .com{color:var(--code-com);font-style:italic}
+  .code .fn{color:var(--code-fn)}
+
+  /* Comparison */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+  @media (max-width:680px){.compare{grid-template-columns:1fr}}
+  .compare > div{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border-left:5px solid;}
+  .compare > div.mid{border-left-color:var(--muted)}
+  .compare > div.adv{border-left-color:var(--primary)}
+  .compare h3{margin-bottom:10px;font-size:20px}
+  .compare ul{margin-left:18px;line-height:1.9;font-size:15px}
+
+  /* Story tool */
+  .storytool{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .storytool-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+  .storytool-form .full{grid-column:1 / -1}
+  .storytool-form label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px;letter-spacing:.3px}
+  .storytool-form input,.storytool-form select,.storytool-form textarea{width:100%;padding:9px 12px;
+    border:1.5px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px;background:#F8FAFC;color:var(--dark)}
+  .storytool-form input:focus,.storytool-form textarea:focus,.storytool-form select:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(109,40,217,.1)}
+  .storytool-form textarea{min-height:50px;resize:vertical}
+
+  .story-out{background:white;border-left:5px solid var(--primary);border-radius:8px;
+    padding:18px 22px;margin-top:14px;box-shadow:0 1px 3px rgba(15,23,42,.04);font-size:16px;line-height:1.9}
+  .story-out b{color:var(--primary)}
+  .moscow-tags{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .moscow-tags .tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;color:white}
+  .moscow-tags .tag.must{background:var(--warn)}
+  .moscow-tags .tag.should{background:var(--secondary);color:var(--dark)}
+  .moscow-tags .tag.could{background:var(--accent)}
+  .moscow-tags .tag.wont{background:#94A3B8}
+
+  .story-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .story-tools button{font-family:inherit;border:none;border-radius:8px;padding:9px 20px;
+    font-weight:600;cursor:pointer;font-size:14px;background:var(--primary);color:white;
+    box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .12s}
+  .story-tools button:hover{transform:translateY(-1px)}
+  .story-tools button.gray{background:var(--muted)}
+  .story-tools button.accent{background:var(--accent)}
+
+  .story-list{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+  .story-item{background:white;border-radius:8px;padding:12px 16px;border-left:4px solid;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;align-items:center;gap:10px}
+  .story-item.must{border-color:var(--warn)} .story-item.should{border-color:var(--secondary)}
+  .story-item.could{border-color:var(--accent)} .story-item.wont{border-color:#94A3B8;opacity:.7}
+  .story-item .num{flex-shrink:0;background:var(--muted);color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+  .story-item .txt{flex:1;font-size:14px;line-height:1.6}
+  .story-item .pri{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;color:white}
+  .story-item .pri.must{background:var(--warn)} .story-item .pri.should{background:var(--secondary);color:var(--dark)}
+  .story-item .pri.could{background:var(--accent)} .story-item .pri.wont{background:#94A3B8}
+  .story-item .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px}
+  .story-item .del:hover{color:var(--warn)}
+
+  /* DB designer */
+  .db{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .db-tables{display:flex;flex-direction:column;gap:14px}
+  .db-table{background:#F8FAFC;border-radius:10px;padding:14px;border:1px solid var(--border)}
+  .db-table-head{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .db-table-head input{flex:1;min-width:140px;padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:6px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;font-weight:600;background:white;color:var(--primary)}
+  .db-table-head input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(109,40,217,.1)}
+  .db-table-head .del-tbl{background:transparent;border:none;color:var(--warn);cursor:pointer;font-size:20px}
+  .db-cols{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+  .db-col{display:grid;grid-template-columns:1fr 130px 30px 30px 30px;gap:5px;align-items:center;background:white;
+    padding:5px 8px;border-radius:5px;border:1px solid #E2E8F0}
+  @media (max-width:680px){.db-col{grid-template-columns:1fr 1fr 25px 25px 25px}}
+  .db-col input,.db-col select{padding:5px 8px;border:1px solid #CBD5E1;border-radius:4px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;background:white;min-width:0}
+  .db-col input:focus,.db-col select:focus{outline:none;border-color:var(--primary)}
+  .db-col .flag{background:transparent;border:1px solid #CBD5E1;border-radius:4px;cursor:pointer;
+    padding:0;width:26px;height:26px;font-size:11px;font-weight:bold;color:var(--muted)}
+  .db-col .flag.on{background:var(--accent);color:white;border-color:var(--accent)}
+  .db-col .del-col{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0}
+  .db-col .del-col:hover{color:var(--warn)}
+  .db-add-col{background:#F1F5F9;border:1.5px dashed var(--primary);border-radius:6px;
+    padding:6px;width:100%;cursor:pointer;font-family:inherit;color:var(--primary);
+    font-weight:600;font-size:12px}
+  .db-add-col:hover{background:var(--primary);color:white}
+  .db-add-table{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:10px 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px;width:100%;margin-top:14px}
+  .db-add-table:hover{transform:translateY(-1px)}
+
+  .db-tabs{display:flex;gap:4px;margin-top:14px;border-bottom:2px solid #E2E8F0}
+  .db-tabs button{background:transparent;border:none;padding:8px 16px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:13px;color:var(--muted);
+    border-bottom:3px solid transparent;margin-bottom:-2px}
+  .db-tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+  .db-out{background:var(--code-bg);color:var(--code-text);border-radius:8px;
+    padding:16px 20px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;
+    line-height:1.7;margin-top:10px;overflow-x:auto;white-space:pre;min-height:160px}
+  .db-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+  .db-tools button{font-family:inherit;border:none;border-radius:8px;padding:9px 20px;
+    font-weight:600;cursor:pointer;font-size:14px;background:var(--primary);color:white}
+  .db-tools button.gray{background:var(--muted)}
+  .db-tools button.accent{background:var(--accent)}
+
+  /* ER Diagram */
+  .er-wrap{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .er-svg{width:100%;background:#F8FAFC;border:1px solid var(--border);border-radius:8px;
+    min-height:300px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px}
+  .er-svg rect.table-bg{fill:white;stroke:var(--primary);stroke-width:2;rx:6;ry:6}
+  .er-svg rect.table-head{fill:var(--primary);rx:6;ry:6}
+  .er-svg text.table-name{fill:white;font-weight:700;font-size:14px}
+  .er-svg text.col-name{fill:var(--dark);font-size:12px}
+  .er-svg text.col-name.pk{fill:var(--warn);font-weight:700}
+  .er-svg text.col-name.fk{fill:var(--secondary);font-weight:700}
+  .er-svg line.rel{stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
+  .er-svg circle.rel-end{fill:var(--accent)}
+
+  /* API designer */
+  .api-design{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .api-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  @media (max-width:680px){.api-form{grid-template-columns:1fr}}
+  .api-form label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .api-form input,.api-form select{width:100%;padding:9px 12px;
+    border:1.5px solid #CBD5E1;border-radius:8px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;background:#F8FAFC;color:var(--dark)}
+  .api-form input:focus,.api-form select:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(109,40,217,.1)}
+  .api-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .api-row{background:white;border:1px solid var(--border);border-radius:8px;padding:10px 14px;
+    display:grid;grid-template-columns:auto 1fr 2fr;gap:12px;align-items:center;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px}
+  @media (max-width:760px){.api-row{grid-template-columns:1fr;gap:6px}}
+  .verb{padding:3px 10px;border-radius:4px;color:white;font-weight:bold;font-size:11px;letter-spacing:.3px}
+  .verb.GET{background:#10B981}
+  .verb.POST{background:#6D28D9}
+  .verb.PUT{background:#F59E0B;color:var(--dark)}
+  .verb.DELETE{background:#DC2626}
+  .api-row .path{color:var(--primary);font-weight:600}
+  .api-row .desc{color:var(--muted);font-family:'Hiragino Sans','Yu Gothic',sans-serif;font-size:13px}
+
+  .api-tabs{display:flex;gap:4px;margin-top:14px;border-bottom:2px solid #E2E8F0}
+  .api-tabs button{background:transparent;border:none;padding:8px 16px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:13px;color:var(--muted);
+    border-bottom:3px solid transparent;margin-bottom:-2px}
+  .api-tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:50px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:72px;line-height:1}
+  .next h2{color:white;font-size:clamp(26px,5vw,38px);margin:12px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;
+    font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第1回</span> <b>要件定義と設計</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#compare">2<span>中級vs上級</span><span class="ic">📈</span></a>
+  <a href="#story">3<span>ストーリー作成</span><span class="ic">📝</span></a>
+  <a href="#db">4<span>DBスキーマ設計</span><span class="ic">🗄️</span></a>
+  <a href="#er">5<span>ER図</span><span class="ic">🔗</span></a>
+  <a href="#api">6<span>API設計</span><span class="ic">🌐</span></a>
+  <a href="#quiz">7<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">8<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 中学生プログラミング塾・上級</div>
+    <h1>要件定義と<br>設計</h1>
+    <p>ユーザーストーリー → DB → API。 <b>チームで 紙の上から</b></p>
+    <div class="em">📐🗄️🌐</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「設計」 を 4ステップで</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:42px;display:block">👥</span><h3>チーム</h3><p style="color:var(--muted);font-size:14px">役割分担</p></div>
+    <div class="card"><span style="font-size:42px;display:block">📝</span><h3>ストーリー</h3><p style="color:var(--muted);font-size:14px">As a / I want</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🗄️</span><h3>DB</h3><p style="color:var(--muted);font-size:14px">テーブル + 外部キー</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🌐</span><h3>API</h3><p style="color:var(--muted);font-size:14px">REST + CRUD</p></div>
+  </div>
+</section>
+
+<!-- 1. 中級vs上級 -->
+<div class="divider" id="compare" data-snav-target>
+  <div class="num">01.</div>
+  <h2>中級 vs 上級</h2>
+</div>
+
+<section class="section">
+  <h2>個人開発 から チーム開発 へ</h2>
+  <p class="lead">中級は <b>動けばOK</b>、 上級は <b>チームで作って 公開して 運用する</b>。 4つの 観点で 比較。</p>
+
+  <div class="compare">
+    <div class="mid">
+      <h3>📝 中級まで</h3>
+      <ul style="color:#475569">
+        <li>個人開発</li>
+        <li>localStorage で 永続化</li>
+        <li>動けばOK</li>
+        <li>手元で 動く</li>
+      </ul>
+    </div>
+    <div class="adv">
+      <h3 style="color:var(--primary)">🚀 上級では</h3>
+      <ul>
+        <li><b>チーム開発・コードレビュー</b></li>
+        <li><b>DB + 認証</b></li>
+        <li><b>テスト・運用・セキュリティ</b></li>
+        <li><b>公開して 他人に使ってもらう</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:var(--secondary)">💡 高校・専門・大学への 橋渡し</h3>
+    <p style="margin-top:6px">上級コースは <b>「学校の プログラミング授業」</b> や <b>「IT系専門学校 初年度」</b> の 基礎部分。<br>
+    ここを 通れば、 進学先で 即戦力！</p>
+  </div>
+</section>
+
+<!-- 2. ユーザーストーリー -->
+<div class="divider" id="story" data-snav-target>
+  <div class="num">02.</div>
+  <h2>ユーザーストーリー 作成ツール</h2>
+</div>
+
+<section class="section">
+  <h2>「As a / I want / So that」</h2>
+  <p class="lead">3つの 項目を 埋めると 業界標準の ユーザーストーリー が 完成。 MoSCoW で 優先順位 も 設定！</p>
+
+  <div class="storytool">
+    <div class="storytool-form">
+      <div>
+        <label>As a — だれ</label>
+        <input type="text" id="stWho" value="中学生" maxlength="30">
+      </div>
+      <div>
+        <label>優先度（MoSCoW）</label>
+        <select id="stPri">
+          <option value="must">🔥 Must — 絶対 必要</option>
+          <option value="should" selected>⭐ Should — できれば</option>
+          <option value="could">✨ Could — あったら 良い</option>
+          <option value="wont">🚫 Won't — 今回は やらない</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>I want — 何が したい</label>
+        <input type="text" id="stWant" value="読んだ本の 感想を 記録 したい" maxlength="60">
+      </div>
+      <div class="full">
+        <label>So that — どんな ためになる</label>
+        <input type="text" id="stSo" value="後で 振り返って 次の本を 選ぶ ヒントに できる" maxlength="60">
+      </div>
+    </div>
+
+    <div class="story-out" id="storyOut"></div>
+
+    <div class="story-tools">
+      <button onclick="addStory()">＋ ストーリーリストに 追加</button>
+      <button class="accent" onclick="copyStory()">📋 コピー</button>
+      <button class="gray" onclick="resetStory()">↺ 初期値</button>
+    </div>
+
+    <div class="story-list" id="storyList"></div>
+  </div>
+</section>
+
+<!-- 3. DBスキーマ設計 -->
+<div class="divider" id="db" data-snav-target>
+  <div class="num">03.</div>
+  <h2>DB スキーマ 設計ツール</h2>
+</div>
+
+<section class="section">
+  <h2>テーブル → カラム → 自動 SQL 生成</h2>
+  <p class="lead">テーブル を 追加 → カラム を 設定 → <b>CREATE TABLE / JSON Schema</b> 自動生成。<br>
+  ER図 とも 連動 します！</p>
+
+  <div class="db">
+    <div class="db-tables" id="dbTables"></div>
+    <button class="db-add-table" onclick="addTable()">＋ テーブル を 追加</button>
+
+    <div class="db-tabs">
+      <button class="active" data-fmt="sql" onclick="setDbFmt('sql')">📄 SQL (CREATE TABLE)</button>
+      <button data-fmt="json" onclick="setDbFmt('json')">{ } JSON Schema</button>
+    </div>
+    <div class="db-out" id="dbOut"></div>
+
+    <div class="db-tools">
+      <button onclick="copyDb()">📋 コピー</button>
+      <button class="accent" onclick="loadDbExample()">📚 サンプル（books + reviews）</button>
+      <button class="gray" onclick="resetDb()">↺ クリア</button>
+    </div>
+
+    <div class="card tip" style="margin-top:14px">
+      <h3 style="color:var(--secondary)">💡 各フラグの 意味</h3>
+      <p style="margin-top:6px;font-size:14px">
+        <b>P</b> = PRIMARY KEY（主キー）／
+        <b>N</b> = NOT NULL（空NG）／
+        <b>U</b> = UNIQUE（重複NG）
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. ER図 -->
+<div class="divider" id="er" data-snav-target>
+  <div class="num">04.</div>
+  <h2>ER 図（リアルタイム）</h2>
+</div>
+
+<section class="section">
+  <h2>上の DB設計 が そのまま 図 に</h2>
+  <p class="lead">テーブルを 追加 / 編集 すると、 ここの ER図 が 自動で 描画されます。 外部キー は 線で つながる！</p>
+
+  <div class="er-wrap">
+    <svg class="er-svg" id="erSvg" viewBox="0 0 800 400"></svg>
+  </div>
+
+  <div class="card tip" style="margin-top:14px">
+    <h3 style="color:var(--secondary)">💡 外部キーの 書き方</h3>
+    <p style="margin-top:6px;font-size:14px">カラム名を <b><code>book_id</code></b> のように <b>「他テーブル名 + _id」</b> で 命名すると、<br>
+    自動的に 関連が 認識されます（FK 推定）。</p>
+  </div>
+</section>
+
+<!-- 5. API設計 -->
+<div class="divider" id="api" data-snav-target>
+  <div class="num">05.</div>
+  <h2>API 設計ツール</h2>
+</div>
+
+<section class="section">
+  <h2>RESTful CRUD — 自動生成</h2>
+  <p class="lead">リソース名（複数形）を 入力 → 5つの CRUD エンドポイント が 自動生成。 Flask / Express / curl も！</p>
+
+  <div class="api-design">
+    <div class="api-form">
+      <div>
+        <label>リソース名（複数形）</label>
+        <input type="text" id="apiRes" value="reviews" maxlength="30">
+      </div>
+      <div>
+        <label>ネスト（親リソース、任意）</label>
+        <input type="text" id="apiNest" value="books" maxlength="30" placeholder="例：books（books の レビュー）">
+      </div>
+    </div>
+
+    <div class="api-list" id="apiList"></div>
+
+    <div class="api-tabs">
+      <button class="active" data-fmt="rest" onclick="setApiFmt('rest')">📋 エンドポイント一覧</button>
+      <button data-fmt="flask" onclick="setApiFmt('flask')">🐍 Flask 雛形</button>
+      <button data-fmt="express" onclick="setApiFmt('express')">⚡ Express 雛形</button>
+      <button data-fmt="curl" onclick="setApiFmt('curl')">$ curl テスト</button>
+    </div>
+    <div class="db-out" id="apiOut" style="margin-top:10px"></div>
+
+    <div class="db-tools">
+      <button onclick="copyApi()">📋 コピー</button>
+      <button class="gray" onclick="resetApi()">↺ 初期値</button>
+    </div>
+  </div>
+</section>
+
+<!-- 6. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">06.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう</h2>
+  <p class="lead">答えがわかったら 解説 が 出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="1">
+      <div class="q">Q1. ユーザーストーリー の <b>正しい 順番</b> は？</div>
+      <div class="opts">
+        <button data-i="0">I want / As a / So that</button>
+        <button data-i="1">As a / I want / So that</button>
+        <button data-i="2">So that / As a / I want</button>
+        <button data-i="3">どれでも 良い</button>
+      </div>
+      <div class="ex">✅ <b>As a [だれ] / I want [何が したい] / So that [どんな ためになる]</b>。<br>業界標準 で、 アジャイル / スクラム 開発 で 必ず 使う 形式！</div>
+    </div>
+
+    <div class="qrow" data-a="3">
+      <div class="q">Q2. <b>外部キー</b>（FOREIGN KEY） の 役割は？</div>
+      <div class="opts">
+        <button data-i="0">ファイル を 外部 保存する</button>
+        <button data-i="1">パスワード を 暗号化</button>
+        <button data-i="2">ユーザーの 認証</button>
+        <button data-i="3">他テーブル の 行 を 参照（関連付け）</button>
+      </div>
+      <div class="ex">✅ 別の テーブル の <b>主キー</b> を 参照して、 関連を 表現。<br>例：<code>reviews</code> の <code>user_id</code> は <code>users</code> の <code>id</code> を 指す。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. <b>MoSCoW法</b> で 「<b>Won't</b>（今回はやらない）」 を 決める 意義は？</div>
+      <div class="opts">
+        <button data-i="0">範囲を 絞って 確実に 動かす ため</button>
+        <button data-i="1">仲間に 仕事を 押し付ける</button>
+        <button data-i="2">楽を する</button>
+        <button data-i="3">後で 困らせる</button>
+      </div>
+      <div class="ex">✅ 「全部やる」 と <b>1つも 完成しない</b>。 「やらない」を 決めて 範囲を 絞る のが プロ。<br>第3回（リリース） で <b>動くもの</b> を 持って いれる！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>チーム開発 4役（PM / FE / BE / QA）</h3><p style="color:var(--muted);font-size:14px">1人 2役 OK</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>ユーザーストーリー（As a / I want / So that）</h3><p style="color:var(--muted);font-size:14px">MoSCoW で 優先度</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>DBスキーマ（テーブル / 主キー / 外部キー）</h3><p style="color:var(--muted);font-size:14px">CREATE TABLE 文</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>ER図 で 関連 を 可視化</h3><p style="color:var(--muted);font-size:14px">1対多 / 多対多</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>REST API（CRUD）の 設計</h3><p style="color:var(--muted);font-size:14px">名詞のURL + 動詞のメソッド</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">💻 🌿</div>
+  <h2>第2回 ｜ 実装と レビュー</h2>
+  <p>Git ブランチ → PR → コードレビュー → マージ！</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 上級 第1回｜要件定義と設計</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* ストーリー */
+  const PRI_LABELS = { must:'🔥 Must', should:'⭐ Should', could:'✨ Could', wont:"🚫 Won't" };
+  function buildStory(){
+    const who = $('stWho').value.trim() || '（だれ）';
+    const want = $('stWant').value.trim() || '（何が したい）';
+    const so = $('stSo').value.trim() || '（どんな ためになる）';
+    const pri = $('stPri').value;
+    return { who, want, so, pri };
+  }
+  function refreshStory(){
+    const s = buildStory();
+    $('storyOut').innerHTML = `
+      <b>As a</b> ${escapeHTML(s.who)} として、<br>
+      <b>I want</b> ${escapeHTML(s.want)} ので、<br>
+      <b>So that</b> ${escapeHTML(s.so)}。
+      <div class="moscow-tags"><span class="tag ${s.pri}">${PRI_LABELS[s.pri]}</span></div>
+    `;
+  }
+  ['stWho','stWant','stSo','stPri'].forEach(id => $(id).addEventListener('input', refreshStory));
+  ['stWho','stWant','stSo','stPri'].forEach(id => $(id).addEventListener('change', refreshStory));
+  refreshStory();
+
+  let storyId = 0;
+  const stories = {};
+  function addStory(){
+    storyId++;
+    stories[storyId] = buildStory();
+    renderStoryList();
+    showToast('＋ ストーリーを 追加しました');
+  }
+  function renderStoryList(){
+    const list = $('storyList');
+    list.innerHTML = '';
+    Object.entries(stories).forEach(([id, s])=>{
+      const div = document.createElement('div');
+      div.className = 'story-item ' + s.pri;
+      div.innerHTML = `<div class="num">#${id}</div>
+        <div class="txt">As a <b>${escapeHTML(s.who)}</b> / I want <b>${escapeHTML(s.want)}</b></div>
+        <div class="pri ${s.pri}">${PRI_LABELS[s.pri]}</div>
+        <button class="del" title="削除">×</button>`;
+      div.querySelector('.del').addEventListener('click', () => {
+        delete stories[id];
+        renderStoryList();
+      });
+      list.appendChild(div);
+    });
+  }
+  function copyStory(){
+    const s = buildStory();
+    const text = `As a ${s.who} として、\\nI want ${s.want} ので、\\nSo that ${s.so}。\\n[優先度: ${PRI_LABELS[s.pri]}]`;
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 コピーしました'));
+  }
+  function resetStory(){
+    $('stWho').value = '中学生';
+    $('stWant').value = '読んだ本の 感想を 記録 したい';
+    $('stSo').value = '後で 振り返って 次の本を 選ぶ ヒントに できる';
+    $('stPri').value = 'should';
+    refreshStory();
+  }
+
+  /* DB 設計 */
+  const COL_TYPES = ['INTEGER','BIGINT','VARCHAR(255)','TEXT','BOOLEAN','DATE','TIMESTAMP','DECIMAL(10,2)'];
+  let tables = [
+    { name:'users', cols:[
+      { name:'id', type:'INTEGER', pk:true, nn:true, uq:false },
+      { name:'name', type:'VARCHAR(255)', pk:false, nn:true, uq:false },
+      { name:'email', type:'VARCHAR(255)', pk:false, nn:true, uq:true },
+    ]},
+    { name:'reviews', cols:[
+      { name:'id', type:'INTEGER', pk:true, nn:true, uq:false },
+      { name:'user_id', type:'INTEGER', pk:false, nn:true, uq:false },
+      { name:'comment', type:'TEXT', pk:false, nn:true, uq:false },
+      { name:'rating', type:'INTEGER', pk:false, nn:false, uq:false },
+    ]},
+  ];
+  let dbFmt = 'sql';
+
+  function renderTables(){
+    const root = $('dbTables');
+    root.innerHTML = '';
+    tables.forEach((t, ti)=>{
+      const div = document.createElement('div');
+      div.className = 'db-table';
+      let html = `<div class="db-table-head">
+        <input type="text" value="${escapeHTML(t.name)}" data-ti="${ti}" data-k="name" spellcheck="false">
+        <button class="del-tbl" data-ti="${ti}" title="テーブル 削除">×</button>
+      </div>
+      <div class="db-cols">`;
+      t.cols.forEach((c, ci)=>{
+        html += `<div class="db-col">
+          <input type="text" value="${escapeHTML(c.name)}" placeholder="カラム名" data-ti="${ti}" data-ci="${ci}" data-k="name" spellcheck="false">
+          <select data-ti="${ti}" data-ci="${ci}" data-k="type">
+            ${COL_TYPES.map(t => `<option ${t===c.type?'selected':''}>${t}</option>`).join('')}
+          </select>
+          <button class="flag ${c.pk?'on':''}" data-ti="${ti}" data-ci="${ci}" data-k="pk" title="PRIMARY KEY">P</button>
+          <button class="flag ${c.nn?'on':''}" data-ti="${ti}" data-ci="${ci}" data-k="nn" title="NOT NULL">N</button>
+          <button class="flag ${c.uq?'on':''}" data-ti="${ti}" data-ci="${ci}" data-k="uq" title="UNIQUE">U</button>
+        </div>`;
+      });
+      html += `</div>
+      <button class="db-add-col" data-ti="${ti}">＋ カラムを 追加</button>`;
+      div.innerHTML = html;
+      root.appendChild(div);
+    });
+    // bind events
+    root.querySelectorAll('input,select').forEach(el => {
+      el.addEventListener('input', () => {
+        const ti = +el.dataset.ti;
+        const ci = el.dataset.ci !== undefined ? +el.dataset.ci : null;
+        const k = el.dataset.k;
+        if(ci === null){
+          tables[ti][k] = el.value;
+        } else {
+          tables[ti].cols[ci][k] = el.value;
+        }
+        renderDbOut();
+        renderEr();
+      });
+    });
+    root.querySelectorAll('.flag').forEach(el => {
+      el.addEventListener('click', () => {
+        const ti = +el.dataset.ti, ci = +el.dataset.ci, k = el.dataset.k;
+        tables[ti].cols[ci][k] = !tables[ti].cols[ci][k];
+        renderTables(); renderDbOut(); renderEr();
+      });
+    });
+    root.querySelectorAll('.del-tbl').forEach(el => {
+      el.addEventListener('click', () => {
+        const ti = +el.dataset.ti;
+        if(confirm(`テーブル「${tables[ti].name}」を 削除？`)){
+          tables.splice(ti, 1);
+          renderTables(); renderDbOut(); renderEr();
+        }
+      });
+    });
+    root.querySelectorAll('.db-add-col').forEach(el => {
+      el.addEventListener('click', () => {
+        const ti = +el.dataset.ti;
+        tables[ti].cols.push({ name:'col' + (tables[ti].cols.length+1), type:'VARCHAR(255)', pk:false, nn:false, uq:false });
+        renderTables(); renderDbOut(); renderEr();
+      });
+    });
+  }
+  function addTable(){
+    tables.push({ name:'new_table', cols:[
+      { name:'id', type:'INTEGER', pk:true, nn:true, uq:false }
+    ]});
+    renderTables(); renderDbOut(); renderEr();
+  }
+  function resetDb(){
+    tables = [];
+    renderTables(); renderDbOut(); renderEr();
+  }
+  function loadDbExample(){
+    tables = [
+      { name:'users', cols:[
+        { name:'id', type:'INTEGER', pk:true, nn:true, uq:false },
+        { name:'name', type:'VARCHAR(255)', pk:false, nn:true, uq:false },
+        { name:'email', type:'VARCHAR(255)', pk:false, nn:true, uq:true },
+      ]},
+      { name:'books', cols:[
+        { name:'id', type:'INTEGER', pk:true, nn:true, uq:false },
+        { name:'title', type:'VARCHAR(255)', pk:false, nn:true, uq:false },
+        { name:'author', type:'VARCHAR(255)', pk:false, nn:false, uq:false },
+      ]},
+      { name:'reviews', cols:[
+        { name:'id', type:'INTEGER', pk:true, nn:true, uq:false },
+        { name:'user_id', type:'INTEGER', pk:false, nn:true, uq:false },
+        { name:'book_id', type:'INTEGER', pk:false, nn:true, uq:false },
+        { name:'comment', type:'TEXT', pk:false, nn:true, uq:false },
+        { name:'rating', type:'INTEGER', pk:false, nn:false, uq:false },
+        { name:'created_at', type:'TIMESTAMP', pk:false, nn:false, uq:false },
+      ]},
+    ];
+    renderTables(); renderDbOut(); renderEr();
+    showToast('📚 books + reviews サンプル を 読み込み');
+  }
+  function renderDbOut(){
+    let out = '';
+    if(dbFmt === 'sql'){
+      tables.forEach(t => {
+        out += `-- ${t.name}\\nCREATE TABLE ${t.name} (\\n`;
+        const lines = t.cols.map(c => {
+          let line = `  ${c.name.padEnd(15)} ${c.type}`;
+          if(c.pk) line += ' PRIMARY KEY' + (c.type.startsWith('INTEGER')?' AUTOINCREMENT':'');
+          if(c.nn && !c.pk) line += ' NOT NULL';
+          if(c.uq && !c.pk) line += ' UNIQUE';
+          // FK 推定
+          const m = c.name.match(/^(.+)_id$/);
+          if(m && !c.pk){
+            const parent = m[1] + 's';
+            if(tables.some(tt => tt.name === parent)){
+              line += ` REFERENCES ${parent}(id)`;
+            }
+          }
+          return line;
+        });
+        out += lines.join(',\\n') + '\\n);\\n\\n';
+      });
+      out = colorSQL(out);
+    } else {
+      const obj = {};
+      tables.forEach(t => {
+        obj[t.name] = {};
+        t.cols.forEach(c => {
+          obj[t.name][c.name] = c.type + (c.pk?' (PK)':'') + (c.nn?' NOT NULL':'') + (c.uq?' UNIQUE':'');
+        });
+      });
+      out = colorJSON(JSON.stringify(obj, null, 2));
+    }
+    $('dbOut').innerHTML = out;
+  }
+  function colorSQL(s){
+    return escapeHTML(s)
+      .replace(/^(--.*)$/gm, '<span style="color:var(--code-com);font-style:italic">$1</span>')
+      .replace(/\b(CREATE TABLE|PRIMARY KEY|AUTOINCREMENT|NOT NULL|UNIQUE|REFERENCES|INTEGER|BIGINT|VARCHAR|TEXT|BOOLEAN|DATE|TIMESTAMP|DECIMAL)\b/g,
+        '<span style="color:var(--code-key)">$1</span>');
+  }
+  function colorJSON(s){
+    return escapeHTML(s)
+      .replace(/&quot;([^&]+?)&quot;:/g, '<span style="color:var(--code-key)">"$1"</span>:')
+      .replace(/: &quot;(.*?)&quot;/g, ': <span style="color:var(--code-str)">"$1"</span>');
+  }
+  function setDbFmt(f){
+    dbFmt = f;
+    document.querySelectorAll('.db-tabs button').forEach(b => b.classList.toggle('active', b.dataset.fmt === f));
+    renderDbOut();
+  }
+  function copyDb(){
+    const text = $('dbOut').innerText;
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 コピーしました'));
+  }
+  renderTables();
+  renderDbOut();
+
+  /* ER図 */
+  function renderEr(){
+    const svg = $('erSvg');
+    if(tables.length === 0){
+      svg.innerHTML = '<text x="400" y="200" text-anchor="middle" fill="#94A3B8" font-size="14">テーブルを 追加すると ここに ER図 が 描画されます</text>';
+      return;
+    }
+    // レイアウト: グリッド配置
+    const tablesPerRow = Math.min(3, tables.length);
+    const tw = 220, rowGap = 30, colGap = 30;
+    const positions = tables.map((t, i) => {
+      const col = i % tablesPerRow;
+      const row = Math.floor(i / tablesPerRow);
+      const th = 30 + t.cols.length * 18 + 10;
+      return { x: 20 + col * (tw + colGap), y: 20 + row * (180 + rowGap), w: tw, h: th, t };
+    });
+    const totalH = Math.max(...positions.map(p => p.y + p.h)) + 20;
+    svg.setAttribute('viewBox', `0 0 ${20 + tablesPerRow * (tw + colGap)} ${Math.max(300, totalH)}`);
+
+    let html = '';
+    // テーブル描画
+    positions.forEach(p => {
+      html += `<rect class="table-bg" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}"/>`;
+      html += `<rect class="table-head" x="${p.x}" y="${p.y}" width="${p.w}" height="26"/>`;
+      html += `<text class="table-name" x="${p.x + p.w/2}" y="${p.y + 18}" text-anchor="middle">${escapeHTML(p.t.name)}</text>`;
+      p.t.cols.forEach((c, ci) => {
+        const y = p.y + 30 + 18 + ci * 18;
+        const fkMatch = c.name.match(/^(.+)_id$/);
+        const isFK = !c.pk && fkMatch && tables.some(tt => tt.name === fkMatch[1] + 's');
+        const cls = c.pk ? 'pk' : (isFK ? 'fk' : '');
+        const icon = c.pk ? '🔑 ' : (isFK ? '🔗 ' : '   ');
+        html += `<text class="col-name ${cls}" x="${p.x + 10}" y="${y}">${icon}${escapeHTML(c.name)}</text>`;
+        html += `<text class="col-name" style="fill:#94A3B8" x="${p.x + p.w - 10}" y="${y}" text-anchor="end" font-size="10">${escapeHTML(c.type.split('(')[0])}</text>`;
+      });
+    });
+    // 関係線
+    positions.forEach(p => {
+      p.t.cols.forEach((c, ci) => {
+        const m = c.name.match(/^(.+)_id$/);
+        if(m && !c.pk){
+          const parentName = m[1] + 's';
+          const parentPos = positions.find(pp => pp.t.name === parentName);
+          if(parentPos){
+            const y1 = p.y + 30 + 18 + ci * 18 - 4;
+            const x1 = p.x;
+            const y2 = parentPos.y + 30 + 18 - 4;
+            const x2 = parentPos.x + parentPos.w;
+            const mx = (x1 + x2) / 2;
+            html += `<path class="rel" d="M${x1} ${y1} C${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" fill="none" stroke="${getCSS('--accent')}" stroke-width="2" stroke-dasharray="4 3"/>`;
+            html += `<circle class="rel-end" cx="${x1}" cy="${y1}" r="3" fill="${getCSS('--accent')}"/>`;
+            html += `<circle class="rel-end" cx="${x2}" cy="${y2}" r="3" fill="${getCSS('--accent')}"/>`;
+          }
+        }
+      });
+    });
+    svg.innerHTML = html;
+  }
+  function getCSS(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  renderEr();
+
+  /* API 設計 */
+  let apiFmt = 'rest';
+  function renderApi(){
+    const res = $('apiRes').value.trim() || 'items';
+    const nest = $('apiNest').value.trim();
+    const base = nest ? `/api/${nest}/<id>/${res}` : `/api/${res}`;
+    const single = nest ? `/api/${res}/<id>` : `/api/${res}/<id>`;
+
+    const endpoints = [
+      { verb:'GET', path:base, desc:`${res} の 一覧 取得` },
+      { verb:'POST', path:base, desc:`${res} の 新規作成（認証）` },
+      { verb:'GET', path:single, desc:`${res} 1件 取得` },
+      { verb:'PUT', path:single, desc:`${res} 更新（自分のみ）` },
+      { verb:'DELETE', path:single, desc:`${res} 削除（自分のみ）` },
+    ];
+
+    // 一覧 表示
+    const list = $('apiList');
+    list.innerHTML = '';
+    endpoints.forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'api-row';
+      div.innerHTML = `<span class="verb ${e.verb}">${e.verb}</span>
+        <span class="path">${escapeHTML(e.path)}</span>
+        <span class="desc">${escapeHTML(e.desc)}</span>`;
+      list.appendChild(div);
+    });
+
+    // 詳細
+    let out = '';
+    if(apiFmt === 'rest'){
+      out = endpoints.map(e => `${e.verb.padEnd(7)} ${e.path.padEnd(30)} # ${e.desc}`).join('\\n');
+    } else if(apiFmt === 'flask'){
+      const resName = res;
+      const nestPart = nest ? `<int:${nest.replace(/s$/,'')}_id>/` : '';
+      out = `from flask import Flask, jsonify, request
+app = Flask(__name__)
+
+@app.route('/api/${nestPart}${resName}', methods=['GET'])
+def list_${resName}(${nest ? nest.replace(/s$/,'') + '_id' : ''}):
+    return jsonify([])
+
+@app.route('/api/${nestPart}${resName}', methods=['POST'])
+def create_${resName.replace(/s$/,'')}(${nest ? nest.replace(/s$/,'') + '_id' : ''}):
+    data = request.get_json()
+    return jsonify({...}), 201
+
+@app.route('/api/${resName}/<int:id>', methods=['GET'])
+def get_${resName.replace(/s$/,'')}(id):
+    return jsonify({...})
+
+@app.route('/api/${resName}/<int:id>', methods=['PUT'])
+def update_${resName.replace(/s$/,'')}(id):
+    return jsonify({...})
+
+@app.route('/api/${resName}/<int:id>', methods=['DELETE'])
+def delete_${resName.replace(/s$/,'')}(id):
+    return '', 204`;
+      out = colorPython(out);
+    } else if(apiFmt === 'express'){
+      const resName = res;
+      const nestPart = nest ? `:${nest.replace(/s$/,'')}Id/` : '';
+      out = `const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.get('/api/${nestPart}${resName}', (req, res) => {
+  res.json([]);
+});
+
+app.post('/api/${nestPart}${resName}', (req, res) => {
+  res.status(201).json({...});
+});
+
+app.get('/api/${resName}/:id', (req, res) => {
+  res.json({...});
+});
+
+app.put('/api/${resName}/:id', (req, res) => {
+  res.json({...});
+});
+
+app.delete('/api/${resName}/:id', (req, res) => {
+  res.status(204).send();
+});`;
+      out = colorJS(out);
+    } else if(apiFmt === 'curl'){
+      const ex = nest ? `/api/${nest}/1/${res}` : `/api/${res}`;
+      const exSingle = `/api/${res}/1`;
+      out = `# 一覧 取得
+curl http://localhost:5000${ex}
+
+# 新規作成
+curl -X POST http://localhost:5000${ex} \\\\
+  -H "Content-Type: application/json" \\\\
+  -d '{"comment":"良い本！","rating":5}'
+
+# 1件 取得
+curl http://localhost:5000${exSingle}
+
+# 更新
+curl -X PUT http://localhost:5000${exSingle} \\\\
+  -H "Content-Type: application/json" \\\\
+  -d '{"rating":4}'
+
+# 削除
+curl -X DELETE http://localhost:5000${exSingle}`;
+    }
+    $('apiOut').innerHTML = out;
+  }
+  function colorPython(s){
+    return escapeHTML(s)
+      .replace(/(#.*$)/gm, '<span style="color:var(--code-com);font-style:italic">$1</span>')
+      .replace(/\b(from|import|def|return)\b/g, '<span style="color:var(--code-key)">$1</span>')
+      .replace(/(@app\\.route|app|Flask|jsonify|request)/g, '<span style="color:var(--code-fn)">$1</span>')
+      .replace(/(&#x27;[^&]*?&#x27;)/g, '<span style="color:var(--code-str)">$1</span>');
+  }
+  function colorJS(s){
+    return escapeHTML(s)
+      .replace(/(\/\/.*$)/gm, '<span style="color:var(--code-com);font-style:italic">$1</span>')
+      .replace(/\b(const|let|require|function|return)\b/g, '<span style="color:var(--code-key)">$1</span>')
+      .replace(/(app|express|res|req)/g, '<span style="color:var(--code-fn)">$1</span>')
+      .replace(/(&#x27;[^&]*?&#x27;)/g, '<span style="color:var(--code-str)">$1</span>');
+  }
+  function setApiFmt(f){
+    apiFmt = f;
+    document.querySelectorAll('.api-tabs button').forEach(b => b.classList.toggle('active', b.dataset.fmt === f));
+    renderApi();
+  }
+  function copyApi(){
+    navigator.clipboard.writeText($('apiOut').innerText).then(()=>showToast('📋 コピーしました'));
+  }
+  function resetApi(){
+    $('apiRes').value = 'reviews';
+    $('apiNest').value = 'books';
+    renderApi();
+  }
+  ['apiRes','apiNest'].forEach(id => $(id).addEventListener('input', renderApi));
+  renderApi();
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・上級 第3回｜テストとリリース</title>
+<style>
+  :root{
+    --primary:#6D28D9; --secondary:#06B6D4; --accent:#10B981;
+    --warn:#DC2626; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --render:#46E3B7; --vercel:#000000; --cloudflare:#F38020; --railway:#0B0D0E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#6D28D9 0%,#0E7490 50%,#0F172A 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#ECFEFF}
+
+  /* Pyramid */
+  .pyramid{background:white;border-radius:14px;padding:30px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;text-align:center}
+  .pyr-svg{width:100%;max-width:500px;margin:0 auto}
+
+  /* Test runner */
+  .runner{background:white;border-radius:14px;padding:0;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;overflow:hidden}
+  .runner-head{background:var(--dark);color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .runner-head .title{font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;color:var(--secondary);font-weight:600}
+  .runner-head button{background:var(--accent);color:white;border:none;border-radius:6px;
+    padding:8px 18px;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px}
+  .runner-head button:hover{transform:translateY(-1px)}
+  .runner-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  @media (max-width:760px){.runner-grid{grid-template-columns:1fr}}
+  .runner-pane{padding:14px;background:#1E293B;color:#E2E8F0;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;border-right:1px solid #334155}
+  .runner-pane:last-child{border-right:none}
+  @media (max-width:760px){.runner-pane{border-right:none;border-bottom:1px solid #334155}}
+  .runner-pane .label{color:#94A3B8;font-size:11px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .runner-pane textarea{width:100%;min-height:160px;background:#0F172A;color:#E2E8F0;
+    border:1px solid #334155;border-radius:6px;padding:10px;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-size:13px;line-height:1.7;resize:vertical}
+  .runner-pane textarea:focus{outline:none;border-color:var(--secondary)}
+  .runner-output{background:#0F172A;color:#E2E8F0;padding:14px 18px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.8;min-height:120px;
+    white-space:pre-wrap;border-top:1px solid #334155}
+  .runner-output .pass{color:#6EE7B7}
+  .runner-output .fail{color:#FCA5A5}
+  .runner-output .head{color:#94A3B8;margin-bottom:6px}
+  .runner-presets{padding:10px 14px;background:#F8FAFC;border-top:1px solid var(--border);
+    display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .runner-presets span{font-size:12px;color:var(--muted);font-weight:600}
+  .runner-presets button{background:white;border:1px solid var(--border);color:var(--primary);
+    padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px}
+  .runner-presets button:hover{background:var(--primary);color:white}
+
+  /* Test case table */
+  .tcbox{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .tcbox-toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+  .tcbox-toolbar button{background:var(--primary);color:white;border:none;border-radius:6px;
+    padding:8px 14px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .tcbox table{width:100%;border-collapse:collapse;font-size:14px}
+  .tcbox th{background:#F8FAFC;text-align:left;padding:10px 12px;font-size:12px;
+    color:var(--muted);font-weight:700;letter-spacing:.3px;border-bottom:2px solid var(--border)}
+  .tcbox td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  .tcbox td input{width:100%;padding:6px 8px;border:1px solid #CBD5E1;border-radius:4px;
+    font-family:inherit;font-size:13px;background:#F8FAFC}
+  .tcbox td input:focus{outline:none;border-color:var(--primary);background:white}
+  .tcbox td.judge{text-align:center;font-size:18px}
+  .tcbox td.judge.pass{color:var(--accent)}
+  .tcbox td.judge.fail{color:var(--warn)}
+  .tcbox td .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px}
+  .tcbox td .del:hover{color:var(--warn)}
+  .tcbox-stats{display:flex;gap:14px;margin-top:12px;justify-content:center;font-size:13px;flex-wrap:wrap}
+  .tcbox-stats span{background:white;border:1px solid var(--border);padding:6px 14px;border-radius:6px;font-weight:600}
+  .tcbox-stats span.pass{background:#ECFDF5;color:#065F46;border-color:var(--accent)}
+  .tcbox-stats span.fail{background:#FEF2F2;color:#991B1B;border-color:var(--warn)}
+
+  /* Deploy comparison */
+  .deploys{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+  .dpl{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    border:2px solid var(--border);cursor:pointer;transition:all .15s;border-top-width:6px}
+  .dpl:hover{transform:translateY(-3px);border-color:currentColor}
+  .dpl.render{color:#0E7490;border-top-color:var(--render)}
+  .dpl.vercel{color:var(--dark);border-top-color:var(--dark)}
+  .dpl.cloudflare{color:var(--cloudflare);border-top-color:var(--cloudflare)}
+  .dpl.railway{color:#475569;border-top-color:var(--railway)}
+  .dpl h3{font-size:20px;margin-bottom:6px}
+  .dpl .pricing{display:inline-block;background:#ECFDF5;color:#065F46;padding:3px 10px;
+    border-radius:4px;font-size:12px;font-weight:700;margin:6px 0}
+  .dpl .meta{font-size:14px;color:var(--muted);line-height:1.7;margin-top:8px}
+  .dpl .meta b{color:var(--dark)}
+  .dpl .stack{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+  .dpl .stack span{background:#F1F5F9;padding:2px 8px;border-radius:4px;font-size:11px;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--dark)}
+
+  /* CI/CD flow */
+  .cicd{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .cicd-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:center}
+  @media (max-width:760px){.cicd-flow{grid-template-columns:1fr}}
+  .cicd-step{background:#F8FAFC;border-radius:10px;padding:14px;text-align:center;cursor:pointer;
+    border:2px solid var(--border);transition:all .15s}
+  .cicd-step:hover{transform:translateY(-2px);border-color:var(--primary)}
+  .cicd-step .ic{font-size:32px;display:block;line-height:1}
+  .cicd-step .lbl{font-size:13px;font-weight:700;margin-top:4px;color:var(--dark)}
+  .cicd-step .sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono','SF Mono',monospace}
+  .cicd-step.run{background:#FEF3C7;border-color:#F59E0B;animation:pulse 1s ease infinite}
+  .cicd-step.pass{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .cicd-step.fail{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  @keyframes pulse{50%{opacity:.7}}
+  .cicd-arrow{font-size:20px;color:var(--primary);text-align:center}
+  @media (max-width:760px){.cicd-arrow{transform:rotate(90deg)}}
+  .cicd-controls{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .cicd-controls button{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:9px 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .cicd-controls button.fail-btn{background:var(--warn)}
+  .cicd-controls button.gray{background:var(--muted)}
+  .cicd-log{background:var(--code-bg);color:var(--code-text);border-radius:8px;
+    padding:14px 18px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;
+    line-height:1.7;margin-top:14px;max-height:180px;overflow-y:auto;white-space:pre-wrap}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:50px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:72px;line-height:1}
+  .next h2{color:white;font-size:clamp(26px,5vw,38px);margin:12px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;
+    font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第3回</span> <b>テストとリリース</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#pyramid">2<span>テストピラミッド</span><span class="ic">🔺</span></a>
+  <a href="#runner">3<span>テストランナー</span><span class="ic">🧪</span></a>
+  <a href="#tc">4<span>テストケース表</span><span class="ic">📋</span></a>
+  <a href="#deploy">5<span>デプロイ先比較</span><span class="ic">🚀</span></a>
+  <a href="#cicd">6<span>CI/CDフロー</span><span class="ic">🔄</span></a>
+  <a href="#quiz">7<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">8<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 中学生プログラミング塾・上級</div>
+    <h1>テストと<br>リリース</h1>
+    <p>pytest / Jest → CI/CD → Render デプロイ で <b>世界に公開</b></p>
+    <div class="em">🧪🚀✨</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「動く」 から 「公開」 まで</h2>
+  <div class="grid grid-3">
+    <div class="card"><span style="font-size:42px;display:block">🧪</span><h3>テスト</h3><p style="color:var(--muted);font-size:14px">pytest / Jest / TDD</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🔄</span><h3>CI/CD</h3><p style="color:var(--muted);font-size:14px">GitHub Actions</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🚀</span><h3>デプロイ</h3><p style="color:var(--muted);font-size:14px">Render / Vercel</p></div>
+  </div>
+</section>
+
+<!-- 1. テストピラミッド -->
+<div class="divider" id="pyramid" data-snav-target>
+  <div class="num">01.</div>
+  <h2>テストピラミッド</h2>
+</div>
+
+<section class="section">
+  <h2>ユニット多 / E2E少 が 鉄則</h2>
+  <p class="lead">テストには 3層 ある。 下層ほど <b>多数 / 速い / 安価</b>、 上層ほど <b>少数 / 遅い / 高価</b>。<br>各層を クリックで 詳細！</p>
+
+  <div class="pyramid">
+    <svg class="pyr-svg" viewBox="0 0 500 350">
+      <!-- E2E -->
+      <polygon points="220,30 280,30 310,110 190,110" fill="#DC2626" stroke="white" stroke-width="3" style="cursor:pointer" onclick="pyrInfo('e2e')"/>
+      <text x="250" y="75" text-anchor="middle" fill="white" font-weight="bold" font-size="20">🌍 E2E</text>
+      <text x="250" y="100" text-anchor="middle" fill="white" font-size="13">少数・遅い</text>
+      <!-- Integration -->
+      <polygon points="190,110 310,110 360,210 140,210" fill="#06B6D4" stroke="white" stroke-width="3" style="cursor:pointer" onclick="pyrInfo('integration')"/>
+      <text x="250" y="160" text-anchor="middle" fill="white" font-weight="bold" font-size="22">🔗 結合</text>
+      <text x="250" y="190" text-anchor="middle" fill="white" font-size="14">中規模</text>
+      <!-- Unit -->
+      <polygon points="140,210 360,210 410,310 90,310" fill="#10B981" stroke="white" stroke-width="3" style="cursor:pointer" onclick="pyrInfo('unit')"/>
+      <text x="250" y="265" text-anchor="middle" fill="white" font-weight="bold" font-size="26">🧪 ユニット</text>
+      <text x="250" y="295" text-anchor="middle" fill="white" font-size="15">多数・速い</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 2. テストランナー -->
+<div class="divider" id="runner" data-snav-target>
+  <div class="num">02.</div>
+  <h2>テストランナー シミュレータ</h2>
+</div>
+
+<section class="section">
+  <h2>関数 ＋ テスト を 書いて 実行</h2>
+  <p class="lead">左で 関数を 定義、 右で テストを 書く。 「<b>テスト実行</b>」 で 結果が 下に 表示！<br>本物の pytest / Jest と同じ感覚で 試せます。</p>
+
+  <div class="runner">
+    <div class="runner-head">
+      <span class="title">📝 jest-like runner（in browser）</span>
+      <button onclick="runTests()">▶ テスト 実行</button>
+    </div>
+    <div class="runner-grid">
+      <div class="runner-pane">
+        <div class="label">// 関数（テスト対象）</div>
+        <textarea id="runnerCode">function add(a, b) {
+  return a + b;
+}
+
+function isEven(n) {
+  return n % 2 === 0;
+}
+
+function reverse(str) {
+  return str.split('').reverse().join('');
+}</textarea>
+      </div>
+      <div class="runner-pane">
+        <div class="label">// テスト（test/expect/toBe）</div>
+        <textarea id="runnerTests">test('add: 2 + 3 = 5', () => {
+  expect(add(2, 3)).toBe(5);
+});
+
+test('add: -1 + 1 = 0', () => {
+  expect(add(-1, 1)).toBe(0);
+});
+
+test('isEven: 4 is even', () => {
+  expect(isEven(4)).toBe(true);
+});
+
+test('reverse: "hello" -> "olleh"', () => {
+  expect(reverse('hello')).toBe('olleh');
+});</textarea>
+      </div>
+    </div>
+    <div class="runner-output" id="runnerOut">▶ 「テスト 実行」 ボタンで 結果が ここに 表示</div>
+    <div class="runner-presets">
+      <span>プリセット:</span>
+      <button onclick="loadPreset('green')">✅ 全パス</button>
+      <button onclick="loadPreset('red')">❌ 失敗テスト 追加</button>
+      <button onclick="loadPreset('tdd')">🔴 TDD（実装無し）</button>
+      <button onclick="loadPreset('aaa')">📝 AAAパターン</button>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:var(--secondary)">💡 AAA パターン</h3>
+    <p style="margin-top:6px;font-size:14px">
+      <b>Arrange</b>（準備）→ <b>Act</b>（実行）→ <b>Assert</b>（検証）の3ブロックで 構成すると 読みやすい！
+    </p>
+  </div>
+</section>
+
+<!-- 3. テストケース表 -->
+<div class="divider" id="tc" data-snav-target>
+  <div class="num">03.</div>
+  <h2>手動 テストケース表</h2>
+</div>
+
+<section class="section">
+  <h2>「操作 → 期待 → 実際 → 判定」</h2>
+  <p class="lead">QA の 標準。 期待 と 実際 が <b>違えば バグ</b>。 表で 管理！</p>
+
+  <div class="tcbox">
+    <div class="tcbox-toolbar">
+      <button onclick="addTC()">＋ ケース 追加</button>
+      <button onclick="loadTCExample()" style="background:var(--accent)">📚 ログイン機能 例</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th style="width:30px">#</th><th>操作</th><th>期待結果</th><th>実際</th><th style="width:60px">判定</th><th style="width:40px"></th></tr>
+      </thead>
+      <tbody id="tcBody"></tbody>
+    </table>
+    <div class="tcbox-stats" id="tcStats"></div>
+  </div>
+</section>
+
+<!-- 4. デプロイ先 -->
+<div class="divider" id="deploy" data-snav-target>
+  <div class="num">04.</div>
+  <h2>デプロイ先 比較</h2>
+</div>
+
+<section class="section">
+  <h2>4社 から 選ぶ</h2>
+  <p class="lead">それぞれ <b>得意な領域</b> が違う。 クリックで 詳細＋デプロイ手順！</p>
+
+  <div class="deploys">
+    <div class="dpl render" onclick="dplInfo('render')">
+      <h3>🚀 Render</h3>
+      <span class="pricing">無料枠 あり</span>
+      <div class="meta"><b>得意：</b>Flask / Express バックエンド<br>
+      <b>特徴：</b>GitHub連携 即デプロイ</div>
+      <div class="stack"><span>Python</span><span>Node</span><span>PostgreSQL</span></div>
+    </div>
+    <div class="dpl vercel" onclick="dplInfo('vercel')">
+      <h3>▲ Vercel</h3>
+      <span class="pricing">無料 寛大</span>
+      <div class="meta"><b>得意：</b>Next.js / 静的サイト<br>
+      <b>特徴：</b>高速 CDN・サーバーレス</div>
+      <div class="stack"><span>Next.js</span><span>React</span><span>Serverless</span></div>
+    </div>
+    <div class="dpl cloudflare" onclick="dplInfo('cloudflare')">
+      <h3>☁️ Cloudflare Pages</h3>
+      <span class="pricing">無料 無制限</span>
+      <div class="meta"><b>得意：</b>静的サイト 専門<br>
+      <b>特徴：</b>世界中の エッジで 高速</div>
+      <div class="stack"><span>Static</span><span>Workers</span></div>
+    </div>
+    <div class="dpl railway" onclick="dplInfo('railway')">
+      <h3>🚂 Railway</h3>
+      <span class="pricing">$5/月〜</span>
+      <div class="meta"><b>得意：</b>DB セット の バックエンド<br>
+      <b>特徴：</b>Postgres / Redis 即起動</div>
+      <div class="stack"><span>Node</span><span>Python</span><span>Postgres</span></div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:var(--secondary)">💡 TODOアプリ なら…</h3>
+    <p style="margin-top:6px;font-size:14px">
+      <b>フロント</b>（HTML/CSS/JS）→ Cloudflare Pages or GitHub Pages（無料）<br>
+      <b>バック</b>（Flask API）→ Render（無料枠）<br>
+      この組み合わせ が ベスト！
+    </p>
+  </div>
+</section>
+
+<!-- 5. CI/CD -->
+<div class="divider" id="cicd" data-snav-target>
+  <div class="num">05.</div>
+  <h2>CI/CD フロー シミュレータ</h2>
+</div>
+
+<section class="section">
+  <h2>「push → テスト → デプロイ」 を 体感</h2>
+  <p class="lead">下の ボタンで <b>git push</b> をシミュレート。 各ステップが 順番に 緑になっていきます！</p>
+
+  <div class="cicd">
+    <div class="cicd-flow">
+      <div class="cicd-step" id="ciPush"><span class="ic">📤</span><div class="lbl">git push</div><div class="sub">developer</div></div>
+      <div class="cicd-arrow">→</div>
+      <div class="cicd-step" id="ciTest"><span class="ic">🧪</span><div class="lbl">CI: テスト</div><div class="sub">GitHub Actions</div></div>
+      <div class="cicd-arrow">→</div>
+      <div class="cicd-step" id="ciDeploy"><span class="ic">🚀</span><div class="lbl">CD: デプロイ</div><div class="sub">Render</div></div>
+    </div>
+    <div class="cicd-controls">
+      <button onclick="runCICD(true)">✅ Push（テスト 全パス）</button>
+      <button class="fail-btn" onclick="runCICD(false)">❌ Push（テスト 失敗）</button>
+      <button class="gray" onclick="resetCICD()">↺ リセット</button>
+    </div>
+    <div class="cicd-log" id="cicdLog">$ git push origin main
+（push を シミュレートしてみよう）</div>
+  </div>
+
+  <div class="card warn" style="margin-top:18px">
+    <h3>⚠️ CI 失敗 ＝ 絶対 マージしない</h3>
+    <p style="margin-top:6px;font-size:14px">テスト が 失敗 した PR は <b>main に マージしない</b>！<br>
+    直してから 再 push → 緑になってから マージ。 main は <b>常に 動く 状態</b> を 保つ！</p>
+  </div>
+</section>
+
+<!-- 6. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">06.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう</h2>
+  <p class="lead">答えがわかったら 解説 が 出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. テストピラミッド で 「一番 多く 書くべき」 テスト は？</div>
+      <div class="opts">
+        <button data-i="0">E2E</button>
+        <button data-i="1">結合</button>
+        <button data-i="2">ユニット</button>
+        <button data-i="3">手動</button>
+      </div>
+      <div class="ex">✅ <b>ユニットテストを 厚く</b>。 速くて 安いので 数百〜数千 書ける。<br>E2E は 重いので <b>厳選した 重要シナリオ</b> だけ！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q2. TDD の <b>正しい 順番</b> は？</div>
+      <div class="opts">
+        <button data-i="0">🔴 失敗するテスト → 🟢 最小実装 → 🔵 リファクタ</button>
+        <button data-i="1">実装 → テスト → リファクタ</button>
+        <button data-i="2">テスト → リファクタ → 実装</button>
+        <button data-i="3">どれでも OK</button>
+      </div>
+      <div class="ex">✅ <b>Red → Green → Refactor</b>。 まず テストを 書いて <b>失敗</b> を 確認、 次に <b>最小</b> 実装で 通す、 最後に きれいに 整える。</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q3. CI が 失敗（赤）した PR を どうする？</div>
+      <div class="opts">
+        <button data-i="0">そのまま マージ</button>
+        <button data-i="1">原因を 直して 再push → 緑に してから マージ</button>
+        <button data-i="2">CI を 無効化</button>
+        <button data-i="3">気にしない</button>
+      </div>
+      <div class="ex">✅ <b>「赤い PR は マージしない」</b> が 鉄則。 main は <b>常に 動く 状態</b>。<br>赤を 無視すると <b>本番が 壊れる</b> → 全員が 困る！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>🔺 テストピラミッド（ユニット多 / E2E少）</h3><p style="color:var(--muted);font-size:14px">速くて 安い ものを 厚く</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>🧪 pytest / Jest ＋ AAAパターン</h3><p style="color:var(--muted);font-size:14px">Arrange / Act / Assert</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🔴 TDD = Red → Green → Refactor</h3><p style="color:var(--muted);font-size:14px">テスト を 先に</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>📋 手動テストケース表 ＋ バグ報告</h3><p style="color:var(--muted);font-size:14px">期待 vs 実際</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>🔄 CI/CD ＝ GitHub Actions</h3><p style="color:var(--muted);font-size:14px">push → テスト → デプロイ</p></div></div>
+    <div class="summary-row"><div class="num">6</div><div><h3>🚀 Render / Vercel で 公開</h3><p style="color:var(--muted);font-size:14px">環境変数 は 本番設定</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">📊 💸</div>
+  <h2>第4回 ｜ 運用・改善・マネタイズ</h2>
+  <p>公開後の ログ / フィードバック / 法務 / マネタイズ 概論！</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 上級 第3回｜テストとリリース</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* テストピラミッド */
+  const PYR_INFO = {
+    unit: { e:'🧪', t:'ユニットテスト',
+      b:`<div style="font-size:15px;line-height:1.9">
+        <b>対象：</b>関数 1個 / クラスの メソッド<br>
+        <b>速さ：</b>1ms 〜 数十ms<br>
+        <b>数：</b>数百 〜 数千<br>
+        <b>ツール：</b>pytest / Jest / Vitest<br><br>
+        <b>例：</b><br>
+        <pre style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6">def test_add():
+    assert add(2, 3) == 5</pre></div>`},
+    integration: { e:'🔗', t:'結合テスト',
+      b:`<div style="font-size:15px;line-height:1.9">
+        <b>対象：</b>複数モジュール（API + DB など）<br>
+        <b>速さ：</b>数百ms 〜 数秒<br>
+        <b>数：</b>数十 〜 数百<br>
+        <b>ツール：</b>pytest + Flask test client / supertest<br><br>
+        <b>例：</b><br>
+        <pre style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6">def test_create_review_api():
+    response = client.post('/api/reviews', json={...})
+    assert response.status_code == 201</pre></div>`},
+    e2e: { e:'🌍', t:'E2E テスト',
+      b:`<div style="font-size:15px;line-height:1.9">
+        <b>対象：</b>ユーザー操作 全体（ブラウザ自動操作）<br>
+        <b>速さ：</b>数秒 〜 数十秒<br>
+        <b>数：</b>数本 〜 数十本（厳選）<br>
+        <b>ツール：</b>Playwright / Cypress<br><br>
+        <b>例：</b><br>
+        <pre style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6">// ログイン → 投稿 → 表示確認
+await page.fill('#email', 'a@b.c');
+await page.click('button[type=submit]');
+await expect(page).toHaveURL('/dashboard');</pre></div>`},
+  };
+  function pyrInfo(k){
+    const i = PYR_INFO[k];
+    if(i) info(i.e, i.t, i.b);
+  }
+
+  /* テストランナー */
+  function runTests(){
+    const code = $('runnerCode').value;
+    const tests = $('runnerTests').value;
+    const out = $('runnerOut');
+    const results = [];
+    let pass = 0, fail = 0;
+
+    // テストランナーを サンドボックスで 実行
+    const sandbox = {
+      results: results,
+      _pass: () => pass++,
+      _fail: () => fail++,
+    };
+
+    // expect/toBe を 実装
+    const wrapper = `
+      const test = (name, fn) => {
+        try {
+          fn();
+          results.push({ name, status: 'pass' });
+        } catch (e) {
+          results.push({ name, status: 'fail', error: e.message });
+        }
+      };
+      const expect = (actual) => ({
+        toBe: (expected) => {
+          if (actual !== expected) {
+            throw new Error('expected ' + JSON.stringify(expected) + ' but got ' + JSON.stringify(actual));
+          }
+        },
+        toEqual: (expected) => {
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+            throw new Error('expected ' + JSON.stringify(expected) + ' but got ' + JSON.stringify(actual));
+          }
+        },
+        toBeTruthy: () => { if (!actual) throw new Error('expected truthy, got ' + JSON.stringify(actual)); },
+        toBeFalsy: () => { if (actual) throw new Error('expected falsy, got ' + JSON.stringify(actual)); },
+        toBeGreaterThan: (n) => { if (!(actual > n)) throw new Error('expected > ' + n + ', got ' + actual); },
+        toContain: (item) => { if (!actual.includes(item)) throw new Error('expected to contain ' + JSON.stringify(item)); },
+      });
+      ${code}
+      ${tests}
+    `;
+
+    try {
+      const fn = new Function('results', wrapper);
+      fn(results);
+    } catch (e) {
+      results.push({ name: '実行エラー', status: 'fail', error: e.message });
+    }
+
+    // 結果表示
+    let html = '<div class="head">▶ Test Results</div>';
+    results.forEach(r => {
+      if (r.status === 'pass') {
+        html += `<span class="pass">✓ PASS</span> ${escapeHTML(r.name)}\n`;
+        pass++;
+      } else {
+        html += `<span class="fail">✗ FAIL</span> ${escapeHTML(r.name)}\n      <span class="fail">→ ${escapeHTML(r.error)}</span>\n`;
+        fail++;
+      }
+    });
+    html += `\n<div class="head">Tests: ${pass} passed, ${fail} failed, ${results.length} total</div>`;
+    if (fail === 0 && pass > 0) html += '<div class="pass">✅ 全パス！</div>';
+    else if (fail > 0) html += '<div class="fail">❌ ' + fail + ' 件 失敗</div>';
+    out.innerHTML = html;
+  }
+
+  const PRESETS = {
+    green: {
+      code: `function add(a, b) {
+  return a + b;
+}
+
+function isEven(n) {
+  return n % 2 === 0;
+}`,
+      tests: `test('add: 2 + 3 = 5', () => {
+  expect(add(2, 3)).toBe(5);
+});
+
+test('add: -1 + 1 = 0', () => {
+  expect(add(-1, 1)).toBe(0);
+});
+
+test('isEven: 4 is even', () => {
+  expect(isEven(4)).toBe(true);
+});
+
+test('isEven: 7 is not even', () => {
+  expect(isEven(7)).toBe(false);
+});`
+    },
+    red: {
+      code: `function add(a, b) {
+  return a - b;  // ← バグ！ + のはずが -
+}`,
+      tests: `test('add: 2 + 3 = 5', () => {
+  expect(add(2, 3)).toBe(5);
+});
+
+test('add: 10 + 20 = 30', () => {
+  expect(add(10, 20)).toBe(30);
+});`
+    },
+    tdd: {
+      code: `// まだ multiply 関数は 実装してない！
+// テストが 失敗 → 実装 → 通る を 体験`,
+      tests: `test('multiply: 3 * 4 = 12', () => {
+  expect(multiply(3, 4)).toBe(12);
+});
+
+test('multiply: 0 * 100 = 0', () => {
+  expect(multiply(0, 100)).toBe(0);
+});`
+    },
+    aaa: {
+      code: `function createTask(title) {
+  return {
+    id: Date.now(),
+    title: title,
+    done: false,
+  };
+}
+
+function markDone(task) {
+  return { ...task, done: true };
+}`,
+      tests: `test('createTask: タイトル設定', () => {
+  // Arrange
+  const title = '宿題をする';
+
+  // Act
+  const task = createTask(title);
+
+  // Assert
+  expect(task.title).toBe(title);
+  expect(task.done).toBe(false);
+});
+
+test('markDone: 完了フラグ', () => {
+  // Arrange
+  const task = createTask('掃除');
+
+  // Act
+  const done = markDone(task);
+
+  // Assert
+  expect(done.done).toBe(true);
+});`
+    },
+  };
+  function loadPreset(k) {
+    const p = PRESETS[k];
+    if (!p) return;
+    $('runnerCode').value = p.code;
+    $('runnerTests').value = p.tests;
+    showToast('📚 ' + k + ' プリセットを 読み込み');
+    setTimeout(runTests, 100);
+  }
+  runTests();
+
+  /* テストケース表 */
+  let tcId = 0;
+  const tcs = {};
+  function addTC(op = '', exp = '', act = '') {
+    tcId++;
+    tcs[tcId] = { op, exp, act };
+    renderTC();
+  }
+  function renderTC() {
+    const body = $('tcBody');
+    body.innerHTML = '';
+    let pass = 0, fail = 0;
+    Object.entries(tcs).forEach(([id, tc]) => {
+      const ok = tc.exp.trim() && tc.act.trim() && tc.exp.trim() === tc.act.trim();
+      const judged = tc.exp.trim() && tc.act.trim();
+      if (judged) (ok ? pass++ : fail++);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td style="text-align:center;font-family:monospace;font-weight:bold;color:var(--primary)">${id}</td>
+        <td><input type="text" data-id="${id}" data-k="op" value="${escapeHTML(tc.op)}" placeholder="例：旗をクリック"></td>
+        <td><input type="text" data-id="${id}" data-k="exp" value="${escapeHTML(tc.exp)}" placeholder="例：カウンタ +1"></td>
+        <td><input type="text" data-id="${id}" data-k="act" value="${escapeHTML(tc.act)}" placeholder="例：+1"></td>
+        <td class="judge ${judged ? (ok ? 'pass' : 'fail') : ''}">${judged ? (ok ? '✅' : '❌') : '⋯'}</td>
+        <td><button class="del" data-id="${id}" title="削除">×</button></td>`;
+      body.appendChild(tr);
+    });
+    body.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const id = inp.dataset.id, k = inp.dataset.k;
+        tcs[id][k] = inp.value;
+        renderTC();
+      });
+    });
+    body.querySelectorAll('.del').forEach(b => {
+      b.addEventListener('click', () => {
+        delete tcs[b.dataset.id];
+        renderTC();
+      });
+    });
+    const total = Object.keys(tcs).length;
+    const judged = pass + fail;
+    $('tcStats').innerHTML = total === 0 ? '' : `
+      <span>合計：${total}件</span>
+      <span class="pass">✅ Pass: ${pass}</span>
+      <span class="fail">❌ Fail: ${fail}</span>
+      <span>未判定：${total - judged}</span>`;
+  }
+  function loadTCExample() {
+    Object.keys(tcs).forEach(k => delete tcs[k]);
+    tcId = 0;
+    addTC('正しい メール+パスワード で ログイン', 'ダッシュボードへ 遷移', 'ダッシュボードへ 遷移');
+    addTC('間違った パスワードで ログイン', 'エラー「無効」表示', 'エラー「無効」表示');
+    addTC('空欄で ログインボタン', 'エラー「必須」表示', '500 エラー');
+    addTC('5回 連続 失敗', 'アカウント ロック', 'ロックされない');
+    showToast('📚 ログイン機能 サンプル を 読み込み');
+  }
+  addTC();
+
+  /* デプロイ先 詳細 */
+  const DPL = {
+    render: { e:'🚀', t:'Render',
+      b:`<div style="font-size:15px;line-height:1.9">
+        <b>料金：</b>無料プラン あり（自動スリープ）／$7/月〜<br>
+        <b>得意：</b>Flask / Express / Django<br>
+        <b>DB：</b>PostgreSQL 無料 90日<br><br>
+        <b>デプロイ手順：</b><br>
+        1. GitHub に push<br>
+        2. Render → New Web Service<br>
+        3. リポジトリを 選ぶ<br>
+        4. Build: <code>pip install -r requirements.txt</code><br>
+        5. Start: <code>gunicorn app:app</code><br>
+        6. 環境変数 設定 → Deploy！</div>`},
+    vercel: { e:'▲', t:'Vercel',
+      b:`<div style="font-size:15px;line-height:1.9">
+        <b>料金：</b>無料 寛大／Pro $20/月<br>
+        <b>得意：</b>Next.js / React / 静的サイト<br>
+        <b>特徴：</b>世界中の エッジで 配信、 サーバーレス関数<br><br>
+        <b>デプロイ手順：</b><br>
+        1. GitHub に push<br>
+        2. Vercel → Import Project<br>
+        3. リポジトリを 選ぶ<br>
+        4. 自動検出 → Deploy！<br>
+        ※ Next.js なら 設定 ほぼ不要</div>`},
+    cloudflare: { e:'☁️', t:'Cloudflare Pages',
+      b:`<div style="font-size:15px;line-height:1.9">
+        <b>料金：</b>無料 無制限 帯域<br>
+        <b>得意：</b>静的サイト（HTML / CSS / JS）<br>
+        <b>特徴：</b>世界中 300+拠点 で 超高速<br><br>
+        <b>デプロイ手順：</b><br>
+        1. GitHub に push<br>
+        2. Cloudflare Pages → Connect to Git<br>
+        3. Build: <code>npm run build</code>（必要なら）<br>
+        4. Output: <code>dist</code>（または public）<br>
+        5. Deploy！</div>`},
+    railway: { e:'🚂', t:'Railway',
+      b:`<div style="font-size:15px;line-height:1.9">
+        <b>料金：</b>無料 $5 クレジット／$5/月〜<br>
+        <b>得意：</b>DB セット の フルスタック<br>
+        <b>特徴：</b>Postgres / Redis / Mongo ワンクリック<br><br>
+        <b>デプロイ手順：</b><br>
+        1. GitHub に push<br>
+        2. Railway → New Project<br>
+        3. Deploy from GitHub<br>
+        4. Add Database（Postgres など）<br>
+        5. 環境変数 自動連携 → Deploy！</div>`},
+  };
+  function dplInfo(k) {
+    const d = DPL[k];
+    if (d) info(d.e, d.t, d.b);
+  }
+
+  /* CI/CD シミュレータ */
+  function setCIStep(id, state) {
+    const el = $(id);
+    el.classList.remove('run','pass','fail');
+    if(state) el.classList.add(state);
+  }
+  function appendCILog(msg) {
+    $('cicdLog').textContent += '\n' + msg;
+    const log = $('cicdLog');
+    log.scrollTop = log.scrollHeight;
+  }
+  function resetCICD() {
+    ['ciPush','ciTest','ciDeploy'].forEach(id => setCIStep(id, null));
+    $('cicdLog').textContent = '$ git push origin main\n（push を シミュレートしてみよう）';
+  }
+  async function runCICD(success) {
+    resetCICD();
+    await new Promise(r => setTimeout(r, 200));
+    // Push
+    setCIStep('ciPush', 'pass');
+    appendCILog('✅ Pushed to origin/main');
+    await new Promise(r => setTimeout(r, 600));
+    // Test
+    setCIStep('ciTest', 'run');
+    appendCILog('🧪 Running tests via GitHub Actions...');
+    appendCILog('   pip install -r requirements.txt');
+    await new Promise(r => setTimeout(r, 800));
+    appendCILog('   pytest --cov=app');
+    await new Promise(r => setTimeout(r, 800));
+
+    if (!success) {
+      setCIStep('ciTest', 'fail');
+      appendCILog('❌ FAILED: test_create_review 期待 201 → 実際 500');
+      appendCILog('');
+      appendCILog('⚠️  CI 失敗 — デプロイは スキップ');
+      appendCILog('   原因を 修正して 再 push してください！');
+      return;
+    }
+    setCIStep('ciTest', 'pass');
+    appendCILog('✅ All tests passed (42 passed, 0 failed)');
+    await new Promise(r => setTimeout(r, 600));
+    // Deploy
+    setCIStep('ciDeploy', 'run');
+    appendCILog('🚀 Deploying to Render...');
+    await new Promise(r => setTimeout(r, 1000));
+    appendCILog('   Building image...');
+    await new Promise(r => setTimeout(r, 600));
+    appendCILog('   Starting service...');
+    await new Promise(r => setTimeout(r, 400));
+    setCIStep('ciDeploy', 'pass');
+    appendCILog('✅ Deployed! https://your-app.onrender.com');
+  }
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

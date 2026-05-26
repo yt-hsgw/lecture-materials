@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・上級 第4回｜運用・改善・マネタイズ ／ 修了</title>
+<style>
+  :root{
+    --primary:#6D28D9; --secondary:#06B6D4; --accent:#10B981;
+    --warn:#DC2626; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --p0:#DC2626; --p1:#F59E0B; --p2:#06B6D4; --p3:#94A3B8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#6D28D9 0%,#0E7490 50%,#0F172A 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#ECFEFF}
+
+  /* Log dashboard */
+  .logs{background:white;border-radius:14px;padding:0;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;overflow:hidden}
+  .logs-head{background:var(--dark);color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .logs-head .title{font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;color:var(--secondary);font-weight:600}
+  .logs-filter{display:flex;gap:4px;flex-wrap:wrap}
+  .logs-filter button{background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:4px;
+    padding:4px 10px;cursor:pointer;font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;font-weight:600}
+  .logs-filter button.active{background:var(--secondary);color:var(--dark);border-color:var(--secondary)}
+  .logs-body{background:#0F172A;color:#E2E8F0;padding:14px 18px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.8;max-height:340px;overflow-y:auto}
+  .log-line{display:flex;gap:10px;padding:3px 0;border-radius:4px}
+  .log-line.INFO .lvl{color:#64748B}
+  .log-line.WARN{background:rgba(245,158,11,.05)}
+  .log-line.WARN .lvl{color:#FCD34D;font-weight:bold}
+  .log-line.ERROR{background:rgba(220,38,38,.08)}
+  .log-line.ERROR .lvl{color:#FCA5A5;font-weight:bold}
+  .log-line .ts{color:#475569;flex-shrink:0}
+  .log-line .lvl{flex-shrink:0;width:60px}
+  .log-line .msg{flex:1;word-break:break-word}
+  .log-line .status{flex-shrink:0;font-weight:bold}
+  .log-line .status.s2{color:#6EE7B7}
+  .log-line .status.s3{color:#67E8F9}
+  .log-line .status.s4{color:#FCD34D}
+  .log-line .status.s5{color:#FCA5A5}
+  .log-line .traceback{color:#64748B;font-style:italic;font-size:12px;padding-left:88px}
+  .logs-stats{background:#1E293B;padding:10px 18px;display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#94A3B8;border-top:1px solid #334155}
+  .logs-stats b{font-family:'JetBrains Mono','SF Mono',monospace}
+  .logs-stats span.err b{color:#FCA5A5}
+  .logs-stats span.warn b{color:#FCD34D}
+
+  /* Feedback classifier */
+  .fb{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .fb-add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .fb-add input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px;background:#F8FAFC}
+  .fb-add input:focus{outline:none;border-color:var(--primary);background:white}
+  .fb-add button{background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px}
+  .fb-examples{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;font-size:13px}
+  .fb-examples span{align-self:center;color:var(--muted)}
+  .fb-examples button{background:#F1F5F9;border:1px solid var(--border);color:var(--primary);
+    padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px}
+  .fb-examples button:hover{background:var(--primary);color:white}
+  .fb-buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+  .fb-bucket{background:#FAFAFF;border-radius:12px;padding:12px;min-height:140px;border:3px dashed #DDD;transition:all .15s}
+  .fb-bucket.over{border-style:solid;transform:scale(1.02)}
+  .fb-bucket h4{font-size:13px;text-align:center;padding-bottom:6px;border-bottom:2px solid currentColor;margin-bottom:8px}
+  .fb-bucket.bug h4{color:var(--warn)}
+  .fb-bucket.req h4{color:var(--secondary)}
+  .fb-bucket.praise h4{color:var(--accent)}
+  .fb-bucket.complaint h4{color:#7C3AED}
+  .fb-item{background:white;border-radius:6px;padding:8px 10px;margin-bottom:6px;cursor:grab;font-size:13px;display:flex;align-items:center;gap:8px;border-left:4px solid var(--primary);user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .fb-item.dragging{opacity:.5}
+  .fb-item .x{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px}
+  .fb-item .x:hover{color:var(--warn)}
+
+  /* Priority matrix */
+  .matrix{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .matrix-frame{position:relative;width:100%;aspect-ratio:1;max-width:600px;margin:0 auto;
+    background:#FAFAFF;border:2px solid #E2E8F0;border-radius:14px;overflow:hidden}
+  .matrix-frame::before{content:'';position:absolute;left:50%;top:0;width:1px;height:100%;border-left:1px dashed #BBB}
+  .matrix-frame::after{content:'';position:absolute;top:50%;left:0;height:1px;width:100%;border-top:1px dashed #BBB}
+  .quad{position:absolute;width:50%;height:50%;padding:14px;font-size:13px;font-weight:bold;color:#888;display:flex;align-items:flex-start}
+  .quad.tl{top:0;left:0;background:rgba(220,38,38,.05);color:var(--warn)}
+  .quad.tr{top:0;left:50%;background:rgba(245,158,11,.05);color:#92400E}
+  .quad.bl{bottom:0;left:0;background:rgba(16,185,129,.05);color:#065F46}
+  .quad.br{bottom:0;left:50%;background:rgba(124,58,237,.05);color:#5B21B6}
+  .axis-label{position:absolute;font-size:12px;color:var(--muted);font-weight:bold}
+  .axis-label.x-l{left:10px;top:50%;transform:translateY(-50%)}
+  .axis-label.x-r{right:10px;top:50%;transform:translateY(-50%)}
+  .axis-label.y-t{top:10px;left:50%;transform:translateX(-50%)}
+  .axis-label.y-b{bottom:10px;left:50%;transform:translateX(-50%)}
+  .dot{position:absolute;background:var(--primary);color:white;border-radius:50%;
+    padding:5px 9px;font-size:11px;font-weight:bold;transform:translate(-50%,-50%);
+    box-shadow:0 3px 6px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap;max-width:160px;
+    text-overflow:ellipsis;overflow:hidden;z-index:2;transition:all .2s}
+  .dot:hover{transform:translate(-50%,-50%) scale(1.15);z-index:5}
+  .dot.fix{background:var(--warn)}
+  .dot.plan{background:#F59E0B;color:var(--dark)}
+  .dot.easy{background:var(--accent)}
+  .dot.no{background:#7C3AED}
+
+  /* Monetization diagnosis */
+  .mon{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .mon-q{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #E2E8F0}
+  .mon-q:last-of-type{border-bottom:none}
+  .mon-q .q{font-weight:700;font-size:15px;margin-bottom:8px}
+  .mon-q .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .mon-q .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .mon-q .opts button.sel{background:var(--primary);color:white;border-color:var(--primary)}
+  .mon-result{margin-top:14px;padding:16px 20px;border-radius:10px;display:none;background:#ECFEFF;border-left:5px solid var(--secondary)}
+  .mon-result.show{display:block;animation:popIn .3s}
+  .mon-result h4{color:var(--primary);font-size:18px;margin-bottom:6px}
+  .mon-result .scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:10px}
+  .mon-result .score{background:white;padding:8px;border-radius:6px;text-align:center;font-size:13px;border:1px solid var(--border)}
+  .mon-result .score b{display:block;font-size:18px;color:var(--primary);font-family:'JetBrains Mono','SF Mono',monospace}
+  .mon-result .score.best{background:var(--accent);color:white}
+  .mon-result .score.best b{color:white}
+  .mon-reset{background:var(--muted);color:white;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;margin-top:12px}
+
+  /* Copyright checker */
+  .cprt{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .cprt-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .cprt-form input{flex:1;min-width:240px;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px;background:#F8FAFC}
+  .cprt-form button{background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px}
+  .cprt-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;font-size:13px}
+  .cprt-presets span{align-self:center;color:var(--muted)}
+  .cprt-presets button{background:#F1F5F9;border:1px solid var(--border);color:var(--primary);padding:4px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px}
+  .cprt-presets button:hover{background:var(--primary);color:white}
+  .cprt-history{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto}
+  .cprt-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;border-left:5px solid;background:white;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .cprt-row.ok{border-color:var(--accent);background:#ECFDF5}
+  .cprt-row.warn{border-color:#F59E0B;background:#FFFBEB}
+  .cprt-row.ng{border-color:var(--warn);background:#FEF2F2}
+  .cprt-row .ic{font-size:24px;flex-shrink:0}
+  .cprt-row .body{flex:1}
+  .cprt-row .name{font-weight:700;font-size:14px;margin-bottom:2px}
+  .cprt-row .reason{font-size:12px;color:var(--muted)}
+  .cprt-row .verdict{font-weight:700;font-size:13px}
+  .cprt-row.ok .verdict{color:#065F46}
+  .cprt-row.warn .verdict{color:#92400E}
+  .cprt-row.ng .verdict{color:#991B1B}
+
+  /* Course checklist */
+  .checklist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .check-item{background:white;border-radius:10px;padding:12px 16px;
+    display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:var(--shadow);
+    border:1px solid var(--border);border-left:5px solid #CBD5E1;transition:all .15s}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#ECFDF5;border-left-color:var(--accent)}
+  .check-item .box{width:22px;height:22px;border:2px solid var(--muted);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;background:white;font-weight:bold;font-size:13px}
+  .check-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .check-item.on .box::before{content:'✓'}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;font-size:14px;margin-bottom:2px}
+  .check-item .txt span{color:var(--muted);font-size:12px}
+  .check-progress{text-align:center;margin-top:12px;font-weight:700;color:var(--primary);font-size:15px}
+
+  /* Certificate */
+  .certbox{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .certform{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+  .certform label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .certform input{width:100%;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px;background:#F8FAFC;color:var(--dark)}
+  .certform input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(109,40,217,.1)}
+
+  .cert{background:linear-gradient(135deg,#F5F3FF,#ECFEFF,#ECFDF5);
+    border:6px double var(--primary);border-radius:18px;padding:40px 30px;text-align:center;
+    position:relative;overflow:hidden}
+  .cert::before,.cert::after{content:'🎓';position:absolute;font-size:80px;opacity:.08;color:var(--primary)}
+  .cert::before{top:10px;left:20px} .cert::after{bottom:10px;right:20px}
+  .cert .badge{font-size:60px}
+  .cert h2{color:var(--primary);font-size:32px;margin:6px 0 14px;letter-spacing:8px;font-weight:800}
+  .cert .body{font-size:16px;line-height:1.9;color:var(--dark)}
+  .cert .name{font-size:28px;font-weight:bold;color:var(--accent);margin:14px 0;
+    padding:8px 0;border-top:2px solid var(--primary);border-bottom:2px solid var(--primary);
+    display:inline-block;min-width:260px}
+  .cert .footer{margin-top:14px;font-size:13px;color:var(--muted)}
+  .cert-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .cert-tools button{font-family:inherit;border:none;border-radius:10px;padding:12px 26px;
+    font-weight:700;cursor:pointer;font-size:15px;background:var(--primary);color:white;
+    box-shadow:0 3px 0 rgba(0,0,0,.12)}
+  .cert-tools button.accent{background:var(--accent)}
+  .cert-tools button.celebrate{background:var(--secondary);color:var(--dark)}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .finale{background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 50%,var(--accent) 100%);color:white;text-align:center;padding:60px 24px;border-radius:14px;margin:32px 24px;}
+  .finale .em{font-size:84px;line-height:1}
+  .finale h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:10px;height:14px;top:-20px;border-radius:2px;animation:fall linear forwards}
+  @keyframes fall{ to { transform: translateY(110vh) rotate(720deg); } }
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,.confetti,.hero,.divider,.section{display:none !important}
+    .cert-print{display:block !important;padding:30px !important}
+  }
+  .cert-print{display:none}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第4回</span> <b>運用・改善・マネタイズ ／ 修了</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#logs">2<span>ログ監視</span><span class="ic">📊</span></a>
+  <a href="#feedback">3<span>フィードバック</span><span class="ic">💬</span></a>
+  <a href="#matrix">4<span>優先度マトリクス</span><span class="ic">🎯</span></a>
+  <a href="#monetize">5<span>マネタイズ診断</span><span class="ic">💸</span></a>
+  <a href="#copyright">6<span>著作権チェッカー</span><span class="ic">⚖️</span></a>
+  <a href="#course">7<span>コースふり返り</span><span class="ic">📚</span></a>
+  <a href="#cert">8<span>修了証</span><span class="ic">🎓</span></a>
+  <a href="#quiz">9<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">10<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 中学生プログラミング塾・上級 ／ 最終回</div>
+    <h1>運用・改善・<br>マネタイズ</h1>
+    <p>公開後の 世界 ＋ <b>コース修了</b> 🎓</p>
+    <div class="em">📊💸🎉</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「公開」 から その先 へ</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:42px;display:block">📊</span><h3>ログ</h3><p style="color:var(--muted);font-size:14px">監視・気づき</p></div>
+    <div class="card"><span style="font-size:42px;display:block">💬</span><h3>声を集める</h3><p style="color:var(--muted);font-size:14px">改善のヒント</p></div>
+    <div class="card"><span style="font-size:42px;display:block">💸</span><h3>マネタイズ</h3><p style="color:var(--muted);font-size:14px">4モデル比較</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🎓</span><h3>修了</h3><p style="color:var(--muted);font-size:14px">おめでとう！</p></div>
+  </div>
+</section>
+
+<!-- 1. ログ監視 -->
+<div class="divider" id="logs" data-snav-target>
+  <div class="num">01.</div>
+  <h2>ログ ダッシュボード</h2>
+</div>
+
+<section class="section">
+  <h2>本物の 運用画面 を 体感</h2>
+  <p class="lead">サンプル 200リクエスト の ログ。 上の フィルタで <b>INFO / WARN / ERROR</b> を 切り替え。 エラー が 何件 あるか パッと わかる！</p>
+
+  <div class="logs">
+    <div class="logs-head">
+      <span class="title">📊 production-logs / my-todo-app</span>
+      <div class="logs-filter">
+        <button class="active" data-lvl="ALL" onclick="setLogFilter('ALL')">ALL</button>
+        <button data-lvl="INFO" onclick="setLogFilter('INFO')">INFO</button>
+        <button data-lvl="WARN" onclick="setLogFilter('WARN')">WARN</button>
+        <button data-lvl="ERROR" onclick="setLogFilter('ERROR')">ERROR</button>
+      </div>
+    </div>
+    <div class="logs-body" id="logsBody"></div>
+    <div class="logs-stats" id="logsStats"></div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:var(--secondary)">💡 「無音 ＝ 健康」 ではない</h3>
+    <p style="margin-top:6px;font-size:14px">バグに 遭った ユーザーの <b>9割は 報告しない</b>。 ログ が ある＝気づける。<br>
+    Sentry（エラー）／Google Analytics（アクセス）／Datadog（総合）から 始めよう！</p>
+  </div>
+</section>
+
+<!-- 2. フィードバック分類 -->
+<div class="divider" id="feedback" data-snav-target>
+  <div class="num">02.</div>
+  <h2>フィードバック 分類ツール</h2>
+</div>
+
+<section class="section">
+  <h2>4種類 に 仕分け（ドラッグ＆ドロップ）</h2>
+  <p class="lead">ユーザーの 声 を 入力 → <b>🐛バグ / 💡要望 / ❤️称賛 / 😡苦情</b> の どれかに ドラッグ！</p>
+
+  <div class="fb">
+    <div class="fb-add">
+      <input type="text" id="fbInput" placeholder="ユーザーの 声を 入力" maxlength="60">
+      <button onclick="addFB()">+ 追加</button>
+    </div>
+    <div class="fb-examples">
+      <span>例：</span>
+      <button onclick="addEx('ログインボタンが 押せません')">バグ系</button>
+      <button onclick="addEx('ダークモードが ほしい')">要望系</button>
+      <button onclick="addEx('すごく 便利！毎日 使ってます')">称賛系</button>
+      <button onclick="addEx('遅すぎて イライラする')">苦情系</button>
+    </div>
+
+    <div class="fb-buckets">
+      <div class="fb-bucket bug" data-bucket="bug"><h4>🐛 バグ（即修正）</h4><div class="fb-items" data-bucket="bug"></div></div>
+      <div class="fb-bucket req" data-bucket="req"><h4>💡 改善要望</h4><div class="fb-items" data-bucket="req"></div></div>
+      <div class="fb-bucket praise" data-bucket="praise"><h4>❤️ 称賛</h4><div class="fb-items" data-bucket="praise"></div></div>
+      <div class="fb-bucket complaint" data-bucket="complaint"><h4>😡 苦情</h4><div class="fb-items" data-bucket="complaint"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 優先度マトリクス -->
+<div class="divider" id="matrix" data-snav-target>
+  <div class="num">03.</div>
+  <h2>優先度 マトリクス</h2>
+</div>
+
+<section class="section">
+  <h2>「インパクト × 工数」 で 配置</h2>
+  <p class="lead">上の <b>フィードバック</b> が ここに 配置されます。 各点を クリックで 重さ を 調整！</p>
+
+  <div class="matrix">
+    <div class="matrix-frame" id="matrixFrame">
+      <div class="quad tl">🔥 すぐ やる</div>
+      <div class="quad tr">📅 計画して</div>
+      <div class="quad bl">😊 余裕あれば</div>
+      <div class="quad br">❌ やらない</div>
+      <span class="axis-label x-l">← 工数 小</span>
+      <span class="axis-label x-r">工数 大 →</span>
+      <span class="axis-label y-t">↑ インパクト 大</span>
+      <span class="axis-label y-b">↓ 小</span>
+    </div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:10px">↑ フィードバックを 追加すると 自動で 配置 ／ 点を クリックで 調整</p>
+  </div>
+</section>
+
+<!-- 4. マネタイズ診断 -->
+<div class="divider" id="monetize" data-snav-target>
+  <div class="num">04.</div>
+  <h2>マネタイズ モデル 診断</h2>
+</div>
+
+<section class="section">
+  <h2>5問で 4モデル の 適性 を 判定</h2>
+  <p class="lead">広告 / サブスク / 従量 / 手数料 — どれが あなたの サービスに 合うか？</p>
+
+  <div class="mon" id="mon">
+    <div class="mon-q" data-q="0">
+      <div class="q">Q1. 予想 ユーザー数 は？</div>
+      <div class="opts">
+        <button data-tag="ad">数万 以上（大）</button>
+        <button data-tag="sub,fee">数百〜数千（中）</button>
+        <button data-tag="usage">数十（B2B 想定）</button>
+      </div>
+    </div>
+    <div class="mon-q" data-q="1">
+      <div class="q">Q2. ユーザーは <b>お金を 払う 意欲</b> ある？</div>
+      <div class="opts">
+        <button data-tag="ad">無料 だけ 使う</button>
+        <button data-tag="sub,fee">機能次第 で 払う</button>
+        <button data-tag="usage">仕事用 なので 払う</button>
+      </div>
+    </div>
+    <div class="mon-q" data-q="2">
+      <div class="q">Q3. サービスの <b>使用頻度</b> は？</div>
+      <div class="opts">
+        <button data-tag="ad,sub">毎日</button>
+        <button data-tag="fee">週1〜月数回</button>
+        <button data-tag="usage">月数回 大量に</button>
+      </div>
+    </div>
+    <div class="mon-q" data-q="3">
+      <div class="q">Q4. <b>取引</b> が 発生する 仕組み？</div>
+      <div class="opts">
+        <button data-tag="fee">はい（売買 / マッチング）</button>
+        <button data-tag="ad,sub,usage">いいえ</button>
+      </div>
+    </div>
+    <div class="mon-q" data-q="4">
+      <div class="q">Q5. 機能の <b>「高度版」 / 「無制限版」</b> が 作れる？</div>
+      <div class="opts">
+        <button data-tag="sub">はい</button>
+        <button data-tag="ad,fee,usage">いいえ</button>
+      </div>
+    </div>
+    <div class="mon-result" id="monResult"></div>
+    <button class="mon-reset" onclick="monReset()">↺ もう一度</button>
+  </div>
+
+  <div class="card warn" style="margin-top:18px">
+    <h3>⚠️ 13歳未満・未成年 の 注意</h3>
+    <p style="margin-top:6px;font-size:14px">Google AdSense / Stripe / PayPal は <b>18歳以上</b>。 中学生は <b>保護者の名義</b> で 受取が 必要。<br>
+    収益が <b>年20万円</b> 超 → 確定申告 が 必要！ 必ず 保護者・税理士 と。</p>
+  </div>
+</section>
+
+<!-- 5. 著作権 -->
+<div class="divider" id="copyright" data-snav-target>
+  <div class="num">05.</div>
+  <h2>著作権 チェッカー</h2>
+</div>
+
+<section class="section">
+  <h2>使ってもいい？ 判定</h2>
+  <p class="lead">使いたい 素材 を 入力 or プリセット選択 → ✅OK / ⚠️注意 / ❌NG。</p>
+
+  <div class="cprt">
+    <div class="cprt-form">
+      <input type="text" id="cprtInput" placeholder="例：ジブリ映画のスクショ / ChatGPT生成画像 / 自撮り..." maxlength="60">
+      <button onclick="checkCprt()">判定</button>
+    </div>
+    <div class="cprt-presets">
+      <span>例:</span>
+      <button onclick="presetCprt('自分で撮った 写真')">自撮り</button>
+      <button onclick="presetCprt('Unsplash の フリー画像')">Unsplash</button>
+      <button onclick="presetCprt('Google検索で 出てきた 画像')">Google 検索</button>
+      <button onclick="presetCprt('ジブリ映画 の スクリーンショット')">ジブリ</button>
+      <button onclick="presetCprt('ChatGPT で 生成した テキスト')">ChatGPT生成</button>
+      <button onclick="presetCprt('Stack Overflow から コピペ')">StackOverflow</button>
+      <button onclick="presetCprt('MIT ライセンス の OSS')">MIT OSS</button>
+      <button onclick="presetCprt('YouTube から ダウンロードした 動画')">YouTube動画</button>
+    </div>
+    <div class="cprt-history" id="cprtHistory"></div>
+  </div>
+</section>
+
+<!-- 6. コースふり返り -->
+<div class="divider" id="course" data-snav-target>
+  <div class="num">06.</div>
+  <h2>上級コース ふり返り（10項目）</h2>
+</div>
+
+<section class="section">
+  <h2>4回 で 身についた こと</h2>
+  <p class="lead">クリックで チェック。 7つ以上 で 修了レベル！</p>
+
+  <div class="checklist" id="courseCheck">
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📝 ユーザーストーリー（As a / I want / So that）が 書ける</b><span>第1回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🗄️ DB スキーマ・ER図 を 設計できる</b><span>第1回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🌐 REST API を CRUD で 設計できる</b><span>第1回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🌿 Git ブランチ → PR → レビュー → マージ</b><span>第2回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🔐 パスワード ハッシュ・SQLi/XSS 対策</b><span>第2回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🧪 pytest / Jest で テスト が 書ける</b><span>第3回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🔄 GitHub Actions で CI/CD 設定</b><span>第3回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🚀 Render / Vercel で 本物の URL を 持っている</b><span>第3回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📊 ログ・フィードバック を 集めて 優先度づけ できる</b><span>第4回</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⚖️ 著作権・マネタイズ・法務 の 基本を 知っている</b><span>第4回</span></div></div>
+  </div>
+  <div class="check-progress" id="courseProg">0 / 10 達成</div>
+</section>
+
+<!-- 7. 修了証 -->
+<div class="divider" id="cert" data-snav-target>
+  <div class="num">07.</div>
+  <h2>修了証 ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>君 専用の 修了証</h2>
+  <p class="lead">名前・教室名・日付を 入力 → A4印刷！</p>
+
+  <div class="certbox">
+    <div class="certform">
+      <div>
+        <label>ニックネーム</label>
+        <input type="text" id="certName" value="ゆうた" maxlength="30">
+      </div>
+      <div>
+        <label>塾名</label>
+        <input type="text" id="certSchool" value="○○ プログラミング塾" maxlength="40">
+      </div>
+      <div>
+        <label>修了日</label>
+        <input type="text" id="certDate" value="" placeholder="例：2026年5月">
+      </div>
+    </div>
+
+    <div class="cert-print" id="certPrint">
+      <div class="cert" id="certView">
+        <div class="badge">🎓</div>
+        <h2>修　了　証</h2>
+        <div class="body">
+          上記の者は<br>
+          <b>中学生プログラミング塾・上級コース</b> を<br>
+          全 4回 修了したことを 証します
+          <div class="name" id="certNameView">ゆうた</div>
+          「設計 → 実装 → テスト → 公開 → 運用」<br>
+          の <b>1サイクル</b> を やり遂げた
+        </div>
+        <div class="footer">
+          <div id="certDateView"></div>
+          <div id="certSchoolView">○○ プログラミング塾</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cert" id="certScreen" style="margin-top:18px">
+      <div class="badge">🎓</div>
+      <h2>修　了　証</h2>
+      <div class="body">
+        上記の者は<br>
+        <b>中学生プログラミング塾・上級コース</b> を<br>
+        全 4回 修了したことを 証します
+        <div class="name" id="certNameView2">ゆうた</div>
+        「設計 → 実装 → テスト → 公開 → 運用」<br>
+        の <b>1サイクル</b> を やり遂げた
+      </div>
+      <div class="footer">
+        <div id="certDateView2"></div>
+        <div id="certSchoolView2">○○ プログラミング塾</div>
+      </div>
+    </div>
+
+    <div class="cert-tools">
+      <button class="accent" onclick="window.print()">🖨️ A4で 印刷</button>
+      <button onclick="downloadCert()">💾 .html で 保存</button>
+      <button class="celebrate" onclick="celebrate()">🎊 おめでとう ボタン</button>
+    </div>
+  </div>
+</section>
+
+<!-- 8. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">08.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう</h2>
+  <p class="lead">最終回 です！</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. 公開した サービスで <b>「無音 ＝ 健康」 ではない</b> 理由は？</div>
+      <div class="opts">
+        <button data-i="0">ログが 出ない から</button>
+        <button data-i="1">ユーザーが いない から</button>
+        <button data-i="2">バグに 遭った ユーザーの 9割は <b>諦めて 去る</b> から</button>
+        <button data-i="3">音声 通信 だから</button>
+      </div>
+      <div class="ex">✅ ユーザーは「問題があっても <b>報告しない</b>」のが 普通。<br>ログ・監視（Sentry など）で <b>能動的に 気づく</b> 仕組みが 必須！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q2. 優先度マトリクス で <b>「最優先」</b> なのは？</div>
+      <div class="opts">
+        <button data-i="0">インパクト 大 × 工数 小</button>
+        <button data-i="1">インパクト 大 × 工数 大</button>
+        <button data-i="2">インパクト 小 × 工数 小</button>
+        <button data-i="3">インパクト 小 × 工数 大</button>
+      </div>
+      <div class="ex">✅ <b>「すぐやる」</b>＝影響大 × 簡単。 一番 ROI が 高い。<br>「インパクト大 × 工数大」は <b>計画して</b>、 残りは 余裕あれば / やらない！</div>
+    </div>
+
+    <div class="qrow" data-a="3">
+      <div class="q">Q3. <b>13歳の 中学生</b> が マネタイズ する 際の 注意 は？</div>
+      <div class="opts">
+        <button data-i="0">そのまま AdSense アカウント を 作る</button>
+        <button data-i="1">税金は 気にしない</button>
+        <button data-i="2">利用規約 不要</button>
+        <button data-i="3">保護者名義 / 確定申告 / 利用規約 すべて 必要</button>
+      </div>
+      <div class="ex">✅ AdSense / Stripe は <b>18歳以上</b>。 保護者名義 で 受け取り。<br>年20万超 で 確定申告。 公開 ＝ 利用規約 ＋ プライバシーポリシー 必須！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. 修了 -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>修了！</h2>
+</div>
+
+<section class="section">
+  <h2>上級コース 4回 ふり返り</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📐 第1回：要件定義と設計</h3><p style="color:var(--muted);font-size:14px">ユーザーストーリー / DB / API</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>💻 第2回：実装とレビュー</h3><p style="color:var(--muted);font-size:14px">Git / PR / 認証 / セキュリティ</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🧪 第3回：テストとリリース</h3><p style="color:var(--muted);font-size:14px">pytest / CI/CD / デプロイ</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>📊 第4回：運用・改善・マネタイズ</h3><p style="color:var(--muted);font-size:14px">ログ / 優先度 / 法務</p></div></div>
+  </div>
+</section>
+
+<div class="finale">
+  <div class="em">🎓✨🎉</div>
+  <h2>上級コース 修了 おめでとう！</h2>
+  <p style="font-size:18px;margin-top:8px">「設計 → 実装 → テスト → 公開 → 運用」 の <b>1サイクル</b> を 制覇！<br>
+  初級・中級・上級 全12回 ＝ <b>真のエンジニアの卵</b> です 🚀</p>
+  <button onclick="celebrate()" style="margin-top:20px;background:white;color:var(--primary);
+    border:none;padding:16px 36px;border-radius:10px;font-family:inherit;font-size:16px;
+    font-weight:700;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18)">🎊 おめでとう ボタン</button>
+</div>
+
+<footer>中学生プログラミング塾 ／ 上級 第4回｜運用・改善・マネタイズ概論 ／ コース修了</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* ログ ダッシュボード */
+  // 生成：200行のリアルなログ
+  function genLogs(){
+    const logs = [];
+    const paths = ['/api/reviews','/api/books','/api/users','/api/auth/login','/api/tasks','/'];
+    const errors = [
+      { p:'/api/reviews', m:'POST 500 KeyError: rating missing' },
+      { p:'/api/auth/login', m:'POST 401 invalid credentials' },
+      { p:'/api/users/999', m:'GET 404 not found' },
+      { p:'/api/books', m:'POST 500 DB connection timeout' },
+    ];
+    let h = 10, m = 0;
+    for(let i = 0; i < 100; i++){
+      m += Math.floor(Math.random() * 3) + 1;
+      if(m >= 60){ m -= 60; h++; }
+      if(h >= 24) h = 0;
+      const ts = '2026-05-24 ' + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(Math.floor(Math.random()*60)).padStart(2,'0');
+      const r = Math.random();
+      if(r < 0.05){
+        const err = errors[Math.floor(Math.random()*errors.length)];
+        logs.push({ ts, lvl:'ERROR', method:'POST', path:err.p, status: err.m.match(/\d+/)[0], msg:err.m, ms: Math.floor(Math.random()*1500)+500 });
+      } else if(r < 0.15){
+        const p = paths[Math.floor(Math.random()*paths.length)];
+        const codes = ['404','429'];
+        const code = codes[Math.floor(Math.random()*codes.length)];
+        logs.push({ ts, lvl:'WARN', method:'GET', path:p, status:code, msg:code==='404'?'not found':'rate limit', ms: Math.floor(Math.random()*100) });
+      } else {
+        const p = paths[Math.floor(Math.random()*paths.length)];
+        const methods = ['GET','POST','PUT','DELETE','GET','GET','GET'];
+        const method = methods[Math.floor(Math.random()*methods.length)];
+        const codes = ['200','201','204'];
+        const code = codes[Math.floor(Math.random()*codes.length)];
+        logs.push({ ts, lvl:'INFO', method, path:p, status:code, msg:'', ms: Math.floor(Math.random()*200) });
+      }
+    }
+    return logs;
+  }
+  const ALL_LOGS = genLogs();
+  let logFilter = 'ALL';
+  function renderLogs(){
+    const body = $('logsBody');
+    const filtered = logFilter === 'ALL' ? ALL_LOGS : ALL_LOGS.filter(l => l.lvl === logFilter);
+    body.innerHTML = filtered.slice(0, 80).map(l => {
+      const sCls = 's' + l.status[0];
+      return `<div class="log-line ${l.lvl}">
+        <span class="ts">[${l.ts}]</span>
+        <span class="lvl">${l.lvl}</span>
+        <span class="msg">${l.method} ${l.path}</span>
+        <span class="status ${sCls}">${l.status} (${l.ms}ms)</span>
+      </div>${l.msg ? `<div class="traceback">→ ${escapeHTML(l.msg)}</div>` : ''}`;
+    }).join('');
+    // stats
+    const info = ALL_LOGS.filter(l => l.lvl === 'INFO').length;
+    const warn = ALL_LOGS.filter(l => l.lvl === 'WARN').length;
+    const err = ALL_LOGS.filter(l => l.lvl === 'ERROR').length;
+    const avgMs = Math.round(ALL_LOGS.reduce((s,l) => s + l.ms, 0) / ALL_LOGS.length);
+    $('logsStats').innerHTML = `<span>合計: <b>${ALL_LOGS.length}</b></span>
+      <span>INFO: <b>${info}</b></span>
+      <span class="warn">WARN: <b>${warn}</b></span>
+      <span class="err">ERROR: <b>${err}</b></span>
+      <span>平均応答: <b>${avgMs}ms</b></span>
+      <span>エラー率: <b>${(err/ALL_LOGS.length*100).toFixed(1)}%</b></span>`;
+  }
+  function setLogFilter(lvl){
+    logFilter = lvl;
+    document.querySelectorAll('.logs-filter button').forEach(b => b.classList.toggle('active', b.dataset.lvl === lvl));
+    renderLogs();
+  }
+  renderLogs();
+
+  /* フィードバック分類 + マトリクス連動 */
+  let fbId = 0;
+  const fbItems = {}; // id -> { text, bucket, x, y }
+  function addFB(){
+    const v = $('fbInput').value.trim();
+    if(!v) return;
+    fbId++;
+    fbItems[fbId] = { id:fbId, text:v, bucket:'bug', x:.25, y:.75 };
+    $('fbInput').value = '';
+    renderFB();
+    renderMatrix();
+  }
+  function addEx(text){
+    $('fbInput').value = text;
+    addFB();
+  }
+  $('fbInput').addEventListener('keypress', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); addFB(); }
+  });
+  const buckets = [...document.querySelectorAll('.fb-bucket')];
+  function renderFB(){
+    buckets.forEach(b => {
+      const inner = b.querySelector('.fb-items');
+      inner.innerHTML = '';
+      Object.values(fbItems).filter(it => it.bucket === b.dataset.bucket).forEach(it => {
+        const el = document.createElement('div');
+        el.className = 'fb-item';
+        el.draggable = true;
+        el.dataset.id = it.id;
+        el.innerHTML = `<span style="flex:1">${escapeHTML(it.text)}</span><button class="x">×</button>`;
+        el.querySelector('.x').addEventListener('click', e => {
+          e.stopPropagation();
+          delete fbItems[it.id];
+          renderFB(); renderMatrix();
+        });
+        el.addEventListener('dragstart', e => {
+          el.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', String(it.id));
+        });
+        el.addEventListener('dragend', () => el.classList.remove('dragging'));
+        inner.appendChild(el);
+      });
+    });
+  }
+  buckets.forEach(b => {
+    b.addEventListener('dragover', e => { e.preventDefault(); b.classList.add('over'); });
+    b.addEventListener('dragleave', () => b.classList.remove('over'));
+    b.addEventListener('drop', e => {
+      e.preventDefault();
+      b.classList.remove('over');
+      const id = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if(!fbItems[id]) return;
+      fbItems[id].bucket = b.dataset.bucket;
+      // バケツに応じてマトリクスのデフォルト位置を変える
+      const def = { bug:{x:.25,y:.85}, req:{x:.6,y:.6}, praise:{x:.3,y:.3}, complaint:{x:.25,y:.7} }[b.dataset.bucket];
+      if(def){ fbItems[id].x = def.x; fbItems[id].y = def.y; }
+      renderFB(); renderMatrix();
+    });
+  });
+
+  /* マトリクス */
+  const matrixFrame = $('matrixFrame');
+  function renderMatrix(){
+    [...matrixFrame.querySelectorAll('.dot')].forEach(d => d.remove());
+    Object.values(fbItems).forEach(it => {
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      const easy = it.x < .5, important = it.y > .5;
+      if(easy && important) dot.classList.add('fix');
+      else if(!easy && important) dot.classList.add('plan');
+      else if(easy && !important) dot.classList.add('easy');
+      else dot.classList.add('no');
+      dot.textContent = it.text.length > 18 ? it.text.slice(0,16)+'…' : it.text;
+      dot.title = it.text;
+      dot.style.left = (it.x * 100) + '%';
+      dot.style.top = ((1 - it.y) * 100) + '%';
+      dot.addEventListener('click', () => {
+        info('🎯', it.text, `
+          <div style="text-align:left;font-size:14px;line-height:1.8">
+            <p>このフィードバックの 位置を 調整：</p>
+            <div style="margin-top:10px"><label style="font-weight:bold">工数（← 小　大 →）</label>
+            <input type="range" min="0" max="100" value="${Math.round(it.x*100)}" id="rangeX" style="width:100%;accent-color:var(--primary)"></div>
+            <div style="margin-top:10px"><label style="font-weight:bold">インパクト（↓ 小　大 ↑）</label>
+            <input type="range" min="0" max="100" value="${Math.round(it.y*100)}" id="rangeY" style="width:100%;accent-color:var(--primary)"></div>
+            <div style="text-align:center;margin-top:14px;color:var(--muted);font-size:13px">スライダーを 動かして 閉じてね</div>
+          </div>`);
+        setTimeout(() => {
+          const rx = document.getElementById('rangeX'), ry = document.getElementById('rangeY');
+          if(!rx) return;
+          rx.addEventListener('input', () => { it.x = rx.value/100; renderMatrix(); });
+          ry.addEventListener('input', () => { it.y = ry.value/100; renderMatrix(); });
+        }, 50);
+      });
+      matrixFrame.appendChild(dot);
+    });
+  }
+  renderFB();
+  renderMatrix();
+
+  /* マネタイズ診断 */
+  const MON_LABELS = { ad:'📺 広告', sub:'🔄 サブスク', usage:'💰 従量課金', fee:'🤝 手数料' };
+  function updateMon(){
+    const rows = [...document.querySelectorAll('#mon .mon-q')];
+    let answered = 0;
+    const scores = { ad:0, sub:0, usage:0, fee:0 };
+    rows.forEach(row => {
+      const sel = row.querySelector('.opts button.sel');
+      if(sel){
+        answered++;
+        sel.dataset.tag.split(',').forEach(t => scores[t]++);
+      }
+    });
+    if(answered < rows.length){
+      $('monResult').classList.remove('show');
+      return;
+    }
+    const max = Math.max(...Object.values(scores));
+    const winners = Object.entries(scores).filter(([k,v]) => v === max).map(([k]) => MON_LABELS[k]);
+    const r = $('monResult');
+    r.classList.add('show');
+    let html = '<h4>💡 おすすめ モデル</h4>';
+    html += '<div class="scores">';
+    Object.entries(scores).forEach(([k,v]) => {
+      const isBest = v === max && v > 0;
+      html += `<div class="score${isBest?' best':''}">${MON_LABELS[k]}<b>${v}</b></div>`;
+    });
+    html += '</div>';
+    html += `<div style="margin-top:10px;font-size:14px"><b>適性 トップ：</b>${winners.join(' / ')}</div>`;
+    html += `<div style="margin-top:6px;font-size:13px;color:var(--muted)">※ あくまで 目安です。 まず <b>無料</b> で 公開して 反応を 見るのが おすすめ！</div>`;
+    r.innerHTML = html;
+  }
+  document.querySelectorAll('#mon .mon-q').forEach(row => {
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        row.querySelectorAll('.opts button').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+        updateMon();
+      });
+    });
+  });
+  function monReset(){
+    document.querySelectorAll('#mon .opts button.sel').forEach(b => b.classList.remove('sel'));
+    $('monResult').classList.remove('show');
+  }
+
+  /* 著作権チェッカー */
+  const CPRT_RULES = [
+    [/(自分|自撮り|自作)/, 'ok', '✅', 'OK: 自分で 作ったもの', '権利は あなた のもの'],
+    [/(unsplash|pixabay|pexels|フリー素材)/i, 'ok', '✅', 'OK: フリー素材', 'ライセンス（CC0 等）の 範囲内で 使用'],
+    [/(mit|apache|bsd|gpl|オープンソース|OSS)/i, 'warn', '⚠️', '注意: OSS は ライセンス遵守', 'クレジット表記 / ライセンス 同梱 が 必要'],
+    [/(stack ?overflow)/i, 'warn', '⚠️', '注意: SO は CC BY-SA', '出典明記 ＋ 派生も SA（同条件）'],
+    [/(google.{0,3}検索|web.{0,3}検索|画像検索)/i, 'ng', '🚫', 'NG: 検索結果の 画像', 'ほぼ 全部 他人の著作物。 勝手に 使うと 違反'],
+    [/(ジブリ|ディズニー|アニメ|漫画|キャラクター)/, 'ng', '🚫', 'NG: アニメ/漫画の キャラ', '商用 不可。 二次創作も グレー'],
+    [/(youtube|ユーチューブ).{0,5}(ダウンロード|落と|保存)/i, 'ng', '🚫', 'NG: YouTube ダウンロード', '原則 違反（規約違反 ＋ 著作権侵害）'],
+    [/(chatgpt|gemini|claude|midjourney|生成).{0,5}(画像|テキスト|文章|コード)/i, 'warn', '⚠️', '注意: AI生成物', '基本OK だが、 学習元 トラブル の 可能性。 商用は 規約確認'],
+    [/(歌詞|楽曲|音楽|j-pop|jpop)/i, 'ng', '🚫', 'NG: 商用楽曲・歌詞', 'JASRAC 等の 管理。 BGM は フリーBGM サイトから'],
+    [/(font|フォント).{0,5}(無料|フリー)/i, 'warn', '⚠️', '注意: フォント', '商用OK か 必ず ライセンス確認'],
+  ];
+  function checkCprt(){
+    const v = $('cprtInput').value.trim();
+    if(!v) return;
+    addCprtRow(v);
+    $('cprtInput').value = '';
+  }
+  function presetCprt(text){ addCprtRow(text); }
+  function addCprtRow(name){
+    let v = 'warn', ic = '⚠️', verdict = '注意（不明）', reason = '出典・ライセンス を 必ず 確認';
+    for(const [pat, vv, icc, vd, rs] of CPRT_RULES){
+      if(pat.test(name)){ v = vv; ic = icc; verdict = vd; reason = rs; break; }
+    }
+    const div = document.createElement('div');
+    div.className = 'cprt-row ' + v;
+    div.innerHTML = `<div class="ic">${ic}</div>
+      <div class="body">
+        <div class="name">${escapeHTML(name)}</div>
+        <div class="reason">${escapeHTML(reason)}</div>
+      </div>
+      <div class="verdict">${escapeHTML(verdict)}</div>`;
+    const hist = $('cprtHistory');
+    hist.insertBefore(div, hist.firstChild);
+  }
+  $('cprtInput').addEventListener('keypress', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); checkCprt(); }
+  });
+
+  /* コースチェック */
+  (function(){
+    const root = $('courseCheck'), out = $('courseProg');
+    const items = [...root.querySelectorAll('.check-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      out.textContent = done + ' / 10 達成';
+      if(done >= 10){ out.style.color = '#10B981'; out.textContent = '🎉 10/10 完全制覇！ 真のエンジニアの卵！'; }
+      else if(done >= 7){ out.style.color = 'var(--accent)'; out.textContent = done + ' / 10 達成 — 修了レベル ✨'; }
+      else { out.style.color = ''; }
+    }
+    items.forEach(it => it.addEventListener('click', () => { it.classList.toggle('on'); update(); }));
+    update();
+  })();
+
+  /* 修了証 */
+  function refreshCert(){
+    const n = $('certName').value.trim() || 'ゆうた';
+    const s = $('certSchool').value.trim() || '○○ プログラミング塾';
+    let d = $('certDate').value.trim();
+    if(!d) d = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long'});
+    $('certNameView').textContent = n;
+    $('certNameView2').textContent = n;
+    $('certSchoolView').textContent = s;
+    $('certSchoolView2').textContent = s;
+    $('certDateView').textContent = d;
+    $('certDateView2').textContent = d;
+  }
+  ['certName','certSchool','certDate'].forEach(id => $(id).addEventListener('input', refreshCert));
+  refreshCert();
+
+  function downloadCert(){
+    const n = $('certName').value.trim() || 'me';
+    const cert = $('certScreen').outerHTML;
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHTML(n)} 修了証</title>
+<style>
+body{font-family:'Inter','Hiragino Sans',sans-serif;padding:40px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.cert{background:linear-gradient(135deg,#F5F3FF,#ECFEFF,#ECFDF5);border:6px double #6D28D9;border-radius:18px;padding:50px 40px;text-align:center;max-width:640px;box-shadow:0 8px 20px rgba(109,40,217,.18)}
+.cert .badge{font-size:60px}
+.cert h2{color:#6D28D9;font-size:34px;margin:6px 0 14px;letter-spacing:8px;font-weight:800}
+.cert .body{font-size:16px;line-height:2;color:#0F172A}
+.cert .name{font-size:30px;font-weight:bold;color:#10B981;margin:14px 0;padding:10px 0;border-top:2px solid #6D28D9;border-bottom:2px solid #6D28D9;display:inline-block;min-width:260px}
+.cert .footer{margin-top:14px;font-size:13px;color:#64748B}
+@media print{body{background:white;padding:20px}.cert{box-shadow:none}}
+</style></head><body>${cert}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '修了証_' + n.replace(/[\/\\?<>:|"*]/g,'_') + '.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 修了証 を 保存しました');
+  }
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* 紙吹雪 */
+  const confetti = $('confetti');
+  function celebrate(){
+    confetti.innerHTML = '';
+    confetti.classList.add('on');
+    const colors = ['#6D28D9','#06B6D4','#10B981','#DC2626','#F59E0B','#EC4899','#A78BFA'];
+    for(let i = 0; i < 120; i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+      s.style.animationDelay = (Math.random() * 1.2) + 's';
+      s.style.transform = `rotate(${Math.random()*360}deg)`;
+      confetti.appendChild(s);
+    }
+    setTimeout(()=>confetti.classList.remove('on'), 5000);
+    info('🎓','修了 おめでとう ！',`<div style="text-align:center;line-height:2;font-size:17px">
+      中学生プログラミング塾・上級コース<br>
+      全 4回 完全 制覇！<br><br>
+      <b>設計 → 実装 → テスト → 公開 → 運用</b><br>
+      の 1サイクル を 自分の手で やり遂げた！<br><br>
+      初級・中級・上級 全12回 ＝<br>
+      <b>真の エンジニアの卵</b> です 🚀<br><br>
+      これからも 作り続けて、<br>
+      世界を 少しずつ 良くしていこう！</div>`);
+  }
+
+  /* ヘルプ */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

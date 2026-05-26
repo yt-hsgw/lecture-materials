@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・上級 第2回｜実装とレビュー</title>
+<style>
+  :root{
+    --primary:#6D28D9; --secondary:#06B6D4; --accent:#10B981;
+    --warn:#DC2626; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --git-main:#A78BFA; --git-feat:#34D399; --git-fix:#F87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#6D28D9 0%,#0E7490 50%,#0F172A 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#ECFEFF}
+
+  /* Code blocks */
+  .code{background:var(--code-bg);color:var(--code-text);border-radius:10px;
+    padding:18px 22px;font-family:'JetBrains Mono','SF Mono','Menlo',monospace;font-size:14px;
+    line-height:1.7;box-shadow:var(--shadow);overflow-x:auto;white-space:pre;}
+
+  /* Git visualizer */
+  .gitviz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .gitviz-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;justify-content:center}
+  .gitviz-controls button{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:9px 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .gitviz-controls button.feat{background:var(--accent)}
+  .gitviz-controls button.merge{background:var(--secondary);color:var(--dark)}
+  .gitviz-controls button.reset{background:var(--muted)}
+  .gitviz-controls button:hover{transform:translateY(-1px)}
+  .gitviz-svg{width:100%;background:#F8FAFC;border:1px solid var(--border);border-radius:8px;
+    min-height:240px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .gitviz-log{background:var(--code-bg);color:var(--code-text);border-radius:8px;
+    padding:14px 18px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;
+    line-height:1.7;margin-top:14px;max-height:180px;overflow-y:auto}
+
+  /* PR simulator */
+  .pr{background:white;border-radius:14px;padding:0;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;overflow:hidden}
+  .pr-head{background:linear-gradient(135deg,#1F2937,#0F172A);color:white;padding:14px 18px}
+  .pr-head .number{color:var(--secondary);font-weight:bold;font-size:14px}
+  .pr-head .title{font-size:18px;font-weight:700;margin-top:2px}
+  .pr-meta{padding:10px 18px;background:#F8FAFC;border-bottom:1px solid var(--border);
+    display:flex;gap:12px;font-size:13px;color:var(--muted);align-items:center;flex-wrap:wrap}
+  .pr-meta .branch-tag{font-family:'JetBrains Mono','SF Mono',monospace;background:#DDD6FE;color:#5B21B6;
+    padding:3px 10px;border-radius:6px;font-weight:600;font-size:12px}
+  .pr-meta .branch-tag.feat{background:#BBF7D0;color:#14532D}
+  .pr-meta .arrow{font-size:16px;color:var(--muted)}
+  .pr-meta .status{margin-left:auto;background:var(--accent);color:white;padding:4px 12px;border-radius:4px;font-weight:bold;font-size:12px}
+  .pr-meta .status.draft{background:var(--muted)}
+  .pr-meta .status.review{background:var(--secondary);color:var(--dark)}
+  .pr-meta .status.merged{background:#6D28D9}
+  .pr-body{padding:18px}
+  .pr-body h4{color:var(--dark);font-size:14px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .pr-form input,.pr-form textarea{width:100%;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:inherit;font-size:14px;background:#F8FAFC;color:var(--dark);margin-bottom:12px}
+  .pr-form textarea{min-height:80px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px}
+  .pr-form input:focus,.pr-form textarea:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(109,40,217,.1)}
+  .pr-diff{background:var(--code-bg);border-radius:8px;padding:14px 18px;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-size:13px;line-height:1.7;margin-top:8px}
+  .pr-diff .line{display:block;white-space:pre}
+  .pr-diff .ctx{color:#94A3B8}
+  .pr-diff .add{color:#6EE7B7;background:rgba(110,231,183,.1)}
+  .pr-diff .del{color:#FCA5A5;background:rgba(252,165,165,.1)}
+  .pr-diff .file{color:var(--secondary);font-weight:bold;margin-bottom:6px}
+
+  .pr-reviews{padding:14px 18px;background:#F8FAFC;border-top:1px solid var(--border)}
+  .pr-review{background:white;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;
+    display:flex;gap:10px;align-items:flex-start;font-size:14px}
+  .pr-review .avatar{flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--primary);
+    color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px}
+  .pr-review .body{flex:1;line-height:1.6}
+  .pr-review .name{font-weight:700;color:var(--primary);font-size:13px}
+  .pr-review .prefix{display:inline-block;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:bold;
+    color:white;font-family:'JetBrains Mono','SF Mono',monospace;margin-right:6px}
+  .pr-review .prefix.nit{background:var(--muted)}
+  .pr-review .prefix.question{background:var(--secondary);color:var(--dark)}
+  .pr-review .prefix.suggestion{background:var(--accent)}
+  .pr-review .prefix.issue{background:var(--warn)}
+
+  .pr-actions{padding:14px 18px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border)}
+  .pr-actions button{font-family:inherit;border:none;border-radius:8px;padding:9px 20px;
+    font-weight:600;cursor:pointer;font-size:14px;background:var(--accent);color:white}
+  .pr-actions button.req-change{background:var(--warn)}
+  .pr-actions button.merge-btn{background:var(--primary)}
+  .pr-actions button.draft-btn{background:var(--muted)}
+  .pr-actions button:hover{transform:translateY(-1px)}
+
+  /* Review checklist */
+  .checklist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .check-item{background:white;border-radius:10px;padding:12px 16px;
+    display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:var(--shadow);
+    border:1px solid var(--border);border-left:5px solid #CBD5E1;
+    transition:all .15s}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#ECFDF5;border-left-color:var(--accent)}
+  .check-item .box{width:22px;height:22px;border:2px solid var(--muted);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;background:white;font-weight:bold;font-size:13px}
+  .check-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .check-item.on .box::before{content:'✓'}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;font-size:14px;margin-bottom:2px}
+  .check-item .txt span{color:var(--muted);font-size:12px}
+  .check-progress{text-align:center;margin-top:12px;font-weight:700;color:var(--primary);font-size:15px}
+
+  /* Hash demo */
+  .hashdemo{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .hashdemo-inputs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .hashdemo-inputs input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;background:#F8FAFC}
+  .hashdemo-inputs input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(109,40,217,.1)}
+  .hashdemo-inputs button{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:10px 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px}
+  .hashdemo-flow{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:14px}
+  @media (max-width:680px){.hashdemo-flow{grid-template-columns:1fr}}
+  .hashdemo-box{background:#F8FAFC;border:2px solid var(--border);border-radius:8px;padding:14px;text-align:center}
+  .hashdemo-box .lbl{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .hashdemo-box .val{font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;color:var(--dark);word-break:break-all;
+    font-weight:600}
+  .hashdemo-box.plain{border-color:var(--warn)}
+  .hashdemo-box.plain .val{color:var(--warn)}
+  .hashdemo-box.hash{border-color:var(--accent)}
+  .hashdemo-box.hash .val{color:var(--accent);font-size:12px}
+  .hashdemo-arrow{font-size:28px;color:var(--primary);text-align:center}
+  .hashdemo-note{background:#ECFEFF;border-left:5px solid var(--secondary);border-radius:8px;
+    padding:12px 16px;font-size:14px;line-height:1.7;color:var(--dark)}
+
+  /* Security playground */
+  .secpg{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .secpg-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid var(--border)}
+  .secpg-tabs button{background:transparent;border:none;padding:10px 18px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:14px;color:var(--muted);
+    border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
+  .secpg-tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+  .secpg-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .secpg-form label{font-weight:600;font-size:13px;color:var(--muted);font-family:'JetBrains Mono','SF Mono',monospace}
+  .secpg-form input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;background:#F8FAFC}
+  .secpg-form input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(109,40,217,.1)}
+  .secpg-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;font-size:13px}
+  .secpg-presets span{align-self:center;color:var(--muted)}
+  .secpg-presets button{background:#F1F5F9;border:1px solid var(--border);color:var(--primary);
+    padding:5px 12px;border-radius:6px;cursor:pointer;font-family:'JetBrains Mono','SF Mono',monospace;font-weight:600;font-size:12px}
+  .secpg-presets button:hover{background:var(--primary);color:white}
+
+  .secpg-result{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:680px){.secpg-result{grid-template-columns:1fr}}
+  .secpg-side{background:#F8FAFC;border-radius:8px;padding:14px;border-top:4px solid}
+  .secpg-side.bad{border-top-color:var(--warn)}
+  .secpg-side.good{border-top-color:var(--accent)}
+  .secpg-side h5{font-size:13px;margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .secpg-side.bad h5{color:var(--warn)}
+  .secpg-side.good h5{color:var(--accent)}
+  .secpg-side .label{font-size:11px;color:var(--muted);margin-top:8px;font-weight:600;text-transform:uppercase}
+  .secpg-side pre{background:var(--code-bg);color:var(--code-text);padding:10px 12px;border-radius:6px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;
+    margin-top:4px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+  .secpg-side .rendered{background:white;border:1px dashed var(--muted);padding:10px 12px;border-radius:6px;
+    margin-top:4px;font-size:13px;color:var(--dark);min-height:30px}
+  .secpg-side .verdict{font-weight:700;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:13px}
+  .secpg-side.bad .verdict{background:#FEE2E2;color:#991B1B}
+  .secpg-side.good .verdict{background:#D1FAE5;color:#065F46}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:50px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:72px;line-height:1}
+  .next h2{color:white;font-size:clamp(26px,5vw,38px);margin:12px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;
+    font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第2回</span> <b>実装とレビュー</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#git">2<span>Gitフロー</span><span class="ic">🌿</span></a>
+  <a href="#pr">3<span>PRシミュレータ</span><span class="ic">📥</span></a>
+  <a href="#review">4<span>レビュー観点</span><span class="ic">🔍</span></a>
+  <a href="#hash">5<span>パスワードハッシュ</span><span class="ic">🔐</span></a>
+  <a href="#sec">6<span>SQLi/XSS</span><span class="ic">🛡️</span></a>
+  <a href="#quiz">7<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">8<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 中学生プログラミング塾・上級</div>
+    <h1>実装と<br>レビュー</h1>
+    <p>Git ブランチ → PR → コードレビュー → マージ ＋ セキュリティ最低限</p>
+    <div class="em">🌿🔍🛡️</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「チームで 安全に」 5つの ステップ</h2>
+  <div class="grid grid-3">
+    <div class="card"><span style="font-size:42px;display:block">🌿</span><h3>Git ブランチ</h3><p style="color:var(--muted);font-size:14px">main を 守る</p></div>
+    <div class="card"><span style="font-size:42px;display:block">📥</span><h3>PR + レビュー</h3><p style="color:var(--muted);font-size:14px">チームの品質</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🛡️</span><h3>セキュリティ</h3><p style="color:var(--muted);font-size:14px">ハッシュ・検証</p></div>
+  </div>
+</section>
+
+<!-- 1. Git フロー可視化 -->
+<div class="divider" id="git" data-snav-target>
+  <div class="num">01.</div>
+  <h2>Git ブランチ 可視化</h2>
+</div>
+
+<section class="section">
+  <h2>ブランチ ＝ <span style="color:var(--accent)">並行する 開発の 線</span></h2>
+  <p class="lead">ボタンで コミット / ブランチ / マージ を 体験。 <b>緑が feature ブランチ、 紫が main</b>。</p>
+
+  <div class="gitviz">
+    <div class="gitviz-controls">
+      <button onclick="gitCommit('main')">📝 main に commit</button>
+      <button class="feat" onclick="gitBranch()">🌿 feature ブランチ 作成</button>
+      <button class="feat" onclick="gitCommit('feat')">📝 feature に commit</button>
+      <button class="merge" onclick="gitMerge()">🔀 main に merge</button>
+      <button class="reset" onclick="gitReset()">↺ リセット</button>
+    </div>
+    <svg class="gitviz-svg" id="gitvizSvg" viewBox="0 0 800 240"></svg>
+    <div class="gitviz-log" id="gitvizLog"></div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:var(--secondary)">💡 ブランチ命名規則</h3>
+    <p style="margin-top:6px;font-size:14px">
+      <b>feature/xxx</b>（新機能）／ <b>bugfix/xxx</b>（バグ修正）／ <b>hotfix/xxx</b>（緊急修正）／ <b>chore/xxx</b>（雑用）<br>
+      <b>type/動詞-名詞</b> の形式（例：<code style="background:#F8FAFC;padding:2px 6px;border-radius:4px">feature/add-login</code>）が ベストプラクティス！
+    </p>
+  </div>
+</section>
+
+<!-- 2. PR シミュレータ -->
+<div class="divider" id="pr" data-snav-target>
+  <div class="num">02.</div>
+  <h2>Pull Request シミュレータ</h2>
+</div>
+
+<section class="section">
+  <h2>本物の GitHub に近い PR を 体験</h2>
+  <p class="lead">PR タイトル・説明・差分・レビューコメント — すべての要素 を 1画面で。<br>下の <b>レビュー結果</b> ボタンで マージ までの フロー も。</p>
+
+  <div class="pr">
+    <div class="pr-head">
+      <div class="number">#42</div>
+      <div class="title" id="prTitle">feat: ユーザー ログイン 機能を 追加</div>
+    </div>
+    <div class="pr-meta">
+      <span class="branch-tag feat">feature/add-login</span>
+      <span class="arrow">→</span>
+      <span class="branch-tag">main</span>
+      <span style="margin-left:auto;font-size:12px">+42 / -3</span>
+      <span class="status review" id="prStatus">👀 Review</span>
+    </div>
+
+    <div class="pr-body">
+      <h4>📝 説明（自分で 編集 OK）</h4>
+      <div class="pr-form">
+        <input type="text" id="prTitleEdit" value="feat: ユーザー ログイン 機能を 追加" oninput="document.getElementById('prTitle').textContent=this.value">
+        <textarea id="prDesc">## やったこと
+- ユーザー ログイン機能を 追加
+
+## なぜ
+- ユーザーストーリー #12 の対応
+
+## 変更点
+- POST /api/auth/login 追加
+- パスワードを bcryptで ハッシュ化
+
+## テスト
+- ローカルで ログイン成功・失敗 ともに確認
+
+## レビュー観点
+- パスワード保存 周りの安全性</textarea>
+      </div>
+
+      <h4>📄 ファイル差分</h4>
+      <div class="pr-diff" id="prDiff"></div>
+    </div>
+
+    <div class="pr-reviews" id="prReviews">
+      <h4 style="color:var(--dark);margin-bottom:10px;font-size:14px;text-transform:uppercase;letter-spacing:.3px">🔍 レビュー</h4>
+    </div>
+
+    <div class="pr-actions">
+      <button class="draft-btn" onclick="prAction('draft')">📝 Draft に 戻す</button>
+      <button onclick="prAction('approve')">✅ Approve</button>
+      <button class="req-change" onclick="prAction('request')">⚠️ Request changes</button>
+      <button class="merge-btn" onclick="prAction('merge')">🔀 Merge PR</button>
+    </div>
+  </div>
+</section>
+
+<!-- 3. レビュー観点 -->
+<div class="divider" id="review" data-snav-target>
+  <div class="num">03.</div>
+  <h2>コードレビュー 観点チェック</h2>
+</div>
+
+<section class="section">
+  <h2>10項目 で 抜け漏れ なく</h2>
+  <p class="lead">PR をマージする 前に この 10項目を 確認。 8つ以上 で 安心して マージ！</p>
+
+  <div class="checklist" id="reviewCheck">
+    <div class="check-item"><div class="box"></div><div class="txt"><b>✅ テストが 全部 通っている</b><span>CI が 緑になっている</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📛 変数名・関数名 が 読んで わかる</b><span><code>a</code> ではなく <code>userId</code></span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🔁 コードの 重複 がない（DRY）</b><span>同じ処理 が 3回以上 ある → 関数化</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🧪 テストが 追加 されている</b><span>新機能 / バグ修正 には テスト</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🔐 パスワードが ハッシュ化 されている</b><span>bcrypt / scrypt / argon2</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🛡️ 入力検証 が ある（バックエンド側）</b><span>長さ / 型 / 形式 チェック</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>💉 SQL は パラメータ化 されている</b><span>文字列連結 NG</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🪤 HTML 出力 は エスケープ されている</b><span><code>textContent</code> 推奨</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🔑 APIキー / 秘密情報 が コードに ない</b><span>環境変数（.env）に</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📚 README が 更新 されている</b><span>新機能の 使い方</span></div></div>
+  </div>
+  <div class="check-progress" id="reviewProg">0 / 10 完了</div>
+</section>
+
+<!-- 4. パスワードハッシュ -->
+<div class="divider" id="hash" data-snav-target>
+  <div class="num">04.</div>
+  <h2>パスワード ハッシュ デモ</h2>
+</div>
+
+<section class="section">
+  <h2>「元に戻せない」 変換</h2>
+  <p class="lead">パスワード を 入力 → ハッシュ化 の デモ。 <b>同じパスワード でも 毎回 違うハッシュ</b>（salt が 効くため）。</p>
+
+  <div class="hashdemo">
+    <div class="hashdemo-inputs">
+      <input type="text" id="hashInput" value="mypassword123" placeholder="パスワードを 入力">
+      <button onclick="doHash()">🔐 ハッシュ化</button>
+      <button onclick="doVerify()" style="background:var(--accent)">✅ 検証</button>
+    </div>
+
+    <div class="hashdemo-flow">
+      <div class="hashdemo-box plain">
+        <div class="lbl">😱 平文（DB に そのまま 保存）</div>
+        <div class="val" id="hashPlain">mypassword123</div>
+      </div>
+      <div class="hashdemo-arrow">→<br><small style="font-size:11px;color:var(--muted)">bcrypt</small></div>
+      <div class="hashdemo-box hash">
+        <div class="lbl">😊 ハッシュ（安全）</div>
+        <div class="val" id="hashOut">クリックで ハッシュ生成</div>
+      </div>
+    </div>
+
+    <div class="hashdemo-note">
+      <b>💡 ポイント：</b><br>
+      ・ハッシュは <b>一方向</b> ＝ 元に戻せない<br>
+      ・<b>salt</b> を 混ぜるので 毎回 違うハッシュ<br>
+      ・検証時は「入力をハッシュ化 → 保存と一致 する？」を 比べる<br>
+      ・<b>Pythonでは Werkzeug、 Node.js では bcrypt パッケージ</b> を 使う
+    </div>
+  </div>
+</section>
+
+<!-- 5. SQLi/XSS プレイグラウンド -->
+<div class="divider" id="sec" data-snav-target>
+  <div class="num">05.</div>
+  <h2>SQLi / XSS プレイグラウンド</h2>
+</div>
+
+<section class="section">
+  <h2>実際に 攻撃 を 試して 比べる</h2>
+  <p class="lead">プリセット の <b>悪意ある 入力</b> を 試して、 <b>危険な コード</b> と <b>安全な コード</b> の 違い を 体感！</p>
+
+  <div class="secpg">
+    <div class="secpg-tabs">
+      <button class="active" data-tab="sqli" onclick="setSecTab('sqli')">💉 SQL インジェクション</button>
+      <button data-tab="xss" onclick="setSecTab('xss')">🪤 XSS</button>
+    </div>
+
+    <div class="secpg-form">
+      <label id="secLabel">ユーザー入力:</label>
+      <input type="text" id="secInput" value="alice">
+    </div>
+
+    <div class="secpg-presets" id="secPresets"></div>
+
+    <div class="secpg-result">
+      <div class="secpg-side bad">
+        <h5>❌ 危険なコード</h5>
+        <div class="label">コード</div>
+        <pre id="secBadCode"></pre>
+        <div class="label">結果</div>
+        <div id="secBadResult"></div>
+        <div class="verdict" id="secBadVerdict"></div>
+      </div>
+      <div class="secpg-side good">
+        <h5>✅ 安全なコード</h5>
+        <div class="label">コード</div>
+        <pre id="secGoodCode"></pre>
+        <div class="label">結果</div>
+        <div id="secGoodResult"></div>
+        <div class="verdict" id="secGoodVerdict"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">06.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう</h2>
+  <p class="lead">答えがわかったら 解説 が 出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. Conventional Commits の <b>正しい例</b> は？</div>
+      <div class="opts">
+        <button data-i="0">「ちょっと修正」</button>
+        <button data-i="1">「update」</button>
+        <button data-i="2">「feat: ユーザーログイン機能を追加」</button>
+        <button data-i="3">「あああ」</button>
+      </div>
+      <div class="ex">✅ <b>type: 何をした</b> の 形式。 <code>feat</code> / <code>fix</code> / <code>docs</code> / <code>refactor</code> / <code>test</code> / <code>chore</code>。<br>機械的に 変更ログ も 自動生成できる！</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q2. パスワード を DB に 保存する 正しい方法 は？</div>
+      <div class="opts">
+        <button data-i="0">平文 のまま</button>
+        <button data-i="1">bcrypt / argon2 で ハッシュ化</button>
+        <button data-i="2">Base64 で エンコード</button>
+        <button data-i="3">逆順 にして 保存</button>
+      </div>
+      <div class="ex">✅ <b>bcrypt / scrypt / argon2</b> など <b>専用の パスワードハッシュ関数</b> を 使う。<br>Base64 や 単純な MD5 は NG（簡単に 元に戻せる）！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. <b>SQLインジェクション</b> を 防ぐ 一番の 方法 は？</div>
+      <div class="opts">
+        <button data-i="0">パラメータ化 クエリ（プレースホルダ）</button>
+        <button data-i="1">ユーザー入力を 信用する</button>
+        <button data-i="2">文字列連結 で SQL を 組み立てる</button>
+        <button data-i="3">フロントエンドで チェックすれば OK</button>
+      </div>
+      <div class="ex">✅ <code>execute("SELECT * FROM users WHERE name = ?", (input,))</code> のように <b>パラメータで 渡す</b>。<br>文字列連結 は 絶対 NG！ フロント検証 も <b>サーバー検証 と 併用</b>。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>🌿 Git ブランチ（main / feature）</h3><p style="color:var(--muted);font-size:14px">type/動詞-名詞 命名</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>📥 PR ＋ レビュー フロー</h3><p style="color:var(--muted);font-size:14px">説明テンプレ / Conventional Comments</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🔍 レビュー 10観点</h3><p style="color:var(--muted);font-size:14px">テスト / 命名 / 重複 / セキュリティ</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🔐 パスワードは ハッシュ化</h3><p style="color:var(--muted);font-size:14px">bcrypt / 元に戻らない</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>🛡️ SQLi / XSS / 秘密情報 対策</h3><p style="color:var(--muted);font-size:14px">パラメータ / textContent / .env</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🧪 🚀</div>
+  <h2>第3回 ｜ テストと リリース</h2>
+  <p>pytest / Jest で ユニットテスト → Render で 公開！</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 上級 第2回｜実装とレビュー</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* Git ブランチ 可視化 */
+  let gitState = { commits: [{ id:1, branch:'main', x:60, msg:'init' }], hasFeat:false, nextId:2, log:[
+    '$ git init',
+    '$ git commit -m "init"',
+  ]};
+  function renderGit(){
+    const svg = $('gitvizSvg');
+    const w = 800;
+    const yMain = 100, yFeat = 180;
+    let html = '';
+    // 軸ライン
+    html += `<line x1="20" y1="${yMain}" x2="${w-20}" y2="${yMain}" stroke="var(--git-main)" stroke-width="3"/>`;
+    if(gitState.hasFeat){
+      html += `<line x1="20" y1="${yFeat}" x2="${w-20}" y2="${yFeat}" stroke="var(--git-feat)" stroke-width="3" stroke-dasharray="6 3"/>`;
+    }
+    // ラベル
+    html += `<text x="20" y="${yMain - 22}" fill="var(--git-main)" font-weight="bold" font-size="14">main</text>`;
+    if(gitState.hasFeat){
+      html += `<text x="20" y="${yFeat - 22}" fill="var(--git-feat)" font-weight="bold" font-size="14">feature/add-login</text>`;
+    }
+    // コミット 描画
+    gitState.commits.forEach(c => {
+      const y = c.branch === 'main' ? yMain : yFeat;
+      const color = c.branch === 'main' ? 'var(--git-main)' : 'var(--git-feat)';
+      html += `<circle cx="${c.x}" cy="${y}" r="14" fill="${color}" stroke="white" stroke-width="3"/>`;
+      html += `<text x="${c.x}" y="${y + 4}" fill="white" text-anchor="middle" font-weight="bold" font-size="11">${c.id}</text>`;
+      html += `<text x="${c.x}" y="${y + 35}" fill="var(--muted)" text-anchor="middle" font-size="10">${escapeHTML(c.msg.slice(0,12))}</text>`;
+    });
+    // 分岐線
+    if(gitState.hasFeat){
+      const mainHead = Math.max(...gitState.commits.filter(c=>c.branch==='main').map(c=>c.x), 60);
+      const featStart = gitState.commits.find(c=>c.branch==='feat');
+      if(featStart){
+        html += `<path d="M${mainHead} ${yMain} Q${(mainHead+featStart.x)/2} ${(yMain+yFeat)/2}, ${featStart.x} ${yFeat}" fill="none" stroke="var(--git-feat)" stroke-width="2" stroke-dasharray="4 3"/>`;
+      }
+    }
+    svg.innerHTML = html;
+    $('gitvizLog').innerHTML = gitState.log.map(l => escapeHTML(l)).join('\n');
+  }
+  function gitCommit(branch){
+    if(branch === 'feat' && !gitState.hasFeat){
+      showToast('先に「ブランチ作成」を 押してね');
+      return;
+    }
+    const last = Math.max(...gitState.commits.map(c=>c.x));
+    const x = last + 70;
+    if(x > 720){ showToast('スペース 不足。 リセット推奨'); return; }
+    const id = gitState.nextId++;
+    const msgs = branch === 'main' ? ['fix typo','update readme','refactor'] : ['add form','add hash','add tests'];
+    const msg = msgs[Math.floor(Math.random()*msgs.length)];
+    gitState.commits.push({ id, branch, x, msg });
+    gitState.log.push(`$ git commit -m "${msg}"`);
+    renderGit();
+  }
+  function gitBranch(){
+    if(gitState.hasFeat){ showToast('既に branch があります'); return; }
+    gitState.hasFeat = true;
+    const last = Math.max(...gitState.commits.filter(c=>c.branch==='main').map(c=>c.x));
+    gitState.commits.push({ id: gitState.nextId++, branch:'feat', x: last + 70, msg:'branch start' });
+    gitState.log.push('$ git checkout -b feature/add-login');
+    renderGit();
+  }
+  function gitMerge(){
+    if(!gitState.hasFeat){ showToast('まず ブランチ作成'); return; }
+    const last = Math.max(...gitState.commits.map(c=>c.x));
+    const x = last + 80;
+    if(x > 720){ showToast('スペース 不足'); return; }
+    gitState.commits.push({ id: gitState.nextId++, branch:'main', x, msg:'merge feat' });
+    gitState.log.push('$ git checkout main');
+    gitState.log.push('$ git merge feature/add-login');
+    gitState.hasFeat = false;
+    renderGit();
+  }
+  function gitReset(){
+    gitState = { commits: [{ id:1, branch:'main', x:60, msg:'init' }], hasFeat:false, nextId:2, log:['$ git init', '$ git commit -m "init"'] };
+    renderGit();
+  }
+  renderGit();
+
+  /* PR シミュレータ */
+  const PR_DIFF = `<span class="file">+++ app/auth.py</span>
+<span class="line ctx">  from flask import Blueprint, request, jsonify</span>
+<span class="line add">+ from werkzeug.security import generate_password_hash, check_password_hash</span>
+<span class="line add">+ from flask_login import login_user, logout_user</span>
+<span class="line ctx">  </span>
+<span class="line ctx">  auth_bp = Blueprint('auth', __name__)</span>
+<span class="line ctx">  </span>
+<span class="line add">+ @auth_bp.route('/api/auth/login', methods=['POST'])</span>
+<span class="line add">+ def login():</span>
+<span class="line add">+     data = request.get_json()</span>
+<span class="line add">+     user = User.query.filter_by(email=data['email']).first()</span>
+<span class="line del">-     if user and user.password == data['password']:  # 危険！</span>
+<span class="line add">+     if user and check_password_hash(user.password_hash, data['password']):</span>
+<span class="line add">+         login_user(user)</span>
+<span class="line add">+         return jsonify({'ok': True})</span>
+<span class="line add">+     return jsonify({'error': 'invalid'}), 401</span>`;
+  $('prDiff').innerHTML = PR_DIFF;
+
+  let prReviews = [
+    { name:'PMさん', avatar:'P', prefix:'suggestion', text:'タイトルに ストーリー番号 #12 を 入れると 追いやすいです！' },
+    { name:'シニア', avatar:'S', prefix:'issue', text:'check_password_hash の 引数順 OK。 でも <b>ログイン失敗時 の 試行回数制限</b> も 別PRで 入れたい。' },
+    { name:'QAさん', avatar:'Q', prefix:'question', text:'空文字 / 半角スペース の email で 落ちないか テスト ありますか？' },
+  ];
+  function renderReviews(){
+    const root = $('prReviews');
+    root.innerHTML = `<h4 style="color:var(--dark);margin-bottom:10px;font-size:14px;text-transform:uppercase;letter-spacing:.3px">🔍 レビュー（${prReviews.length}件）</h4>`;
+    prReviews.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'pr-review';
+      div.innerHTML = `<div class="avatar">${r.avatar}</div>
+        <div class="body">
+          <span class="name">${escapeHTML(r.name)}</span>
+          <div style="margin-top:4px"><span class="prefix ${r.prefix}">${r.prefix}</span>${r.text}</div>
+        </div>`;
+      root.appendChild(div);
+    });
+  }
+  renderReviews();
+  function prAction(act){
+    const s = $('prStatus');
+    if(act === 'approve'){
+      s.className = 'status'; s.textContent = '✅ Approved';
+      showToast('✅ Approved！ マージ 可能 です');
+    } else if(act === 'request'){
+      s.className = 'status req-change'; s.textContent = '⚠️ Changes Requested'; s.style.background = 'var(--warn)'; s.style.color = 'white';
+      showToast('⚠️ Changes Requested — 修正対応 必要');
+    } else if(act === 'merge'){
+      s.className = 'status merged'; s.textContent = '🔀 Merged'; s.style.background = '#6D28D9'; s.style.color = 'white';
+      showToast('🔀 マージしました！ コミット履歴 に 残ります');
+    } else if(act === 'draft'){
+      s.className = 'status draft'; s.textContent = '📝 Draft'; s.style.background = 'var(--muted)'; s.style.color = 'white';
+      showToast('📝 Draft に 戻しました');
+    }
+  }
+
+  /* レビュー観点チェック */
+  (function(){
+    const root = $('reviewCheck'), out = $('reviewProg');
+    const items = [...root.querySelectorAll('.check-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      out.textContent = done + ' / 10 完了';
+      if(done === 10){ out.style.color = '#10B981'; out.textContent = '🎉 10/10 完璧！ 安心してマージ！'; }
+      else if(done >= 8){ out.style.color = 'var(--accent)'; out.textContent = done + ' / 10 — 合格ライン！'; }
+      else { out.style.color = ''; }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{ it.classList.toggle('on'); update(); }));
+    update();
+  })();
+
+  /* パスワードハッシュ デモ */
+  async function sha256hex(text){
+    const buf = new TextEncoder().encode(text);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  async function doHash(){
+    const pw = $('hashInput').value;
+    $('hashPlain').textContent = pw;
+    // salt付き ハッシュ風 を 生成（bcrypt風 のプレフィックス）
+    const salt = Math.random().toString(36).slice(2, 12);
+    const fullHash = await sha256hex(salt + pw);
+    const display = `$bcrypt$10$${salt}${fullHash.slice(0, 31)}`;
+    $('hashOut').textContent = display;
+    showToast('🔐 ハッシュ化 完了！ 毎回 違う ハッシュ');
+  }
+  async function doVerify(){
+    const pw = $('hashInput').value;
+    info('✅','検証 の しくみ',`
+      <div style="font-size:14px;line-height:1.8">
+        <b>ログイン時 の 検証:</b><br><br>
+        <pre style="background:var(--code-bg);color:var(--code-text);padding:12px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap">stored_hash = "$bcrypt$10$..." # DBから取得
+
+if check_password_hash(stored_hash, "${escapeHTML(pw)}"):
+    login_user(user)  # ✅ 一致
+else:
+    return error      # ❌ 不一致</pre>
+        <br>
+        ハッシュ化 は <b>一方向</b> だが、<br>
+        「<b>同じパスワード から 同じハッシュが 生成できる</b>」 ので 比較可能！<br>
+        bcrypt は salt が ハッシュに 埋め込まれているので 一致判定 ができる。
+      </div>`);
+  }
+  doHash();
+
+  /* SQLi / XSS プレイグラウンド */
+  let secTab = 'sqli';
+  const SEC_PRESETS = {
+    sqli: [
+      { label:'普通の名前', value:'alice' },
+      { label:`' OR '1'='1`, value:"' OR '1'='1" },
+      { label:`'; DROP TABLE`, value:"'; DROP TABLE users; --" },
+      { label:`admin' --`, value:"admin' --" },
+    ],
+    xss: [
+      { label:'普通の本文', value:'素敵な本でした' },
+      { label:'<scr'+'ipt>', value:"<scr"+"ipt>alert('hacked')<\/scr"+"ipt>" },
+      { label:'<img onerror>', value:`<img src=x onerror="alert('XSS')">` },
+      { label:'<a href javascript>', value:`<a href="javascript:alert(1)">click</a>` },
+    ],
+  };
+  function setSecTab(t){
+    secTab = t;
+    document.querySelectorAll('.secpg-tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+    if(t === 'sqli'){
+      $('secLabel').textContent = 'ユーザー名 入力:';
+      $('secInput').value = 'alice';
+    } else {
+      $('secLabel').textContent = 'コメント 入力:';
+      $('secInput').value = '素敵な本でした';
+    }
+    renderSecPresets();
+    renderSec();
+  }
+  function renderSecPresets(){
+    const root = $('secPresets');
+    root.innerHTML = '<span>例:</span>';
+    SEC_PRESETS[secTab].forEach(p => {
+      const b = document.createElement('button');
+      b.textContent = p.label;
+      b.addEventListener('click', () => { $('secInput').value = p.value; renderSec(); });
+      root.appendChild(b);
+    });
+  }
+  function renderSec(){
+    const input = $('secInput').value;
+    if(secTab === 'sqli'){
+      // 危険なコード（文字列連結）
+      const badQuery = `SELECT * FROM users WHERE name = '${input}'`;
+      $('secBadCode').textContent = `query = f"SELECT * FROM users\\n  WHERE name = '{user_input}'"\ncursor.execute(query)`;
+      $('secBadResult').innerHTML = `<pre style="background:var(--code-bg);color:var(--code-text);padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;white-space:pre-wrap;word-break:break-all">${escapeHTML(badQuery)}</pre>`;
+      // 攻撃判定
+      const dangerous = /'\s*(OR|UNION|;|--|DROP|DELETE|UPDATE|INSERT)/i.test(input) || input.includes("'");
+      $('secBadVerdict').textContent = dangerous ? '⚠️ SQL注入 成功！ DB全体が 危険！' : '✅ 正常な クエリ';
+
+      // 安全なコード（パラメータ化）
+      $('secGoodCode').textContent = `query = "SELECT * FROM users\\n  WHERE name = ?"\ncursor.execute(query, (user_input,))`;
+      $('secGoodResult').innerHTML = `<pre style="background:var(--code-bg);color:var(--code-text);padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;white-space:pre-wrap;word-break:break-all">SELECT * FROM users\n  WHERE name = ?\n[params: "${escapeHTML(input)}"]</pre>`;
+      $('secGoodVerdict').textContent = '✅ 安全！ 入力は ただの文字列として 扱われる';
+    } else {
+      // 危険なコード（innerHTML）
+      $('secBadCode').textContent = `el.innerHTML = userComment;`;
+      const badEl = document.createElement('div');
+      // 実際にinnerHTML として 評価（ただし script は ブラウザが実行しない場合がある）
+      // 安全のため innerHTML は使わず、 ぱっと見の HTML 評価だけ シミュレート
+      try {
+        badEl.innerHTML = input;
+        // スクリプトタグを 視覚化
+        const hasScript = /<script|onerror=|onclick=|javascript:/i.test(input);
+        $('secBadResult').innerHTML = `<div style="background:white;border:2px dashed var(--warn);padding:8px;border-radius:4px;font-size:13px">${badEl.innerHTML}</div>${hasScript ? '<div style="color:var(--warn);font-size:12px;margin-top:6px">⚠️ &lt;script&gt; / onerror=... が <b>実行</b> される 危険性！</div>' : ''}`;
+        $('secBadVerdict').textContent = hasScript ? '⚠️ XSS 攻撃 が 成立！' : '✅ 正常な 表示';
+      } catch(e){
+        $('secBadResult').innerHTML = '<div style="color:var(--warn)">レンダリングエラー</div>';
+        $('secBadVerdict').textContent = '⚠️ XSS 攻撃 が 成立！';
+      }
+
+      // 安全なコード（textContent）
+      $('secGoodCode').textContent = `el.textContent = userComment;`;
+      const goodEl = document.createElement('div');
+      goodEl.textContent = input;
+      $('secGoodResult').innerHTML = `<div style="background:white;border:2px dashed var(--accent);padding:8px;border-radius:4px;font-size:13px">${escapeHTML(goodEl.textContent)}</div>`;
+      $('secGoodVerdict').textContent = '✅ 安全！ HTML として 解釈されず、 ただのテキスト として 表示';
+    }
+  }
+  $('secInput').addEventListener('input', renderSec);
+  setSecTab('sqli');
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>
