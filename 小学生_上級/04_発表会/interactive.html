@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小学生・上級 第4回｜発表会</title>
+<style>
+  :root{
+    --primary:#7C4DFF; --secondary:#FFD54F; --accent:#00BFA5;
+    --warn:#FF5252; --dark:#1A1A2E; --light:#F8F5FF;
+    --panel:#FFFFFF; --muted:#5A5A75; --shadow:0 4px 0 rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,select,textarea{font:inherit}
+
+  /* === Top progress + status === */
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* === Side nav === */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* === Modal === */
+  .modal-bg{position:fixed;inset:0;background:rgba(26,26,46,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  /* === Hero === */
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#7C4DFF 0%,#536DFE 50%,#00BFA5 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.25);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(18px,2.4vw,24px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,108px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px;font-weight:bold}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:8px}
+  .card.warn{border-left:8px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:8px solid var(--accent);background:#E0F7FA}
+  .card.tip{border-left:8px solid var(--secondary);background:#FFFCEE}
+
+  /* === 4 Parts timeline === */
+  .parts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  @media (max-width:760px){.parts{grid-template-columns:repeat(2,1fr)}}
+  .part-card{background:white;border-radius:14px;padding:18px;box-shadow:var(--shadow);
+    text-align:center;border-top:6px solid var(--primary)}
+  .part-card:nth-child(2){border-top-color:var(--accent)}
+  .part-card:nth-child(3){border-top-color:var(--secondary)}
+  .part-card:nth-child(4){border-top-color:#9C27B0}
+  .part-card .pn{font-size:14px;color:var(--muted);font-weight:bold}
+  .part-card .pt{font-size:30px;font-weight:bold;color:var(--primary);margin:6px 0}
+  .part-card:nth-child(2) .pt{color:var(--accent)}
+  .part-card:nth-child(3) .pt{color:#B8860B}
+  .part-card:nth-child(4) .pt{color:#9C27B0}
+  .part-card .pl{font-size:14px;color:var(--dark)}
+
+  /* === Script generator === */
+  .script{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .script-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .script-grid .full{grid-column:1 / -1}
+  .script-grid label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .script-grid label small{color:var(--accent);margin-left:6px}
+  .script-grid input,.script-grid textarea{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA;color:var(--dark)}
+  .script-grid input:focus,.script-grid textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .script-grid textarea{min-height:60px;resize:vertical}
+
+  .scriptview{margin-top:18px;background:#FFFCEE;border:3px dashed var(--secondary);
+    border-radius:14px;padding:22px;font-size:15px;line-height:2;color:var(--dark);
+    box-shadow:0 4px 0 rgba(0,0,0,.06)}
+  .scriptview h3{color:var(--primary);font-size:18px;margin:14px 0 4px;border-bottom:1px solid #E0E0E0;padding-bottom:4px}
+  .scriptview h3:first-child{margin-top:0}
+  .scriptview small{color:var(--muted);font-weight:normal;font-size:13px}
+  .scripttools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .scripttools button{font-family:inherit;border:none;border-radius:10px;padding:10px 22px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .scripttools button.gray{background:var(--muted)}
+  .scripttools button.accent{background:var(--accent)}
+
+  /* === Presentation timer === */
+  .ptimer{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);
+    margin-top:14px;text-align:center}
+  .ptimer-phase{font-size:18px;color:var(--muted);font-weight:bold;margin-bottom:6px}
+  .ptimer-phase b{color:var(--primary)}
+  .ptimer-disp{font-size:clamp(60px,12vw,120px);font-weight:bold;
+    font-family:'SF Mono','Menlo',monospace;color:var(--primary);line-height:1;margin:10px 0}
+  .ptimer-disp.warn{color:var(--warn);animation:pulse .5s ease infinite}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+  .ptimer-bar{height:14px;border-radius:999px;background:#EEE;overflow:hidden;margin:18px auto;max-width:600px}
+  .ptimer-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));
+    width:0;transition:width .5s linear}
+  .ptimer-ctrl{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .ptimer-ctrl button{font-family:inherit;border:none;border-radius:12px;padding:12px 28px;
+    font-weight:bold;cursor:pointer;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .ptimer-ctrl button.gray{background:var(--muted)}
+  .ptimer-ctrl button.accent{background:var(--accent)}
+  .ptimer-phases{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}
+  @media (max-width:760px){.ptimer-phases{grid-template-columns:repeat(2,1fr)}}
+  .ptimer-phases .ph{background:#F5F5F5;border-radius:8px;padding:8px 6px;font-size:12px;
+    text-align:center;border:2px solid transparent;transition:all .2s}
+  .ptimer-phases .ph.now{background:var(--primary);color:white;border-color:var(--secondary);transform:scale(1.05)}
+  .ptimer-phases .ph.done{background:#E0F7FA;color:#00695C;border-color:var(--accent)}
+
+  /* === Breathing exercise === */
+  .breathe{background:white;border-radius:18px;padding:30px 24px;box-shadow:var(--shadow);margin-top:14px;text-align:center}
+  .breathe-circle{width:160px;height:160px;border-radius:50%;margin:20px auto;
+    background:radial-gradient(circle,#7C4DFF,#536DFE);box-shadow:0 10px 30px rgba(124,77,255,.4);
+    display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:bold;
+    transition:transform 4s ease-in-out;will-change:transform}
+  .breathe-circle.in{transform:scale(1.5)}
+  .breathe-circle.out{transform:scale(1)}
+  .breathe-circle.hold{transform:scale(1.4)}
+  .breathe-text{font-size:22px;color:var(--primary);font-weight:bold;margin-top:10px;min-height:30px}
+  .breathe-ctrl{margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .breathe-ctrl button{font-family:inherit;border:none;border-radius:10px;padding:10px 24px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .breathe-ctrl button.gray{background:var(--muted)}
+  .breathe-cycle{margin-top:8px;font-size:13px;color:var(--muted)}
+
+  /* === Q&A practice === */
+  .qaprac{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .qa-card{background:#FFFCEE;border-left:6px solid var(--secondary);border-radius:10px;
+    padding:14px 18px;margin-bottom:12px}
+  .qa-card .ques{font-weight:bold;font-size:16px;margin-bottom:10px;color:var(--dark)}
+  .qa-card .ques::before{content:'🙋 ';color:var(--secondary);font-size:18px}
+  .qa-options{display:grid;gap:8px}
+  .qa-options button{background:white;border:2px solid #DDD;border-radius:8px;padding:10px 14px;
+    text-align:left;cursor:pointer;font-family:inherit;font-size:14px;line-height:1.6;
+    transition:all .15s;color:var(--dark)}
+  .qa-options button:hover{border-color:var(--primary);background:#F3EFFF}
+  .qa-options button.right{background:#A5D6A7;border-color:#388E3C;color:#1B5E20}
+  .qa-options button.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C;text-decoration:line-through}
+  .qa-card.answered .qa-explain{display:block}
+  .qa-explain{display:none;margin-top:10px;padding:10px;background:white;border-radius:8px;
+    font-size:13px;color:var(--muted);line-height:1.7}
+
+  /* === Rehearsal checklist === */
+  .checklist{margin-top:14px}
+  .check-item{background:white;border-radius:12px;padding:14px 18px;margin-bottom:10px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);
+    transition:transform .12s,background .15s;border-left:6px solid #DDD}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#E0F7FA;border-left-color:var(--accent)}
+  .check-item .box{width:30px;height:30px;border:3px solid var(--muted);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;background:white}
+  .check-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .check-item .box::before{content:'✓';opacity:0}
+  .check-item.on .box::before{opacity:1}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;margin-bottom:2px}
+  .check-item .txt span{color:var(--muted);font-size:13px}
+  .check-progress{text-align:center;margin-top:14px;font-weight:bold;color:var(--primary)}
+
+  /* === Certificate === */
+  .certform{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .certform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .certform-grid label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .certform-grid input{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA;color:var(--dark)}
+  .certform-grid input:focus{outline:none;border-color:var(--primary);background:white}
+  .cert{margin-top:18px;background:linear-gradient(135deg,#FFFCEE,#F3EFFF);
+    border:6px double var(--primary);border-radius:18px;padding:40px 30px;text-align:center;
+    box-shadow:0 8px 20px rgba(124,77,255,.18);position:relative;overflow:hidden}
+  .cert::before, .cert::after{
+    content:'⭐';position:absolute;font-size:80px;opacity:.08;color:var(--primary)}
+  .cert::before{top:10px;left:20px}
+  .cert::after{bottom:10px;right:20px}
+  .cert .badge{font-size:60px;margin-bottom:10px}
+  .cert h2{color:var(--primary);font-size:36px;margin-bottom:14px;letter-spacing:4px}
+  .cert .body{font-size:16px;line-height:2;color:var(--dark)}
+  .cert .name{font-size:32px;font-weight:bold;color:var(--accent);margin:14px 0;
+    padding:10px 0;border-top:2px solid var(--primary);border-bottom:2px solid var(--primary);display:inline-block;
+    min-width:240px}
+  .cert .footer{margin-top:18px;font-size:13px;color:var(--muted)}
+  .cert-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .cert-tools button{font-family:inherit;border:none;border-radius:12px;padding:12px 26px;
+    font-weight:bold;cursor:pointer;font-size:15px;box-shadow:0 4px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .cert-tools button:hover{transform:translateY(-2px)}
+  .cert-tools button.gray{background:var(--muted)}
+  .cert-tools button.accent{background:var(--accent)}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .qrow{margin-bottom:16px}
+  .qrow .q{font-weight:bold;font-size:17px;margin-bottom:8px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:2px solid var(--accent);color:var(--dark);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;
+    font-weight:bold;transition:all .15s}
+  .qrow .opts button:hover{background:#E0F7FA}
+  .qrow .opts button.right{background:#A5D6A7;border-color:#388E3C;color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:6px;display:none}
+  .qrow.answered .ex{display:block}
+
+  /* === Summary / next === */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .finale{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 50%,var(--secondary) 100%);
+    color:white;text-align:center;padding:60px 24px;border-radius:20px;margin:32px 24px;}
+  .finale .em{font-size:84px;line-height:1}
+  .finale h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* === Toast === */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:12px 24px;border-radius:999px;
+    font-weight:bold;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* === Confetti === */
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:10px;height:14px;top:-20px;border-radius:2px;
+    animation:fall linear forwards}
+  @keyframes fall{ to { transform: translateY(110vh) rotate(720deg); } }
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+
+  /* === Print: cert only === */
+  @media print {
+    body { background: white; }
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,.confetti,
+    .hero,.divider,.section{ display:none !important; }
+    .cert-print { display:block !important; padding:30px !important; }
+    .cert-print .cert { border-width:6px !important; box-shadow: none !important; }
+  }
+  .cert-print { display:none; }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第4回</span> <b>発表会</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#parts">2<span>4パート構成</span><span class="ic">📋</span></a>
+  <a href="#script">3<span>台本ジェネレータ</span><span class="ic">📝</span></a>
+  <a href="#timer">4<span>発表タイマー</span><span class="ic">⏱️</span></a>
+  <a href="#breathe">5<span>緊張ほぐし</span><span class="ic">🫁</span></a>
+  <a href="#qa">6<span>質疑応答 練習</span><span class="ic">🙋</span></a>
+  <a href="#rehearsal">7<span>リハーサル</span><span class="ic">✅</span></a>
+  <a href="#cert">8<span>修了証</span><span class="ic">🎓</span></a>
+  <a href="#quiz">9<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">10<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 小学生プログラミング教室・上級 ／ 最終回</div>
+    <h1>発表会</h1>
+    <p>3分プレゼン → 質疑応答 → <b>コース修了 🎓</b></p>
+    <div class="em">🎤✨🎉</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4つのステップで コース完結</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:56px;display:block">📝</span><h3>台本</h3><p style="color:var(--muted)">4パート 作成</p></div>
+    <div class="card"><span style="font-size:56px;display:block">⏱️</span><h3>リハーサル</h3><p style="color:var(--muted)">3分で 練習</p></div>
+    <div class="card"><span style="font-size:56px;display:block">🎤</span><h3>本番</h3><p style="color:var(--muted)">堂々と 発表</p></div>
+    <div class="card"><span style="font-size:56px;display:block">🎓</span><h3>修了</h3><p style="color:var(--muted)">おめでとう！</p></div>
+  </div>
+</section>
+
+<!-- 1. 4パート構成 -->
+<div class="divider" id="parts" data-snav-target>
+  <div class="num">1.</div>
+  <h2>3分プレゼン 4パート構成</h2>
+</div>
+
+<section class="section">
+  <h2>合計 180秒の 黄金構成</h2>
+  <p class="lead">3分は おもったより 短い。 だから <b>4パート に 区切って</b> 計算しやすく する！</p>
+
+  <div class="parts">
+    <div class="part-card">
+      <div class="pn">① 何を 作った</div>
+      <div class="pt">30秒</div>
+      <div class="pl">作品名 ＋ どんなもの</div>
+    </div>
+    <div class="part-card">
+      <div class="pn">② どう 作った（デモ）</div>
+      <div class="pt">60秒</div>
+      <div class="pl">実際に 動かして 見せる</div>
+    </div>
+    <div class="part-card">
+      <div class="pn">③ 苦労した こと</div>
+      <div class="pt">60秒</div>
+      <div class="pl">どう 解決したか まで</div>
+    </div>
+    <div class="part-card">
+      <div class="pn">④ 次に やりたい こと</div>
+      <div class="pt">30秒</div>
+      <div class="pl">改良の 余地を 見せる</div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3 style="color:#B8860B">💡 「②デモ」 が 一番 大事</h3>
+    <p style="margin-top:6px">話だけより、<b>動いている画面</b> の方が ぜんぜん 伝わる！<br>
+    リハーサルで 必ず 1回 動かす。</p>
+  </div>
+</section>
+
+<!-- 2. 台本ジェネレータ -->
+<div class="divider" id="script" data-snav-target>
+  <div class="num">2.</div>
+  <h2>プレゼン 台本ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>4パート うめれば 台本 完成！</h2>
+  <p class="lead">下を 埋めると、本番で 読める <b>台本</b> ができる。 印刷・保存 もOK！</p>
+
+  <div class="script">
+    <div class="script-grid">
+      <div>
+        <label>あなたの ニックネーム</label>
+        <input type="text" id="scName" value="ゆうた" maxlength="20">
+      </div>
+      <div>
+        <label>作品 名</label>
+        <input type="text" id="scWork" value="ねこねこタイマー" maxlength="30">
+      </div>
+      <div class="full">
+        <label>① 何を 作った <small>30秒</small></label>
+        <textarea id="sc1">ねこを 育てながら 集中時間を のばす アプリです。</textarea>
+      </div>
+      <div class="full">
+        <label>② どう 作った（デモで 見せる ポイント） <small>60秒</small></label>
+        <textarea id="sc2">スタートボタンで タイマーが 動いて、25分で ねこが 1匹 育ちます。
+これが 自分の 一番の 工夫した ところです。</textarea>
+      </div>
+      <div class="full">
+        <label>③ 苦労した こと（解決方法 まで） <small>60秒</small></label>
+        <textarea id="sc3">タイマーが 0で 止まらなくて 困りました。
+AIに 相談して 「もし のこり時間 = 0 なら すべてを 止める」を 入れたら 直りました。</textarea>
+      </div>
+      <div class="full">
+        <label>④ 次に やりたい こと <small>30秒</small></label>
+        <textarea id="sc4">ねこの 種類を 5匹に 増やしたいです。
+あと、お友だちにも 使ってもらえる ように したいです。</textarea>
+      </div>
+    </div>
+
+    <div class="scriptview" id="scView"></div>
+
+    <div class="scripttools">
+      <button onclick="copyScript()">📋 台本コピー</button>
+      <button class="accent" onclick="downloadScript()">💾 保存 (.txt)</button>
+      <button class="gray" onclick="resetScript()">↺ 初期値</button>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 発表タイマー -->
+<div class="divider" id="timer" data-snav-target>
+  <div class="num">3.</div>
+  <h2>発表タイマー</h2>
+</div>
+
+<section class="section">
+  <h2>4パート 自動進行（合計 3分）</h2>
+  <p class="lead">スタートを 押すと パート①〜④が 自動で 進む。<br>
+  各パート 切替 で <b>ベル</b>、終わりで <b>3回ベル</b> が 鳴ります。</p>
+
+  <div class="ptimer">
+    <div class="ptimer-phase">いまは：<b id="ptimerPhase">準備OK</b></div>
+    <div class="ptimer-disp" id="ptimerDisp">03:00</div>
+    <div class="ptimer-bar"><div class="ptimer-bar-fill" id="ptimerFill"></div></div>
+    <div class="ptimer-ctrl">
+      <button id="ptStart">▶ スタート</button>
+      <button id="ptPause" class="gray">⏸ 一時停止</button>
+      <button id="ptReset" class="accent">↺ リセット</button>
+    </div>
+    <div class="ptimer-phases" id="ptPhases">
+      <div class="ph" data-i="0">① 何を作った<br>30秒</div>
+      <div class="ph" data-i="1">② デモ<br>60秒</div>
+      <div class="ph" data-i="2">③ 苦労<br>60秒</div>
+      <div class="ph" data-i="3">④ 次に<br>30秒</div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-top:10px">⏰ 合計 3分（180秒）。音量に注意！</p>
+  </div>
+</section>
+
+<!-- 4. 緊張ほぐし -->
+<div class="divider" id="breathe" data-snav-target>
+  <div class="num">4.</div>
+  <h2>緊張ほぐし</h2>
+</div>
+
+<section class="section">
+  <h2>4-2-6 呼吸法</h2>
+  <p class="lead">本番前に <b>3サイクル</b> やると 体が 落ち着く。<br>
+  4秒 吸って → 2秒 止めて → 6秒 はく。 円が ふくらんだり しぼんだり するよ。</p>
+
+  <div class="breathe">
+    <div class="breathe-circle" id="brCircle">START</div>
+    <div class="breathe-text" id="brText">「スタート」 を 押すと はじまります</div>
+    <div class="breathe-ctrl">
+      <button id="brStart">🫁 呼吸スタート</button>
+      <button id="brStop" class="gray">⏸ ストップ</button>
+    </div>
+    <div class="breathe-cycle" id="brCycle">サイクル：0 / 3</div>
+  </div>
+
+  <div class="grid grid-3" style="margin-top:18px">
+    <div class="card" style="text-align:center"><div style="font-size:48px">💪</div><h3>ガッツポーズ</h3><p style="color:var(--muted);font-size:13px">両手を 上に 10秒</p></div>
+    <div class="card" style="text-align:center"><div style="font-size:48px">😊</div><h3>友だちの顔</h3><p style="color:var(--muted);font-size:13px">やさしい人を 見て話す</p></div>
+    <div class="card" style="text-align:center"><div style="font-size:48px">🦶</div><h3>足を しっかり</h3><p style="color:var(--muted);font-size:13px">床に つけて 立つ</p></div>
+  </div>
+</section>
+
+<!-- 5. 質疑応答 練習 -->
+<div class="divider" id="qa" data-snav-target>
+  <div class="num">5.</div>
+  <h2>質疑応答 練習</h2>
+</div>
+
+<section class="section">
+  <h2>こんな 質問が 来たら？</h2>
+  <p class="lead">どちらの答え方が 良いか クリック で 選んでみよう！</p>
+
+  <div class="qaprac" id="qaprac"><!-- generated --></div>
+</section>
+
+<!-- 6. リハーサル -->
+<div class="divider" id="rehearsal" data-snav-target>
+  <div class="num">6.</div>
+  <h2>リハーサル チェック</h2>
+</div>
+
+<section class="section">
+  <h2>本番前に 必ず 確認</h2>
+  <p class="lead">8つ ぜんぶ ✓ なら 本番 OK！</p>
+
+  <div class="checklist" id="rehearcheck">
+    <div class="check-item"><div class="box"></div><div class="txt"><b>① 台本が 3分に おさまる</b><span>タイマーで 計った</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>② デモが ちゃんと 動く</b><span>1回 旗を 押して 確認</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>③ パソコンが フル充電</b><span>Wi-Fi も つながる</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>④ 音量を チェック</b><span>大きすぎず・小さすぎず</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑤ 顔を 上げて 話せる</b><span>原稿ばかり 見ない</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑥ 声が 後ろまで 届く</b><span>友だちに 確認</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑦ デモが 失敗した時の 対処も 考えた</b><span>「画面で 説明」 に 切替</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑧ 友だちから「いいね」を 1つ もらった</b><span>ペアで リハーサル</span></div></div>
+  </div>
+  <div class="check-progress" id="rehProg">0 / 8 達成</div>
+</section>
+
+<!-- 7. 修了証 -->
+<div class="divider" id="cert" data-snav-target>
+  <div class="num">7.</div>
+  <h2>修了証ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>君の 名前 入りの 修了証</h2>
+  <p class="lead">名前と 教室名を 入力して、 印刷or 保存！</p>
+
+  <div class="certform">
+    <div class="certform-grid">
+      <div>
+        <label>ニックネーム</label>
+        <input type="text" id="certName" value="ゆうた" maxlength="20">
+      </div>
+      <div>
+        <label>教室名</label>
+        <input type="text" id="certSchool" value="○○ プログラミング教室" maxlength="30">
+      </div>
+      <div>
+        <label>修了日</label>
+        <input type="text" id="certDate" value="" placeholder="例：2026年5月20日">
+      </div>
+    </div>
+
+    <div class="cert-print" id="certPrint">
+      <div class="cert" id="certView">
+        <div class="badge">🏆</div>
+        <h2>修　了　証</h2>
+        <div class="body">
+          上記の者は<br>
+          <b>小学生プログラミング教室・上級コース</b> を<br>
+          修了したことを 証します
+          <div class="name" id="certNameView">ゆうた</div>
+          「企画 → 実装 → テスト → 発表」<br>
+          の一連を 自分で やり遂げた
+        </div>
+        <div class="footer">
+          <div id="certDateView"></div>
+          <div id="certSchoolView">○○ プログラミング教室</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 画面表示用 -->
+    <div class="cert" id="certScreen" style="margin-top:18px">
+      <div class="badge">🏆</div>
+      <h2>修　了　証</h2>
+      <div class="body">
+        上記の者は<br>
+        <b>小学生プログラミング教室・上級コース</b> を<br>
+        修了したことを 証します
+        <div class="name" id="certNameView2">ゆうた</div>
+        「企画 → 実装 → テスト → 発表」<br>
+        の一連を 自分で やり遂げた
+      </div>
+      <div class="footer">
+        <div id="certDateView2"></div>
+        <div id="certSchoolView2">○○ プログラミング教室</div>
+      </div>
+    </div>
+
+    <div class="cert-tools">
+      <button class="accent" onclick="window.print()">🖨️ 印刷する</button>
+      <button onclick="downloadCert()">💾 保存 (.html)</button>
+      <button onclick="celebrate()">🎊 お祝いボタン</button>
+    </div>
+  </div>
+</section>
+
+<!-- 8. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">8.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう！</h2>
+  <p class="lead">何回 まちがえてもOK。答えがわかったら 説明が出るよ。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. 3分プレゼン で <b>一番 時間 を かける</b> パートは？</div>
+      <div class="opts">
+        <button data-i="0">① 何を 作った</button>
+        <button data-i="1">④ 次に やりたい</button>
+        <button data-i="2">② デモ ／ ③ 苦労（60秒ずつ）</button>
+        <button data-i="3">質疑応答</button>
+      </div>
+      <div class="ex">✅ ②デモ ＋ ③苦労 が 各60秒。 ①④ は 30秒ずつ。<br>とくに <b>デモ</b> は 言葉だけより 伝わる！</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q2. 質問されて <b>答えが わからない</b> とき、 良い答え方は？</div>
+      <div class="opts">
+        <button data-i="0">テキトーに 答える</button>
+        <button data-i="1">「すみません、わかりません！ 今度 調べます」</button>
+        <button data-i="2">無視する</button>
+        <button data-i="3">「その質問は ナシで」と 言う</button>
+      </div>
+      <div class="ex">✅ 正直に <b>「わかりません」</b> でOK！<br>知ったかぶりは 一番ダメ。 「調べます」 と セットで 言えると 好印象。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. 友だちの 発表を 聞くとき、 <b>大事なこと</b> は？</div>
+      <div class="opts">
+        <button data-i="0">しっかり 聞いて はくしゅ する</button>
+        <button data-i="1">スマホを いじる</button>
+        <button data-i="2">となりの人と 話す</button>
+        <button data-i="3">うとうと する</button>
+      </div>
+      <div class="ex">✅ 発表する人 も 聞く人 も <b>主役</b>。 はくしゅが あると 発表する側は ぜんぜん 違う！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. 修了 -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>修了！</h2>
+</div>
+
+<section class="section">
+  <h2>上級コース 4回 ふり返り</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📝 第1回：企画書を 書いた</h3><p style="color:var(--muted)">マンダラ → 絞り込み → 5項目テンプレ</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>⚒️ 第2回：作品を 作った</h3><p style="color:var(--muted)">設計→ブロック翻訳、AIに相談</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🔧 第3回：テスト＆改善</h3><p style="color:var(--muted)">ユーザーテスト・分類・優先順位</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🎤 第4回：発表会</h3><p style="color:var(--muted)">3分プレゼン → コース修了！</p></div></div>
+  </div>
+</section>
+
+<div class="finale">
+  <div class="em">🎓✨🎉</div>
+  <h2>上級コース 修了 おめでとう！</h2>
+  <p style="font-size:18px;margin-top:8px">「企画 → 実装 → テスト → 発表」 が <b>自分の チカラ</b> に なりました。<br>
+  これからも 作りつづけよう！</p>
+  <button onclick="celebrate()" style="margin-top:20px;background:white;color:var(--primary);
+    border:none;padding:14px 32px;border-radius:14px;font-family:inherit;font-size:18px;
+    font-weight:bold;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18)">🎊 おめでとう ボタン</button>
+</div>
+
+<footer>小学生プログラミング教室 ／ 上級 第4回｜発表会</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     台本ジェネレータ
+     ========================================================= */
+  const SC_FIELDS = ['scName','scWork','sc1','sc2','sc3','sc4'];
+  function buildScript(){
+    const name = $('scName').value.trim() || '（ニックネーム）';
+    const work = $('scWork').value.trim() || '（作品名）';
+    const s1 = $('sc1').value.trim() || '（① の内容）';
+    const s2 = $('sc2').value.trim() || '（② の内容）';
+    const s3 = $('sc3').value.trim() || '（③ の内容）';
+    const s4 = $('sc4').value.trim() || '（④ の内容）';
+    return { name, work, s1, s2, s3, s4 };
+  }
+  function refreshScript(){
+    const s = buildScript();
+    $('scView').innerHTML =
+      `<h3>① 何を 作った <small>（30秒）</small></h3>
+      ${escapeHTML(s.name)}です。<br>
+      「<b>${escapeHTML(s.work)}</b>」 という作品を 作りました。<br>
+      ${escapeHTML(s.s1).replace(/\n/g,'<br>')}
+
+      <h3>② どう 作った（デモ）<small>（60秒）</small></h3>
+      ${escapeHTML(s.s2).replace(/\n/g,'<br>')}
+      <br><i style="color:#999">※ ここで 旗を 押して デモ</i>
+
+      <h3>③ 苦労した こと <small>（60秒）</small></h3>
+      ${escapeHTML(s.s3).replace(/\n/g,'<br>')}
+
+      <h3>④ 次に やりたい こと <small>（30秒）</small></h3>
+      ${escapeHTML(s.s4).replace(/\n/g,'<br>')}
+
+      <h3>📌 結びの一言</h3>
+      聞いてくれて ありがとうございました！`;
+  }
+  SC_FIELDS.forEach(id => $(id).addEventListener('input', refreshScript));
+  function scriptText(){
+    const s = buildScript();
+    return `■ ${s.work} ／ ${s.name}
+
+① 何を 作った（30秒）
+${s.s1}
+
+② どう 作った・デモ（60秒）
+${s.s2}
+※ ここで 旗を 押して デモ
+
+③ 苦労した こと（60秒）
+${s.s3}
+
+④ 次に やりたい こと（30秒）
+${s.s4}
+
+📌 結び：聞いてくれて ありがとうございました！`;
+  }
+  function copyScript(){
+    navigator.clipboard.writeText(scriptText())
+      .then(()=>showToast('📋 台本を コピーしました'))
+      .catch(()=>showToast('コピー できませんでした'));
+  }
+  function downloadScript(){
+    const blob = new Blob([scriptText()], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const name = ($('scName').value.trim() || 'me').replace(/[\/\\?<>:|"*]/g,'_');
+    a.download = '発表台本_' + name + '.txt';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 ' + a.download + ' を 保存しました');
+  }
+  function resetScript(){
+    $('scName').value = 'ゆうた';
+    $('scWork').value = 'ねこねこタイマー';
+    $('sc1').value = 'ねこを 育てながら 集中時間を のばす アプリです。';
+    $('sc2').value = 'スタートボタンで タイマーが 動いて、25分で ねこが 1匹 育ちます。\nこれが 自分の 一番の 工夫した ところです。';
+    $('sc3').value = 'タイマーが 0で 止まらなくて 困りました。\nAIに 相談して 「もし のこり時間 = 0 なら すべてを 止める」を 入れたら 直りました。';
+    $('sc4').value = 'ねこの 種類を 5匹に 増やしたいです。\nあと、お友だちにも 使ってもらえる ように したいです。';
+    refreshScript();
+  }
+  refreshScript();
+
+  /* =========================================================
+     発表タイマー（30/60/60/30 ＝ 180秒）
+     ========================================================= */
+  const PT_PHASES = [
+    { name:'① 何を 作った', sec:30 },
+    { name:'② デモ で 見せる', sec:60 },
+    { name:'③ 苦労した こと', sec:60 },
+    { name:'④ 次に やりたい こと', sec:30 },
+  ];
+  let ptIdx = 0, ptLeft = PT_PHASES[0].sec, ptRunning = false, ptIntv = null;
+  const ptDisp = $('ptimerDisp'), ptFill = $('ptimerFill'), ptName = $('ptimerPhase');
+  const ptPhases = [...document.querySelectorAll('#ptPhases .ph')];
+
+  function fmt(s){
+    const m = Math.floor(s/60), ss = s%60;
+    return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+  }
+  function ptTotal(){return PT_PHASES.reduce((a,p)=>a+p.sec,0);}
+  function ptRemain(){
+    let r = ptLeft;
+    for(let i = ptIdx+1; i < PT_PHASES.length; i++) r += PT_PHASES[i].sec;
+    return r;
+  }
+  function ptUpdate(){
+    ptDisp.textContent = fmt(ptLeft);
+    ptName.textContent = PT_PHASES[ptIdx].name;
+    const totalGone = ptTotal() - ptRemain();
+    ptFill.style.width = (totalGone / ptTotal() * 100) + '%';
+    ptDisp.classList.toggle('warn', ptLeft <= 5 && ptRunning);
+    ptPhases.forEach((el, i)=>{
+      el.classList.toggle('now', i === ptIdx && ptRunning);
+      el.classList.toggle('done', i < ptIdx);
+    });
+  }
+  function ptBell(freq, dur){
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      g.gain.value = .25;
+      g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(); osc.stop(ac.currentTime + dur);
+    } catch(e){}
+  }
+  function ptStart(){
+    if(ptRunning) return;
+    ptRunning = true;
+    ptUpdate();
+    ptIntv = setInterval(()=>{
+      ptLeft--;
+      if(ptLeft < 0){
+        ptIdx++;
+        if(ptIdx >= PT_PHASES.length){
+          ptRunning = false;
+          clearInterval(ptIntv);
+          ptIdx = PT_PHASES.length - 1;
+          ptLeft = 0;
+          ptName.textContent = '🎉 発表 完了！ おつかれさま';
+          ptDisp.textContent = '00:00';
+          ptDisp.classList.remove('warn');
+          ptPhases.forEach(el=>{el.classList.remove('now');el.classList.add('done')});
+          ptBell(880, .3); setTimeout(()=>ptBell(660, .5), 200); setTimeout(()=>ptBell(880, .8), 500);
+          return;
+        }
+        ptLeft = PT_PHASES[ptIdx].sec;
+        ptBell(660, .2);
+      }
+      ptUpdate();
+    }, 1000);
+  }
+  function ptPause(){
+    ptRunning = false;
+    clearInterval(ptIntv);
+    ptUpdate();
+  }
+  function ptReset(){
+    ptRunning = false;
+    clearInterval(ptIntv);
+    ptIdx = 0; ptLeft = PT_PHASES[0].sec;
+    ptName.textContent = '準備OK';
+    ptDisp.classList.remove('warn');
+    ptUpdate();
+  }
+  $('ptStart').addEventListener('click', ptStart);
+  $('ptPause').addEventListener('click', ptPause);
+  $('ptReset').addEventListener('click', ptReset);
+  ptReset();
+
+  /* =========================================================
+     呼吸法（4-2-6）
+     ========================================================= */
+  const brCircle = $('brCircle'), brText = $('brText'), brCycle = $('brCycle');
+  let brCycleN = 0, brRunning = false, brTimers = [];
+  function brClearTimers(){ brTimers.forEach(t=>clearTimeout(t)); brTimers = []; }
+  function brStep(){
+    if(!brRunning) return;
+    brCycleN++;
+    brCycle.textContent = `サイクル：${brCycleN} / 3`;
+    if(brCycleN > 3){
+      brStop();
+      brText.textContent = '🌟 リラックス できた？ 本番 がんばろう！';
+      brCircle.textContent = 'OK!';
+      return;
+    }
+    // 吸う（4秒）
+    brText.textContent = '吸って…（4秒）';
+    brCircle.classList.remove('out','hold'); brCircle.classList.add('in');
+    brCircle.textContent = '吸';
+    brTimers.push(setTimeout(()=>{
+      if(!brRunning) return;
+      // 止める（2秒）
+      brText.textContent = '止めて…（2秒）';
+      brCircle.classList.remove('in','out'); brCircle.classList.add('hold');
+      brCircle.textContent = '止';
+      brTimers.push(setTimeout(()=>{
+        if(!brRunning) return;
+        // はく（6秒）
+        brText.textContent = 'はいて…（6秒）';
+        brCircle.classList.remove('in','hold'); brCircle.classList.add('out');
+        brCircle.textContent = 'は';
+        brTimers.push(setTimeout(brStep, 6000));
+      }, 2000));
+    }, 4000));
+  }
+  function brStart(){
+    if(brRunning) return;
+    brRunning = true;
+    brCycleN = 0;
+    brStep();
+  }
+  function brStop(){
+    brRunning = false;
+    brClearTimers();
+    brCircle.classList.remove('in','out','hold');
+    brCircle.textContent = 'START';
+  }
+  $('brStart').addEventListener('click', brStart);
+  $('brStop').addEventListener('click', ()=>{
+    brStop();
+    brText.textContent = '停止しました';
+    brCycle.textContent = `サイクル：${brCycleN} / 3`;
+  });
+
+  /* =========================================================
+     質疑応答 練習
+     ========================================================= */
+  const QAS = [
+    {
+      q: 'ねこの 絵は どうやって 描いたの？',
+      opts: [
+        { t:'忘れちゃいました。', ok:false },
+        { t:'自分で Scratchの ペイントツールで 描きました。15分くらい かかりました！', ok:true },
+        { t:'秘密です。', ok:false },
+      ],
+      ex:'✅ <b>「自分で / ツール名 / どのくらい かかった」</b> の3点セット。 エピソードで 話すと 伝わる！'
+    },
+    {
+      q: 'もっと むずかしくする 予定 ありますか？',
+      opts: [
+        { t:'考えてないです。', ok:false },
+        { t:'はい、 ねこの 種類を 増やしたり、 むずかしいモードを 追加したいです！', ok:true },
+        { t:'むずかしくしません。', ok:false },
+      ],
+      ex:'✅ 「次に やりたい こと」 とつなげて 前向きに 答える！「考えてない」 は もったいない。'
+    },
+    {
+      q: 'なんで このゲームを 作ろうと 思ったの？',
+      opts: [
+        { t:'なんとなく。', ok:false },
+        { t:'妹が 集中するのが 苦手だったので、 楽しく できる ものを 作りたかったからです。', ok:true },
+        { t:'むずかしい 質問なので 答えません。', ok:false },
+      ],
+      ex:'✅ <b>「だれが・どんな こまりごと」</b> から 話すと、 あなたの 作品の 意味が 伝わる！'
+    },
+    {
+      q: 'AIを どんなふうに 使ったの？',
+      opts: [
+        { t:'AIに ぜんぶ 書いてもらいました。', ok:false },
+        { t:'タイマーで 詰まった時に 「どんなブロックを 使えばいい？」と 聞きました。コードは 自分で 書きました。', ok:true },
+        { t:'AIは 使ってません。', ok:false },
+      ],
+      ex:'✅ 上級の 卒業要件は <b>「自分で 最低1行 書く」</b>。 AIは 相談相手！'
+    },
+  ];
+  const qaEl = $('qaprac');
+  QAS.forEach((qa, i)=>{
+    const card = document.createElement('div');
+    card.className = 'qa-card';
+    card.innerHTML = `<div class="ques">${escapeHTML(qa.q)}</div>
+      <div class="qa-options"></div>
+      <div class="qa-explain">${qa.ex}</div>`;
+    const optsEl = card.querySelector('.qa-options');
+    qa.opts.forEach(opt=>{
+      const b = document.createElement('button');
+      b.textContent = opt.t;
+      b.addEventListener('click', ()=>{
+        if(card.classList.contains('answered')) return;
+        card.classList.add('answered');
+        if(opt.ok){
+          b.classList.add('right');
+        } else {
+          b.classList.add('wrong');
+          // 正解を表示
+          [...optsEl.querySelectorAll('button')].forEach((bb,bi)=>{
+            if(qa.opts[bi].ok) bb.classList.add('right');
+          });
+        }
+      });
+      optsEl.appendChild(b);
+    });
+    qaEl.appendChild(card);
+  });
+
+  /* =========================================================
+     リハーサル チェックリスト
+     ========================================================= */
+  (function(){
+    const root = $('rehearcheck'), out = $('rehProg');
+    const items = [...root.querySelectorAll('.check-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      out.textContent = `${done} / 8 達成`;
+      if(done === 8){
+        out.style.color = '#4CAF50';
+        out.textContent = '🎉 8 / 8 達成！ 本番 OK！';
+      } else if(done >= 6){
+        out.style.color = 'var(--accent)';
+        out.textContent = `${done} / 8 達成 — もう少し！`;
+      } else {
+        out.style.color = '';
+      }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{
+      it.classList.toggle('on'); update();
+    }));
+    update();
+  })();
+
+  /* =========================================================
+     修了証ジェネレータ
+     ========================================================= */
+  function refreshCert(){
+    const name = $('certName').value.trim() || '（ニックネーム）';
+    const school = $('certSchool').value.trim() || '（教室名）';
+    let date = $('certDate').value.trim();
+    if(!date){
+      date = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
+    }
+    $('certNameView').textContent = name;
+    $('certNameView2').textContent = name;
+    $('certSchoolView').textContent = school;
+    $('certSchoolView2').textContent = school;
+    $('certDateView').textContent = date;
+    $('certDateView2').textContent = date;
+  }
+  ['certName','certSchool','certDate'].forEach(id => $(id).addEventListener('input', refreshCert));
+  refreshCert();
+
+  function downloadCert(){
+    const name = $('certName').value.trim() || 'me';
+    const certHtml = $('certScreen').outerHTML;
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHTML(name)} 修了証</title>
+<style>
+body{font-family:sans-serif;padding:40px;background:#F8F5FF;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.cert{background:linear-gradient(135deg,#FFFCEE,#F3EFFF);border:6px double #7C4DFF;border-radius:18px;padding:50px 40px;text-align:center;max-width:600px;width:100%;box-shadow:0 8px 20px rgba(124,77,255,.18);position:relative;overflow:hidden}
+.cert .badge{font-size:60px;margin-bottom:10px}
+.cert h2{color:#7C4DFF;font-size:36px;margin-bottom:14px;letter-spacing:4px}
+.cert .body{font-size:16px;line-height:2;color:#1A1A2E}
+.cert .name{font-size:32px;font-weight:bold;color:#00BFA5;margin:14px 0;padding:10px 0;border-top:2px solid #7C4DFF;border-bottom:2px solid #7C4DFF;display:inline-block;min-width:240px}
+.cert .footer{margin-top:18px;font-size:13px;color:#5A5A75}
+@media print { body{background:white;padding:20px} .cert{box-shadow:none} }
+</style></head><body>${certHtml}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '修了証_' + name.replace(/[\/\\?<>:|"*]/g,'_') + '.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 修了証を 保存しました');
+  }
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     紙吹雪
+     ========================================================= */
+  const confetti = $('confetti');
+  function celebrate(){
+    confetti.innerHTML = '';
+    confetti.classList.add('on');
+    const colors = ['#7C4DFF','#FFD54F','#00BFA5','#FF5252','#536DFE','#9C27B0'];
+    for(let i = 0; i < 100; i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+      s.style.animationDelay = (Math.random() * 1.2) + 's';
+      s.style.transform = `rotate(${Math.random()*360}deg)`;
+      confetti.appendChild(s);
+    }
+    setTimeout(()=>confetti.classList.remove('on'), 5000);
+    info('🎓','修了 おめでとう！',`<div style="text-align:center;line-height:2">
+      上級コース 4回 完全クリア！<br>
+      <b>企画 → 実装 → テスト → 発表</b><br>
+      が 自分の チカラ に なりました。<br><br>
+      これからも 作りつづけよう！</div>`);
+  }
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

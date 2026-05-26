@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小学生・上級 第1回｜作品の企画書をかこう</title>
+<style>
+  :root{
+    --primary:#7C4DFF; --secondary:#FFD54F; --accent:#00BFA5;
+    --warn:#FF5252; --dark:#1A1A2E; --light:#F8F5FF;
+    --panel:#FFFFFF; --muted:#5A5A75; --shadow:0 4px 0 rgba(0,0,0,.1);
+    --sticky:#FFEB3B; --sticky-b:#80DEEA; --sticky-p:#F8BBD0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,select,textarea{font:inherit}
+
+  /* === Top progress + status === */
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* === Side nav === */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* === Modal === */
+  .modal-bg{position:fixed;inset:0;background:rgba(26,26,46,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  /* === Hero === */
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#7C4DFF 0%,#536DFE 50%,#00BFA5 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.25);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(18px,2.4vw,24px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,108px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px;font-weight:bold}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:8px}
+  .card.warn{border-left:8px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:8px solid var(--accent);background:#E0F7FA}
+  .card.tip{border-left:8px solid var(--secondary);background:#FFFCEE}
+
+  /* === Mandala (9マス) === */
+  .mando{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+    background:var(--primary);padding:10px;border-radius:14px;box-shadow:var(--shadow);margin-top:14px}
+  .mando textarea{background:white;border:none;border-radius:8px;padding:12px 10px;
+    font-family:inherit;font-size:15px;text-align:center;resize:none;min-height:80px;color:var(--dark);
+    box-shadow:inset 0 2px 4px rgba(0,0,0,.05)}
+  .mando textarea:focus{outline:3px solid var(--secondary);background:#FFFCEE}
+  .mando .center{background:var(--secondary);font-weight:bold;color:var(--dark);text-align:center;
+    display:flex;align-items:center;justify-content:center;font-size:16px;padding:10px}
+  .mando .center input{background:transparent;border:none;text-align:center;width:100%;
+    font-family:inherit;font-size:18px;font-weight:bold;color:var(--dark)}
+  .mando .center input:focus{outline:none}
+  .mando-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:center}
+  .mando-tools button{font-family:inherit;border:none;border-radius:10px;padding:8px 18px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white;transition:transform .12s}
+  .mando-tools button:hover{transform:translateY(-2px)}
+  .mando-tools button.gray{background:var(--muted)}
+  .mando-tools button.accent{background:var(--accent)}
+
+  /* === Diagnosis === */
+  .diag{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .diag .qrow{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #DDD}
+  .diag .qrow:last-of-type{border-bottom:none}
+  .diag .q{font-weight:bold;font-size:16px;margin-bottom:8px}
+  .diag .opts{display:flex;gap:10px;flex-wrap:wrap}
+  .diag .opts button{background:white;border:2px solid var(--primary);color:var(--primary);
+    padding:6px 18px;border-radius:999px;cursor:pointer;font-family:inherit;
+    font-weight:bold;font-size:14px;transition:all .15s}
+  .diag .opts button:hover{background:#F3EFFF}
+  .diag .opts button.sel{background:var(--primary);color:white}
+  .diag-result{margin-top:14px;padding:18px 22px;border-radius:12px;font-weight:bold;
+    text-align:center;display:none;font-size:17px;line-height:1.7}
+  .diag-result.show{display:block;animation:popIn .4s}
+  .diag-result.ok{background:#E0F7FA;border:3px solid var(--accent);color:#00695C}
+  .diag-result.mid{background:#FFFCEE;border:3px solid var(--secondary);color:#7C5800}
+  .diag-result.ng{background:#FFEBEE;border:3px solid var(--warn);color:#B71C1C}
+
+  /* === Plan template (印刷可能) === */
+  .planform{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .pf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .pf-grid label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .pf-grid .full{grid-column:1 / -1}
+  .pf-grid input,.pf-grid textarea{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA;color:var(--dark)}
+  .pf-grid textarea{min-height:64px;resize:vertical}
+  .pf-grid input:focus,.pf-grid textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .pf-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .pf-tools button{font-family:inherit;border:none;border-radius:12px;padding:10px 22px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .pf-tools button:hover{transform:translateY(-2px)}
+  .pf-tools button.gray{background:var(--muted)}
+  .pf-tools button.accent{background:var(--accent)}
+  .pf-tools button.warn{background:var(--warn)}
+
+  /* === Plan sheet preview === */
+  .sheet{background:white;border:2px solid var(--primary);border-radius:14px;
+    padding:24px;margin-top:18px;box-shadow:var(--shadow);font-size:14px}
+  .sheet h3{color:var(--primary);font-size:20px;margin-bottom:4px;border-bottom:2px dashed var(--primary);padding-bottom:6px}
+  .sheet .row{margin-top:14px}
+  .sheet .row .lbl{display:inline-block;background:var(--primary);color:white;font-weight:bold;
+    padding:3px 10px;border-radius:6px;font-size:13px;margin-bottom:6px}
+  .sheet .row.s .lbl{background:var(--secondary);color:var(--dark)}
+  .sheet .row.a .lbl{background:var(--accent)}
+  .sheet .row.p .lbl{background:#9C27B0}
+  .sheet .row.w .lbl{background:var(--warn)}
+  .sheet .row .v{padding-left:8px;border-left:3px solid #E0E0E0;margin-left:4px;
+    white-space:pre-wrap;color:#333}
+  .sheet .footer{margin-top:18px;border-top:1px dashed #CCC;padding-top:10px;
+    color:#999;font-size:12px;text-align:right}
+
+  /* === Sketchpad === */
+  .sketch-area{background:white;border:2px dashed var(--primary);border-radius:12px;
+    padding:14px;min-height:280px;position:relative;margin-top:14px;overflow:hidden}
+  .sketch-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    padding:10px;background:#F3EFFF;border-radius:10px;margin-bottom:10px}
+  .sketch-toolbar .palette{display:flex;gap:4px}
+  .sketch-toolbar .palette button{background:white;border:none;border-radius:8px;
+    padding:6px 10px;font-family:inherit;font-size:14px;cursor:pointer;font-weight:bold;
+    box-shadow:0 2px 0 rgba(0,0,0,.1)}
+  .sketch-toolbar .palette button:hover{transform:translateY(-2px)}
+  .sketch-toolbar .palette button.sticky{background:var(--sticky)}
+  .sketch-toolbar .palette button.btn{background:var(--primary);color:white}
+  .sketch-toolbar .palette button.txt{background:#E0E0E0}
+  .sketch-toolbar .palette button.img{background:var(--sticky-b)}
+  .sketch-toolbar .palette button.bar{background:var(--accent);color:white}
+  .sketch-toolbar .right{margin-left:auto;display:flex;gap:6px}
+  .sketch-toolbar .right button{background:var(--muted);color:white;border:none;
+    border-radius:8px;padding:6px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:bold}
+  .sketch-canvas{position:relative;width:100%;min-height:260px;background:
+    linear-gradient(white,white),
+    repeating-linear-gradient(0deg, #EEE 0 1px, transparent 1px 20px),
+    repeating-linear-gradient(90deg, #EEE 0 1px, transparent 1px 20px);
+    background-blend-mode:normal,multiply,multiply;border-radius:8px;cursor:default}
+  .sketch-item{position:absolute;cursor:move;user-select:none;touch-action:none;
+    padding:8px 12px;border-radius:6px;font-weight:bold;font-size:14px;
+    box-shadow:0 2px 4px rgba(0,0,0,.15);transition:transform .1s}
+  .sketch-item.dragging{transform:scale(1.05);z-index:50;opacity:.9}
+  .sketch-item.sel{outline:3px solid var(--primary);outline-offset:2px}
+  .sketch-item.k-sticky{background:var(--sticky);transform:rotate(-2deg)}
+  .sketch-item.k-btn{background:var(--primary);color:white}
+  .sketch-item.k-txt{background:transparent;color:var(--dark);border:1px dashed #999}
+  .sketch-item.k-img{background:var(--sticky-b);font-size:24px;text-align:center;min-width:50px}
+  .sketch-item.k-bar{background:var(--accent);color:white;min-width:120px;text-align:center}
+  .sketch-item .x{position:absolute;top:-8px;right:-8px;width:22px;height:22px;
+    background:var(--warn);color:white;border:none;border-radius:50%;font-size:14px;
+    cursor:pointer;display:none;line-height:1}
+  .sketch-item.sel .x{display:block}
+  .sketch-help{text-align:center;color:#999;font-size:14px;padding:50px 20px}
+
+  /* === Samples === */
+  .samples{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+  .sample{background:white;border-radius:14px;padding:16px;box-shadow:var(--shadow);
+    cursor:pointer;border:3px solid transparent;transition:all .15s}
+  .sample:hover{border-color:var(--primary);transform:translateY(-3px)}
+  .sample h3{color:var(--primary);font-size:18px;margin-bottom:4px}
+  .sample p{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .sample .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .sample .meta span{background:#F3EFFF;padding:3px 10px;border-radius:999px;font-size:11px;color:var(--primary);font-weight:bold}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .qrow{margin-bottom:16px}
+  .qrow .q{font-weight:bold;font-size:17px;margin-bottom:8px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:2px solid var(--accent);color:var(--dark);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;
+    font-weight:bold;transition:all .15s}
+  .qrow .opts button:hover{background:#E0F7FA}
+  .qrow .opts button.right{background:#A5D6A7;border-color:#388E3C;color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:6px;display:none}
+  .qrow.answered .ex{display:block}
+
+  /* === Summary / next === */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* === Toast === */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:12px 24px;border-radius:999px;
+    font-weight:bold;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+
+  /* === Print: show only the sheet === */
+  @media print {
+    body { background: white; }
+    .progress,.top-status,.snav,.snav-help,.modal-bg,.toast,
+    .hero,.divider,.section{ display:none !important; }
+    .print-sheet { display:block !important; padding: 20px !important; }
+    .print-sheet .sheet { border: 2px solid #000 !important; box-shadow: none; }
+  }
+  .print-sheet { display:none; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>上級 第1回</span> <b>作品の企画書をかこう</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#what">2<span>上級コースとは</span><span class="ic">📈</span></a>
+  <a href="#idea">3<span>マンダラ法</span><span class="ic">💡</span></a>
+  <a href="#focus">4<span>絞り込み診断</span><span class="ic">🔍</span></a>
+  <a href="#plan">5<span>企画書テンプレ</span><span class="ic">📝</span></a>
+  <a href="#sketch">6<span>画面設計ボード</span><span class="ic">🎨</span></a>
+  <a href="#samples">7<span>サンプル企画書</span><span class="ic">📚</span></a>
+  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">コピーしました！</div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 小学生プログラミング教室・上級</div>
+    <h1>作品の<br>企画書をかこう</h1>
+    <p>アイデア → 絞り込み → 企画書1枚 で <b>「自分で考えた作品」</b> をスタート！</p>
+    <div class="em">📝✨🎨</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「コードは 書かない」 1日</h2>
+  <p class="lead">今日は <b>紙とアタマ</b> の日。 ちゃんと企画してから 作ると、ぐっと完成度が 上がる！</p>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:56px;display:block">💡</span><h3>アイデア出し</h3><p style="color:var(--muted)">マンダラ法</p></div>
+    <div class="card"><span style="font-size:56px;display:block">🔍</span><h3>1つに しぼる</h3><p style="color:var(--muted)">3つの質問</p></div>
+    <div class="card"><span style="font-size:56px;display:block">📝</span><h3>企画書 1枚</h3><p style="color:var(--muted)">5項目テンプレ</p></div>
+    <div class="card"><span style="font-size:56px;display:block">🎨</span><h3>画面設計</h3><p style="color:var(--muted)">パーツを並べる</p></div>
+  </div>
+</section>
+
+<!-- 1. 上級コースとは -->
+<div class="divider" id="what" data-snav-target>
+  <div class="num">1.</div>
+  <h2>上級コースって なに？</h2>
+</div>
+
+<section class="section">
+  <h2>中級との 大きな ちがい</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>🐹 中級まで</h3>
+      <ul style="margin-left:20px;margin-top:6px;line-height:2">
+        <li>先生の <b>手本</b> を まねる</li>
+        <li>ちょっと <b>アレンジ</b></li>
+        <li>ゴール ＝ <b>「動いた！」</b></li>
+        <li>講師は <b>「教える」</b></li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:8px solid var(--primary)">
+      <h3 style="color:var(--primary)">🚀 上級では</h3>
+      <ul style="margin-left:20px;margin-top:6px;line-height:2">
+        <li><b>自分で 企画</b> する</li>
+        <li>設計 → 実装 → テスト → 発表 を <b>一人で</b></li>
+        <li>ゴール ＝ <b>「使ってもらえた！」</b></li>
+        <li>講師は <b>「サポート」</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 style="margin-top:50px">全4回 のスケジュール</h2>
+  <div class="grid grid-4" style="margin-top:14px">
+    <div class="card" style="border-top:6px solid var(--primary)"><h3>第1回</h3><p style="color:var(--muted)">企画書を 書く<br><b>← きょう</b></p></div>
+    <div class="card" style="border-top:6px solid var(--secondary)"><h3>第2回</h3><p style="color:var(--muted)">作品を 作る</p></div>
+    <div class="card" style="border-top:6px solid var(--accent)"><h3>第3回</h3><p style="color:var(--muted)">テスト＆改善</p></div>
+    <div class="card" style="border-top:6px solid #9C27B0"><h3>第4回</h3><p style="color:var(--muted)">発表会 🎤</p></div>
+  </div>
+</section>
+
+<!-- 2. マンダラ法 -->
+<div class="divider" id="idea" data-snav-target>
+  <div class="num">2.</div>
+  <h2>アイデア発想：マンダラ法</h2>
+</div>
+
+<section class="section">
+  <h2>9マスで アイデアを 広げる</h2>
+  <p class="lead">真ん中に <b>テーマ</b>（例：こまっている事）、まわりに <b>思いつくこと</b> を どんどん書く。<br>
+  ヘンでもOK！ 後で 1つに しぼるから。</p>
+
+  <div class="mando" id="mando">
+    <textarea data-i="0" placeholder="例：家族" aria-label="マンダラ1"></textarea>
+    <textarea data-i="1" placeholder="例：学校" aria-label="マンダラ2"></textarea>
+    <textarea data-i="2" placeholder="例：友だち" aria-label="マンダラ3"></textarea>
+    <textarea data-i="3" placeholder="例：毎日" aria-label="マンダラ4"></textarea>
+    <div class="center">
+      <input type="text" id="mandoCenter" value="こまっている こと" maxlength="14" aria-label="中央テーマ">
+    </div>
+    <textarea data-i="5" placeholder="例：遊び" aria-label="マンダラ6"></textarea>
+    <textarea data-i="6" placeholder="例：勉強" aria-label="マンダラ7"></textarea>
+    <textarea data-i="7" placeholder="例：家事" aria-label="マンダラ8"></textarea>
+    <textarea data-i="8" placeholder="例：あいさつ" aria-label="マンダラ9"></textarea>
+  </div>
+
+  <div class="mando-tools">
+    <button onclick="loadMandoExample()">📚 例を 読み込む</button>
+    <button class="accent" onclick="pickRandomMando()">🎲 1つ えらぶ</button>
+    <button class="gray" onclick="resetMando()">↺ クリア</button>
+  </div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3 style="color:#B8860B">💡 マンダラ法の コツ</h3>
+    <p style="margin-top:6px"><b>「最低5マス うめる」</b> を 目標に。 残りは あとから 思いついたら 書き足してOK。<br>
+    🎲 ボタンで ランダムに 1つ えらんでみる のも アリ！</p>
+  </div>
+</section>
+
+<!-- 3. 絞り込み診断 -->
+<div class="divider" id="focus" data-snav-target>
+  <div class="num">3.</div>
+  <h2>アイデアを 1つに しぼる 診断</h2>
+</div>
+
+<section class="section">
+  <h2>「90分×3回で 作れる？」 チェック</h2>
+  <p class="lead">5つの質問に 答えると、その アイデアが 上級コースで <b>作れる かどうか</b> 判定！</p>
+
+  <div class="diag" id="diag">
+    <div class="qrow" data-w="2"><div class="q">Q1. <b>だれが</b> 使うか、はっきり 言える？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div></div>
+    <div class="qrow" data-w="2"><div class="q">Q2. なにが できるか、<b>3〜5個</b> で 言える？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div></div>
+    <div class="qrow" data-w="3"><div class="q">Q3. <b>1画面〜3画面</b> で すむ？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div></div>
+    <div class="qrow" data-w="2"><div class="q">Q4. 自分で <b>「楽しそう」</b> と 思える？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div></div>
+    <div class="qrow" data-w="3"><div class="q">Q5. オンライン通信や、3D、AI会話 など <b>むずかしい技術</b> を 必要としない？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div></div>
+
+    <div class="diag-result" id="diagResult"></div>
+  </div>
+</section>
+
+<!-- 4. 企画書テンプレート -->
+<div class="divider" id="plan" data-snav-target>
+  <div class="num">4.</div>
+  <h2>デジタル 企画書 テンプレート</h2>
+</div>
+
+<section class="section">
+  <h2>5つの欄を うめれば 完成！</h2>
+  <p class="lead">下の項目を 入力すると、右に 企画書が リアルタイムで できる。<br>
+  「<b>印刷</b>」 ボタンで そのまま A4で 出せます。</p>
+
+  <div class="planform">
+    <div class="pf-grid">
+      <div class="full">
+        <label>① 作品の 名前（仮でOK）</label>
+        <input type="text" id="pfName" value="ねこねこタイマー" maxlength="30">
+      </div>
+      <div class="full">
+        <label>② キャッチコピー（30文字以内）</label>
+        <input type="text" id="pfCatch" value="ねこを 育てながら 集中時間を のばすアプリ" maxlength="40">
+      </div>
+      <div>
+        <label>③ だれが 使う？（くわしく）</label>
+        <textarea id="pfWho">小学2年生の 妹。ひらがなが 読める。長く 集中するのが むずかしい。</textarea>
+      </div>
+      <div>
+        <label>④ なにが できる？（3〜5個）</label>
+        <textarea id="pfWhat">・スタートボタンで タイマーが 動く
+・25分で ねこが 1匹 育つ
+・3匹 ためたら 図かんに のる
+・休けい中に ごはん をあげられる</textarea>
+      </div>
+      <div class="full">
+        <label>⑤ 心配なこと（先生・AIに 聞きたい事）</label>
+        <textarea id="pfWorry">・タイマーが 動いている間に 別のことが できるかな？
+・ねこの 絵は どこから 持ってくる？</textarea>
+      </div>
+    </div>
+    <div class="pf-tools">
+      <button onclick="loadPlanExample('ex1')">📚 サンプル1（ゲーム）</button>
+      <button onclick="loadPlanExample('ex2')">📚 サンプル2（学習）</button>
+      <button class="accent" onclick="window.print()">🖨️ 印刷する</button>
+      <button onclick="downloadPlan()">💾 保存 (.html)</button>
+      <button class="gray" onclick="resetPlan()">↺ クリア</button>
+    </div>
+  </div>
+
+  <!-- リアルタイムプレビュー -->
+  <div class="print-sheet" id="printSheet">
+    <div class="sheet" id="planSheet">
+      <h3 id="psName">作品名</h3>
+      <div style="color:#666;font-size:14px" id="psCatch">キャッチコピー</div>
+      <div class="row"><span class="lbl">① 作品名</span><div class="v" id="psNameV"></div></div>
+      <div class="row s"><span class="lbl">② だれが使う</span><div class="v" id="psWho"></div></div>
+      <div class="row a"><span class="lbl">③ できること</span><div class="v" id="psWhat"></div></div>
+      <div class="row p"><span class="lbl">④ 画面のイメージ</span><div class="v">↓ 画面設計ボード で 作って 印刷時 紙の裏に 貼る</div></div>
+      <div class="row w"><span class="lbl">⑤ 心配なこと</span><div class="v" id="psWorry"></div></div>
+      <div class="footer">小学生プログラミング教室・上級 第1回 ／ きじゅん日：<span id="psDate"></span></div>
+    </div>
+  </div>
+
+  <!-- スクリーン表示用 -->
+  <div class="sheet" id="planSheetScreen" style="margin-top:18px">
+    <h3 id="psName2">作品名</h3>
+    <div style="color:#666;font-size:14px" id="psCatch2">キャッチコピー</div>
+    <div class="row"><span class="lbl">① 作品名</span><div class="v" id="psNameV2"></div></div>
+    <div class="row s"><span class="lbl">② だれが使う</span><div class="v" id="psWho2"></div></div>
+    <div class="row a"><span class="lbl">③ できること</span><div class="v" id="psWhat2"></div></div>
+    <div class="row p"><span class="lbl">④ 画面のイメージ</span><div class="v">下の「画面設計ボード」で 作って 紙に 貼る</div></div>
+    <div class="row w"><span class="lbl">⑤ 心配なこと</span><div class="v" id="psWorry2"></div></div>
+    <div class="footer">小学生プログラミング教室・上級 第1回 ／ <span id="psDate2"></span></div>
+  </div>
+</section>
+
+<!-- 5. 画面設計ボード -->
+<div class="divider" id="sketch" data-snav-target>
+  <div class="num">5.</div>
+  <h2>画面設計 ボード</h2>
+</div>
+
+<section class="section">
+  <h2>パーツを ドラッグして 画面を 組み立てる</h2>
+  <p class="lead">画面パーツを クリックして 追加 → <b>ドラッグで移動</b> → クリックで 選択 → ❌ で 削除。<br>
+  紙に 貼るような感じで、自由に 並べてみよう。</p>
+
+  <div class="sketch-area">
+    <div class="sketch-toolbar">
+      <span style="font-weight:bold;font-size:13px;color:var(--muted)">追加：</span>
+      <div class="palette">
+        <button class="sticky" onclick="addPart('sticky','📝 ふせん')">📝 ふせん</button>
+        <button class="btn" onclick="addPart('btn','ボタン')">🔘 ボタン</button>
+        <button class="txt" onclick="addPart('txt','タイトル')">📝 文字</button>
+        <button class="img" onclick="addPart('img','🐱')">🖼️ 絵文字</button>
+        <button class="bar" onclick="addPart('bar','▓▓▓▓░░ 60%')">📊 メーター</button>
+      </div>
+      <div class="right">
+        <button onclick="clearSketch()">↺ クリア</button>
+      </div>
+    </div>
+    <div class="sketch-canvas" id="sketchCanvas">
+      <div class="sketch-help" id="sketchHelp">↑ 上のボタンを 押すと パーツが ここに 出てくるよ。<br>そのあと ドラッグで 場所を 動かそう！</div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:#B8860B">💡 画面設計の コツ</h3>
+    <ul style="margin-left:24px;margin-top:6px;line-height:1.9">
+      <li><b>大事なもの は 大きく</b>（タイトル・キャラ）</li>
+      <li>毎回 押すボタンは <b>下のほうに</b>（指が届きやすい）</li>
+      <li>同じ仲間 は <b>近くに</b> まとめる</li>
+      <li>1画面に <b>5〜7個</b> までが ちょうど良い</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6. サンプル企画書 -->
+<div class="divider" id="samples" data-snav-target>
+  <div class="num">6.</div>
+  <h2>サンプル企画書（3つ）</h2>
+</div>
+
+<section class="section">
+  <h2>先輩たちの 企画書を のぞく</h2>
+  <p class="lead">クリックすると くわしく見られる。 自分の企画書を 書くときの ヒントに！</p>
+
+  <div class="samples" id="samplesBox">
+    <!-- generated -->
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう！</h2>
+  <p class="lead">何回 まちがえてもOK。答えがわかったら 説明が出るよ。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="1">
+      <div class="q">Q1. つぎのうち、上級コースの <b>ゴール</b> は どれ？</div>
+      <div class="opts">
+        <button data-i="0">動いた！</button>
+        <button data-i="1">人に 使ってもらえた！</button>
+        <button data-i="2">先生に ほめられた！</button>
+        <button data-i="3">ぜんぶ AIに 書いてもらえた！</button>
+      </div>
+      <div class="ex">✅ 上級は「<b>使ってもらえた</b>」がゴール。 中級の「動いた」より <b>一歩 進んだ</b> 目標。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q2. 企画書の <b>「だれが使う？」</b> は どう書くと 良い？</div>
+      <div class="opts">
+        <button data-i="0">小学2年生の 妹（くわしく 1人）</button>
+        <button data-i="1">みんな</button>
+        <button data-i="2">日本人 ぜんいん</button>
+        <button data-i="3">使う人 はいない</button>
+      </div>
+      <div class="ex">✅ <b>1人 を くわしく</b> イメージするのが コツ。「みんな」は <b>だれにも 合わない</b> 作品に なってしまう。</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q3. 第1回（今日）で <b>やらない</b> こと は？</div>
+      <div class="opts">
+        <button data-i="0">アイデアを 広げる</button>
+        <button data-i="1">企画書を 書く</button>
+        <button data-i="2">コードを 書く</button>
+        <button data-i="3">画面を 紙に描く</button>
+      </div>
+      <div class="ex">✅ 今日は <b>「考える日」</b>。 コードは 第2回から！ 紙の上で じっくり 設計しよう。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>マンダラ法で アイデアを 広げる</h3><p style="color:var(--muted)">9マスに 思いつくだけ</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>3つの質問で 1つに しぼる</h3><p style="color:var(--muted)">「90分×3回で 作れるか」</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>企画書 5つの欄 を 書いた</h3><p style="color:var(--muted)">名前・だれ・なに・画面・心配</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>画面設計を パーツで 並べた</h3><p style="color:var(--muted)">1画面 5〜7個 まで</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>「コードを 書く前に 考える」 が プロのコツ</h3><p style="color:var(--muted)">設計が ちゃんとしてると 後がラク</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">⚒️🐹</div>
+  <h2>次回 ｜ 作品を 作ろう</h2>
+  <p>企画書 どおりに Scratchで 実装スタート！ 詰まったら AIに 相談。</p>
+</div>
+
+<footer>小学生プログラミング教室 ／ 上級 第1回｜作品の企画書をかこう</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function $(id){ return document.getElementById(id); }
+
+  /* =========================================================
+     マンダラ法
+     ========================================================= */
+  const mandoCells = [...document.querySelectorAll('#mando textarea')];
+  const MANDO_EX = {
+    '家族のこまり事': ['朝起きるのが大変', '宿題を忘れる', '兄妹げんか', '時間が分からない', '片づけ', 'おやつ管理', '習いごと忘れ', 'ごはん配ぜん'],
+    '楽しい遊び': ['カードゲーム', '鬼ごっこ', '神経衰弱', 'クイズ', '迷路', 'お絵かき', '当てっこ', 'リズム'],
+    '勉強の助け': ['漢字テスト', '計算ドリル', '英単語', '時間割', '九九', 'タイマー', 'ごほうび', '記録'],
+  };
+  function loadMandoExample(){
+    const themes = Object.keys(MANDO_EX);
+    const t = themes[Math.floor(Math.random()*themes.length)];
+    $('mandoCenter').value = t;
+    const arr = MANDO_EX[t];
+    mandoCells.forEach((c,i)=>{ c.value = arr[i] || ''; });
+    showToast('📚 例「' + t + '」を 読み込みました');
+  }
+  function pickRandomMando(){
+    const filled = mandoCells.map(c => c.value.trim()).filter(Boolean);
+    if(filled.length === 0){ showToast('まず マスを うめてね'); return; }
+    const pick = filled[Math.floor(Math.random()*filled.length)];
+    info('🎲','ランダムに 1つ えらびました',
+      `<div style="text-align:center"><div style="font-size:32px;color:var(--primary);font-weight:bold;margin:10px 0">${escapeHTML(pick)}</div><p style="font-size:14px;color:var(--muted)">これを テーマに 企画してみる？<br>気に入らなかったら もう一度 押してね！</p></div>`);
+  }
+  function resetMando(){
+    mandoCells.forEach(c => c.value = '');
+    $('mandoCenter').value = 'こまっている こと';
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     絞り込み診断
+     ========================================================= */
+  const diag = $('diag');
+  const diagRows = [...diag.querySelectorAll('.qrow')];
+  const diagResult = $('diagResult');
+  function updateDiag(){
+    let score = 0, max = 0, answered = 0;
+    diagRows.forEach(row=>{
+      const w = parseInt(row.dataset.w, 10);
+      max += w;
+      const sel = row.querySelector('.opts button.sel');
+      if(sel){
+        answered++;
+        score += parseInt(sel.dataset.v, 10) * w;
+      }
+    });
+    if(answered < diagRows.length){
+      diagResult.classList.remove('show');
+      return;
+    }
+    diagResult.classList.add('show');
+    diagResult.classList.remove('ok','mid','ng');
+    const ratio = score / max;
+    if(ratio >= .8){
+      diagResult.classList.add('ok');
+      diagResult.innerHTML = `🎉 <b>バッチリ！</b><br>このアイデアは 上級コースで <b>作れそう</b>です。 企画書 を 書きはじめよう！`;
+    } else if(ratio >= .5){
+      diagResult.classList.add('mid');
+      diagResult.innerHTML = `🤔 <b>もうひと工夫！</b><br>「いいえ」の所を 小さくしたり、はっきりさせたり して みよう。 アイデアは いい！`;
+    } else {
+      diagResult.classList.add('ng');
+      diagResult.innerHTML = `⚠️ <b>大きすぎ かも</b><br>もっと <b>ちっちゃくして</b>、または <b>べつのアイデア</b> で やり直そう。 マンダラに 戻ってみよう！`;
+    }
+  }
+  diagRows.forEach(row=>{
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        row.querySelectorAll('.opts button').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel');
+        updateDiag();
+      });
+    });
+  });
+
+  /* =========================================================
+     企画書テンプレート
+     ========================================================= */
+  const PF_FIELDS = ['pfName','pfCatch','pfWho','pfWhat','pfWorry'];
+  const PF_EX = {
+    ex1: {
+      pfName: 'もぐもぐクイズ',
+      pfCatch: 'たべものの 名前を 当てる 5問クイズ',
+      pfWho: '5才の弟。ひらがなが 少し 読める。絵が大好き。',
+      pfWhat: '・絵が 出てくる\n・選択肢が 4つ\n・正解で 拍手の音\n・5問で 結果画面',
+      pfWorry: '・絵は どこから 借りる？\n・音の 入れ方'
+    },
+    ex2: {
+      pfName: 'おうち時間わり',
+      pfCatch: 'やる事を 順に 教えてくれる 時間わり アプリ',
+      pfWho: '自分。 宿題を 忘れがち。',
+      pfWhat: '・登録した 予定を 順に 表示\n・1つ 終わったら ✓\n・全部 終わったら ごほうび\n・色で 種類分け',
+      pfWorry: '・予定を どこに 保存？\n・色の つけ方'
+    }
+  };
+  function refreshPlan(){
+    const name = $('pfName').value.trim() || '（作品名）';
+    const cat = $('pfCatch').value.trim() || '（キャッチコピー）';
+    const who = $('pfWho').value.trim() || '（だれが 使うか）';
+    const what = $('pfWhat').value.trim() || '（できること）';
+    const worry = $('pfWorry').value.trim() || '（心配なこと）';
+    const d = new Date().toLocaleDateString('ja-JP');
+    // 印刷用
+    $('psName').textContent = name;
+    $('psCatch').textContent = cat;
+    $('psNameV').textContent = name;
+    $('psWho').textContent = who;
+    $('psWhat').textContent = what;
+    $('psWorry').textContent = worry;
+    $('psDate').textContent = d;
+    // 画面用
+    $('psName2').textContent = name;
+    $('psCatch2').textContent = cat;
+    $('psNameV2').textContent = name;
+    $('psWho2').textContent = who;
+    $('psWhat2').textContent = what;
+    $('psWorry2').textContent = worry;
+    $('psDate2').textContent = d;
+  }
+  PF_FIELDS.forEach(id => $(id).addEventListener('input', refreshPlan));
+  function loadPlanExample(key){
+    const ex = PF_EX[key];
+    if(!ex) return;
+    Object.entries(ex).forEach(([k,v]) => $(k).value = v);
+    refreshPlan();
+    showToast('📚 サンプル「' + ex.pfName + '」を 読み込みました');
+  }
+  function resetPlan(){
+    PF_FIELDS.forEach(id => $(id).value = '');
+    refreshPlan();
+  }
+  function downloadPlan(){
+    const name = $('pfName').value.trim() || '企画書';
+    const sheet = $('planSheetScreen').outerHTML;
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHTML(name)} 企画書</title>
+<style>
+body{font-family:sans-serif;padding:20px;max-width:800px;margin:0 auto;background:#F8F5FF}
+.sheet{background:white;border:2px solid #7C4DFF;border-radius:14px;padding:24px;font-size:14px}
+.sheet h3{color:#7C4DFF;font-size:22px;border-bottom:2px dashed #7C4DFF;padding-bottom:6px;margin-bottom:4px}
+.sheet .row{margin-top:14px}
+.sheet .row .lbl{display:inline-block;background:#7C4DFF;color:white;font-weight:bold;padding:3px 10px;border-radius:6px;font-size:13px;margin-bottom:6px}
+.sheet .row.s .lbl{background:#FFD54F;color:#333}
+.sheet .row.a .lbl{background:#00BFA5}
+.sheet .row.p .lbl{background:#9C27B0}
+.sheet .row.w .lbl{background:#FF5252}
+.sheet .row .v{padding-left:8px;border-left:3px solid #E0E0E0;margin-left:4px;white-space:pre-wrap;color:#333}
+.sheet .footer{margin-top:18px;border-top:1px dashed #CCC;padding-top:10px;color:#999;font-size:12px;text-align:right}
+</style></head><body>${sheet}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name.replace(/[\/\\?<>:|"*]/g,'_') + '_企画書.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 ' + a.download + ' を 保存しました');
+  }
+  refreshPlan();
+
+  /* =========================================================
+     画面設計ボード（クリック追加＋ドラッグ移動）
+     ========================================================= */
+  const canvas = $('sketchCanvas');
+  const sketchHelp = $('sketchHelp');
+  let partCount = 0;
+  function addPart(kind, label){
+    if(sketchHelp) sketchHelp.style.display = 'none';
+    partCount++;
+    const el = document.createElement('div');
+    el.className = 'sketch-item k-' + kind;
+    el.textContent = label;
+    el.contentEditable = (kind === 'btn' || kind === 'txt' || kind === 'sticky' || kind === 'bar');
+    el.spellcheck = false;
+    const rect = canvas.getBoundingClientRect();
+    const x = 20 + (partCount * 20) % Math.max(50, rect.width - 100);
+    const y = 20 + (partCount * 12) % Math.max(50, rect.height - 60);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+
+    const x_btn = document.createElement('button');
+    x_btn.className = 'x';
+    x_btn.textContent = '×';
+    x_btn.contentEditable = false;
+    x_btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      el.remove();
+      partCount = canvas.querySelectorAll('.sketch-item').length;
+      if(partCount === 0 && sketchHelp) sketchHelp.style.display = 'block';
+    });
+    el.appendChild(x_btn);
+
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      canvas.querySelectorAll('.sketch-item.sel').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');
+    });
+
+    // Drag
+    let dragging = false, startX = 0, startY = 0, elX = 0, elY = 0;
+    el.addEventListener('pointerdown', (e)=>{
+      if(e.target.classList.contains('x')) return;
+      if(el.isContentEditable && document.activeElement === el) return;
+      dragging = true;
+      el.classList.add('dragging');
+      el.setPointerCapture(e.pointerId);
+      startX = e.clientX; startY = e.clientY;
+      const r = el.getBoundingClientRect();
+      const cr = canvas.getBoundingClientRect();
+      elX = r.left - cr.left;
+      elY = r.top - cr.top;
+    });
+    el.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      const cr = canvas.getBoundingClientRect();
+      const nx = Math.max(0, Math.min(cr.width - el.offsetWidth, elX + dx));
+      const ny = Math.max(0, Math.min(cr.height - el.offsetHeight, elY + dy));
+      el.style.left = nx + 'px';
+      el.style.top = ny + 'px';
+    });
+    el.addEventListener('pointerup', (e)=>{
+      dragging = false;
+      el.classList.remove('dragging');
+      try{ el.releasePointerCapture(e.pointerId); }catch(_){ }
+    });
+
+    canvas.appendChild(el);
+  }
+  canvas.addEventListener('click', (e)=>{
+    if(e.target === canvas){
+      canvas.querySelectorAll('.sketch-item.sel').forEach(x=>x.classList.remove('sel'));
+    }
+  });
+  function clearSketch(){
+    canvas.querySelectorAll('.sketch-item').forEach(x => x.remove());
+    partCount = 0;
+    if(sketchHelp) sketchHelp.style.display = 'block';
+  }
+
+  /* =========================================================
+     サンプル企画書
+     ========================================================= */
+  const SAMPLES = [
+    {
+      name:'ねこねこタイマー',
+      catch:'ねこを 育てながら 集中時間を のばすアプリ',
+      who:'小2の妹。長く 集中するのが むずかしい。',
+      what:['25分タイマー','ねこが 1匹 育つ','3匹で 図かんに','休けい中 ごはん'],
+      worry:'タイマー中に 他の事 できるか／ねこの絵',
+      tags:['ゲーム','学習','タイマー']
+    },
+    {
+      name:'もぐもぐクイズ',
+      catch:'たべものの 名前を 当てる 5問クイズ',
+      who:'5才の弟。 ひらがな 少し読める。',
+      what:['絵が出る','4択','正解で 拍手','5問で結果'],
+      worry:'絵は どこから／音の入れ方',
+      tags:['クイズ','幼児','学習']
+    },
+    {
+      name:'おうち時間わり',
+      catch:'やる事を 順に教えてくれる 時間わり アプリ',
+      who:'自分。 宿題を 忘れがち。',
+      what:['予定を 登録','順に 表示','✓で完了','全部で ごほうび'],
+      worry:'予定の 保存／色の つけ方',
+      tags:['ツール','自分用']
+    }
+  ];
+  const samplesEl = $('samplesBox');
+  SAMPLES.forEach((s,i)=>{
+    const card = document.createElement('div');
+    card.className = 'sample';
+    card.innerHTML = `<h3>${escapeHTML(s.name)}</h3>
+      <p>${escapeHTML(s.catch)}</p>
+      <div class="meta">${s.tags.map(t=>`<span>${escapeHTML(t)}</span>`).join('')}</div>`;
+    card.addEventListener('click', ()=>{
+      info('📚', s.name, `
+        <div style="text-align:left;font-size:14px;line-height:1.8">
+          <div><b>キャッチコピー：</b> ${escapeHTML(s.catch)}</div>
+          <div style="margin-top:8px"><b>👥 だれが：</b> ${escapeHTML(s.who)}</div>
+          <div style="margin-top:8px"><b>📝 できること：</b><ul style="margin-left:22px;margin-top:4px">${s.what.map(w=>`<li>${escapeHTML(w)}</li>`).join('')}</ul></div>
+          <div style="margin-top:8px"><b>⚠️ 心配なこと：</b> ${escapeHTML(s.worry)}</div>
+        </div>`);
+    });
+    samplesEl.appendChild(card);
+  });
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

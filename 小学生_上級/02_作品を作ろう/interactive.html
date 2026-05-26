@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小学生・上級 第2回｜作品を作ろう</title>
+<style>
+  :root{
+    --primary:#7C4DFF; --secondary:#FFD54F; --accent:#00BFA5;
+    --warn:#FF5252; --dark:#1A1A2E; --light:#F8F5FF;
+    --ai:#00BFA5; --ai-bg:#E0F7FA;
+    --panel:#FFFFFF; --muted:#5A5A75; --shadow:0 4px 0 rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,select,textarea{font:inherit}
+
+  /* === Top progress + status === */
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* === Side nav === */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* === Modal === */
+  .modal-bg{position:fixed;inset:0;background:rgba(26,26,46,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  /* === Hero === */
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#7C4DFF 0%,#536DFE 50%,#00BFA5 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.25);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(18px,2.4vw,24px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,108px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px;font-weight:bold}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:8px}
+  .card.warn{border-left:8px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:8px solid var(--accent);background:#E0F7FA}
+  .card.tip{border-left:8px solid var(--secondary);background:#FFFCEE}
+
+  /* === Scratch blocks === */
+  .blk{display:inline-block;padding:6px 12px;margin:3px;border-radius:8px;
+    color:white;font-weight:bold;font-size:13px;box-shadow:0 2px 0 rgba(0,0,0,.15);}
+  .blk-event{background:#FFD500;color:#6B5300} .blk-motion{background:#4C97FF}
+  .blk-look{background:#9966FF} .blk-control{background:#FFAB19}
+  .blk-sense{background:#5CB1D6} .blk-op{background:#59C059}
+  .blk-var{background:#FF8C1A} .blk-sound{background:#CF63CF}
+  .stack{background:white;border-radius:12px;padding:14px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;align-items:flex-start;gap:3px;margin-top:8px}
+  .stack .nest{margin-left:20px;border-left:2px dashed #CCC;padding-left:10px;
+    display:flex;flex-direction:column;gap:3px;align-items:flex-start;}
+
+  /* === Block translator === */
+  .translator{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .tr-pick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tr-pick button{background:white;border:2px solid var(--primary);color:var(--primary);
+    padding:8px 16px;border-radius:999px;cursor:pointer;font-family:inherit;
+    font-weight:bold;font-size:13px;transition:all .15s}
+  .tr-pick button:hover{background:#F3EFFF}
+  .tr-pick button.sel{background:var(--primary);color:white}
+  .tr-result{padding:16px;background:#FAFAFF;border-radius:10px;min-height:80px}
+  .tr-result .label{font-size:13px;color:var(--muted);font-weight:bold;margin-bottom:6px}
+
+  /* === Function splitter === */
+  .splitter{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .splitter input{width:100%;padding:12px 14px;border:2px solid #DDD;border-radius:10px;
+    font-family:inherit;font-size:15px;background:#FAFAFA}
+  .splitter input:focus{outline:none;border-color:var(--primary);background:white}
+  .splitter .examples{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .splitter .examples button{background:#F3EFFF;border:2px dashed var(--primary);
+    color:var(--primary);padding:4px 12px;border-radius:999px;cursor:pointer;
+    font-family:inherit;font-weight:bold;font-size:12px}
+  .splitter .examples button:hover{background:var(--primary);color:white}
+  .splitter-out{margin-top:14px;display:grid;gap:8px}
+  .splitter-step{background:white;border-left:6px solid var(--primary);border-radius:10px;
+    padding:12px 16px;display:flex;align-items:center;gap:12px;
+    box-shadow:0 3px 0 rgba(0,0,0,.06)}
+  .splitter-step .n{background:var(--primary);color:white;width:30px;height:30px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:bold;flex-shrink:0;font-size:14px}
+  .splitter-step .t{flex:1;font-size:14px}
+  .splitter-go{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .splitter-go button{font-family:inherit;border:none;border-radius:10px;padding:10px 20px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .splitter-go button.gray{background:var(--muted)}
+
+  /* === Flow chart === */
+  .flow{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px;
+    text-align:center}
+  .flow-step{background:linear-gradient(135deg,var(--primary),#9C7CFF);color:white;
+    padding:20px 24px;border-radius:14px;display:inline-block;max-width:500px;
+    box-shadow:0 6px 12px rgba(124,77,255,.3);font-size:17px;font-weight:bold;line-height:1.7}
+  .flow-step.end{background:linear-gradient(135deg,var(--accent),#33D9C0)}
+  .flow-step.warn{background:linear-gradient(135deg,var(--warn),#FF8A8A)}
+  .flow-opts{margin-top:18px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .flow-opts button{font-family:inherit;background:white;border:3px solid var(--primary);
+    color:var(--primary);padding:10px 24px;border-radius:12px;cursor:pointer;
+    font-weight:bold;font-size:15px;box-shadow:0 4px 0 rgba(0,0,0,.12);transition:transform .12s}
+  .flow-opts button:hover{transform:translateY(-2px);background:#F3EFFF}
+  .flow-arrow{font-size:26px;color:var(--primary);margin:8px 0;line-height:1}
+  .flow-restart{margin-top:16px;background:var(--muted);color:white;border:none;
+    padding:8px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:bold;font-size:13px}
+  .flow-history{margin-top:14px;font-size:13px;color:var(--muted);text-align:left;
+    background:#F5F5F5;border-radius:8px;padding:10px 14px;line-height:1.6;display:none}
+  .flow-history.show{display:block}
+
+  /* === AI prompt maker === */
+  .pmaker{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .pmform{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .pmform label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .pmform .full{grid-column:1 / -1}
+  .pmform input,.pmform textarea{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA;color:var(--dark)}
+  .pmform textarea{min-height:60px;resize:vertical}
+  .pmform input:focus,.pmform textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .promptbox{margin-top:18px;background:var(--dark);color:#E0F7FA;padding:18px 22px;border-radius:12px;
+    font-family:'SF Mono','Menlo',monospace;font-size:14px;line-height:1.8;white-space:pre-wrap;
+    box-shadow:var(--shadow);min-height:120px;position:relative}
+  .promptbox .corner{position:absolute;top:8px;right:12px;font-size:12px;color:#999}
+  .pmtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:center}
+  .pmtools button{font-family:inherit;border:none;border-radius:10px;padding:10px 22px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white;transition:transform .12s}
+  .pmtools button:hover{transform:translateY(-2px)}
+  .pmtools button.gray{background:var(--muted)}
+
+  /* === Good/Bad cards === */
+  .gbcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}
+  .gbcard{background:white;border-radius:14px;padding:18px;box-shadow:var(--shadow);cursor:pointer;
+    border:3px solid transparent;transition:all .15s;position:relative}
+  .gbcard:hover{transform:translateY(-3px)}
+  .gbcard.judged.right{border-color:#4CAF50;background:#F1F8E9}
+  .gbcard.judged.wrong{border-color:var(--warn);background:#FFEBEE}
+  .gbcard .quote{font-style:italic;color:#333;font-size:14px;margin:8px 0;
+    padding:10px;background:#F5F5F5;border-radius:8px;border-left:4px solid #999}
+  .gbcard .picks{display:flex;gap:10px;margin-top:10px}
+  .gbcard .picks button{flex:1;background:white;border:2px solid var(--primary);color:var(--primary);
+    padding:8px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:bold;font-size:13px}
+  .gbcard .picks button:hover{background:#F3EFFF}
+  .gbcard.judged .picks{display:none}
+  .gbcard .why{display:none;margin-top:10px;font-size:13px;color:var(--muted);line-height:1.7}
+  .gbcard.judged .why{display:block}
+
+  /* === Progress checklist === */
+  .checklist{margin-top:14px}
+  .check-item{background:white;border-radius:12px;padding:14px 18px;margin-bottom:10px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);
+    transition:transform .12s,background .15s;border-left:6px solid #DDD}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#E0F7FA;border-left-color:var(--accent)}
+  .check-item .box{width:30px;height:30px;border:3px solid var(--muted);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;background:white}
+  .check-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .check-item .box::before{content:'✓';opacity:0}
+  .check-item.on .box::before{opacity:1}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;margin-bottom:2px}
+  .check-item .txt span{color:var(--muted);font-size:13px}
+  .check-progress{text-align:center;margin-top:14px;font-weight:bold;color:var(--primary)}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .qrow{margin-bottom:16px}
+  .qrow .q{font-weight:bold;font-size:17px;margin-bottom:8px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:2px solid var(--accent);color:var(--dark);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;
+    font-weight:bold;transition:all .15s}
+  .qrow .opts button:hover{background:#E0F7FA}
+  .qrow .opts button.right{background:#A5D6A7;border-color:#388E3C;color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:6px;display:none}
+  .qrow.answered .ex{display:block}
+
+  /* === Summary / next === */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .next{background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* === Toast === */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:12px 24px;border-radius:999px;
+    font-weight:bold;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>上級 第2回</span> <b>作品を作ろう</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#translate">2<span>ブロック翻訳</span><span class="ic">🔄</span></a>
+  <a href="#split">3<span>機能分割</span><span class="ic">✂️</span></a>
+  <a href="#stuck">4<span>詰まった時フロー</span><span class="ic">🧭</span></a>
+  <a href="#aiprompt">5<span>AI相談メーカー</span><span class="ic">🤖</span></a>
+  <a href="#aigood">6<span>AI使い方診断</span><span class="ic">⚖️</span></a>
+  <a href="#track">7<span>進捗チェック</span><span class="ic">📊</span></a>
+  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 小学生プログラミング教室・上級</div>
+    <h1>作品を 作ろう</h1>
+    <p>企画書 → ブロック → 動く作品 へ！ <b>完成形の8割</b> を めざす</p>
+    <div class="em">⚒️🐹💡</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「設計通り」 を「動く」 にする</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:56px;display:block">🔄</span><h3>翻訳</h3><p style="color:var(--muted)">企画→ブロック</p></div>
+    <div class="card"><span style="font-size:56px;display:block">✂️</span><h3>分割</h3><p style="color:var(--muted)">機能を小さく</p></div>
+    <div class="card"><span style="font-size:56px;display:block">🔁</span><h3>くりかえし</h3><p style="color:var(--muted)">作る→動かす</p></div>
+    <div class="card"><span style="font-size:56px;display:block">🤖</span><h3>相談</h3><p style="color:var(--muted)">AIに ヒント</p></div>
+  </div>
+</section>
+
+<!-- 1. 翻訳ガイド -->
+<div class="divider" id="translate" data-snav-target>
+  <div class="num">1.</div>
+  <h2>機能 → ブロック 翻訳ガイド</h2>
+</div>
+
+<section class="section">
+  <h2>よくある機能 と 必要なブロック</h2>
+  <p class="lead">下の機能を 押すと、必要な Scratchブロックの 組み合わせ が 見られる。</p>
+
+  <div class="translator">
+    <div class="tr-pick" id="trPick">
+      <!-- buttons generated -->
+    </div>
+    <div class="tr-result" id="trResult">
+      <div class="label">↑ 機能を 1つ えらんでね</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 機能分割 -->
+<div class="divider" id="split" data-snav-target>
+  <div class="num">2.</div>
+  <h2>機能分割シミュレータ</h2>
+</div>
+
+<section class="section">
+  <h2>「大きすぎ」を 小さなステップ に</h2>
+  <p class="lead">作りたい機能を 入力 or サンプルを 選ぶと、 <b>3〜5個の 小さなステップ</b> に 分けて くれます。</p>
+
+  <div class="splitter">
+    <label style="display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px">作りたい機能</label>
+    <input type="text" id="spInput" value="スタートボタンで タイマーが 動く" placeholder="例：神経衰弱で カードがめくれる">
+    <div class="examples">
+      <span style="font-size:12px;color:var(--muted);align-self:center">例：</span>
+      <button onclick="loadSplit('スタートボタンで タイマーが 動く')">タイマー</button>
+      <button onclick="loadSplit('クリックで スコアが 1上がる')">スコア</button>
+      <button onclick="loadSplit('正解で 拍手の音 が 鳴る')">効果音</button>
+      <button onclick="loadSplit('カードを めくれる')">カード</button>
+      <button onclick="loadSplit('結果画面が 表示される')">結果画面</button>
+    </div>
+
+    <div class="splitter-out" id="spOut"></div>
+
+    <div class="splitter-go">
+      <button onclick="doSplit()">✂️ 小さく 分ける</button>
+      <button class="gray" onclick="clearSplit()">↺ クリア</button>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 詰まったときフロー -->
+<div class="divider" id="stuck" data-snav-target>
+  <div class="num">3.</div>
+  <h2>詰まった時の フローチャート</h2>
+</div>
+
+<section class="section">
+  <h2>「どうしよう」 を 5秒で 判断</h2>
+  <p class="lead">クリックで 次のステップに 進む！ 何回でも やり直せます。</p>
+
+  <div class="flow" id="flowBox">
+    <div class="flow-step" id="flowStep"></div>
+    <div class="flow-opts" id="flowOpts"></div>
+    <button class="flow-restart" onclick="flowReset()">↺ 最初から やり直す</button>
+    <div class="flow-history" id="flowHist"></div>
+  </div>
+</section>
+
+<!-- 4. AI相談プロンプトメーカー -->
+<div class="divider" id="aiprompt" data-snav-target>
+  <div class="num">4.</div>
+  <h2>AI相談 プロンプトメーカー</h2>
+</div>
+
+<section class="section">
+  <h2>「コードは 書かないで」 の 相談文を 作る</h2>
+  <p class="lead">下の項目を うめると、プログラミング相談 用の プロンプト が できる。</p>
+
+  <div class="pmaker">
+    <div class="pmform">
+      <div class="full">
+        <label>① 何を 作っている？</label>
+        <input type="text" id="pmWhat" value="Scratchで もぐらたたきゲーム" maxlength="60">
+      </div>
+      <div>
+        <label>② ここまで できた</label>
+        <textarea id="pmDone">モグラを クリックしたら 隠れる ところまで</textarea>
+      </div>
+      <div>
+        <label>③ どこで 詰まった？</label>
+        <textarea id="pmStuck">クリックしたとき スコアを 上げたい</textarea>
+      </div>
+      <div class="full">
+        <label>④ AIに 何を 聞きたい？</label>
+        <input type="text" id="pmAsk" value="どんなブロックを 使えばいい？" maxlength="60">
+      </div>
+    </div>
+
+    <div class="promptbox" id="aiPrompt">
+      <span class="corner">📝 プロンプト</span>
+    </div>
+
+    <div class="pmtools">
+      <button onclick="copyAIPrompt()">📋 コピー</button>
+      <button class="gray" onclick="resetAIPrompt()">↺ 初期値</button>
+    </div>
+
+    <div class="card tip" style="margin-top:16px">
+      <h3 style="color:#B8860B">💡 大事なルール</h3>
+      <ul style="margin-left:22px;margin-top:6px;line-height:1.8">
+        <li>「<b>コードは 書かないで</b>」と 必ず 入れる</li>
+        <li>AIの答えは そのまま 使わず、<b>自分で 試す</b></li>
+        <li>個人情報（本名・住所・学校名）は <b>絶対NG</b></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 5. AI使い方診断 -->
+<div class="divider" id="aigood" data-snav-target>
+  <div class="num">5.</div>
+  <h2>AI 使い方 ○×診断</h2>
+</div>
+
+<section class="section">
+  <h2>これは 上級の 卒業要件 ？</h2>
+  <p class="lead">下の <b>AIの 使い方</b> は OK？ NG？ ボタンで 判定 ！</p>
+
+  <div class="gbcards" id="gbcards">
+    <!-- generated -->
+  </div>
+</section>
+
+<!-- 6. 進捗チェック -->
+<div class="divider" id="track" data-snav-target>
+  <div class="num">6.</div>
+  <h2>進捗 チェックリスト</h2>
+</div>
+
+<section class="section">
+  <h2>今日の 自分 を チェック</h2>
+  <p class="lead">クリックで チェック！ 7つ できれば 「8割」 達成！</p>
+
+  <div class="checklist" id="prog">
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📝 企画書を 見直した</b><span>大きすぎたら 小さく した</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>✂️ 機能を 5つに 分けた</b><span>ちっちゃな ステップにした</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🟢 機能① が 動いた</b><span>1つ目 完成 → 旗で 確認</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🟢 機能② が 動いた</b><span>2つ目 完成 → 旗で 確認</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🟢 機能③ が 動いた</b><span>3つ目 完成 → 旗で 確認</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🤖 AIに 1回 相談した</b><span>コードは 書かせず ヒントだけ</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>👫 友だちに 中間共有した</b><span>「いい感じ！」を 1つ もらった</span></div></div>
+  </div>
+  <div class="check-progress" id="progSum">0 / 7 達成</div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう！</h2>
+  <p class="lead">何回 まちがえてもOK。答えがわかったら 説明が出るよ。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. 大きな機能 「タイマー機能 を 作る」 を どう やる？</div>
+      <div class="opts">
+        <button data-i="0">一気に 全部 書く</button>
+        <button data-i="1">AIに ぜんぶ 書かせる</button>
+        <button data-i="2">3〜5個の 小さな ステップに 分けて 1つずつ</button>
+        <button data-i="3">先生に 書いてもらう</button>
+      </div>
+      <div class="ex">✅ <b>小さく 分けて 1つずつ 動かす</b> のがプロのコツ。 大きいまま 進めると どこで 詰まったか 分からなく なる！</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q2. Scratchで 詰まった！ <b>最初に</b> やることは？</div>
+      <div class="opts">
+        <button data-i="0">すぐ 先生に 聞く</button>
+        <button data-i="1">自分で 30分 考える・調べる</button>
+        <button data-i="2">作品を 消して 1から やり直す</button>
+        <button data-i="3">あきらめる</button>
+      </div>
+      <div class="ex">✅ まず <b>自分で 30分</b>。 そのあと 友だち → AI → 先生 の順！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. AIに 相談する とき、<b>言ってはダメ</b> なのは どれ？</div>
+      <div class="opts">
+        <button data-i="0">「ぜんぶ コードを 書いて」</button>
+        <button data-i="1">「どんな ブロックが いいですか？」</button>
+        <button data-i="2">「考え方を 教えて」</button>
+        <button data-i="3">「ヒントを ください」</button>
+      </div>
+      <div class="ex">✅ <b>「ぜんぶ 書いて」 はNG</b>。 上級の 卒業要件は <b>自分で 最低1行</b> 書くこと。 AIは 相談相手 として 使う！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>企画書 を ブロックに 翻訳できた</h3><p style="color:var(--muted)">機能 → 必要なブロック</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>大きな機能 を 小さく 分割</h3><p style="color:var(--muted)">3〜5ステップに</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>「作る → 動かす」 を くりかえし</h3><p style="color:var(--muted)">中間チェックの 習慣</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>詰まった時の 4ステップ</h3><p style="color:var(--muted)">自分 → 友だち → AI → 先生</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>AIを 相談相手 として 使えた</h3><p style="color:var(--muted)">コードは 自分で 書く</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🐛🔧</div>
+  <h2>次回 ｜ テストして なおそう</h2>
+  <p>友だちに 使ってもらって バグを 見つける！ 改善して さらに 完成度UP</p>
+</div>
+
+<footer>小学生プログラミング教室 ／ 上級 第2回｜作品を作ろう</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     翻訳ガイド
+     ========================================================= */
+  const TRANSLATE = [
+    { key:'timer', label:'⏱️ タイマー（残り時間）',
+      stack: [
+        { c:'blk-event', t:'🟡 旗が押されたとき' },
+        { c:'blk-var', t:'🟧 のこり時間 を 25 にする' },
+        { c:'blk-control', t:'🟠 ずっと' },
+        { c:'blk-control', t:'🟠 1秒 待つ', nest:true },
+        { c:'blk-var', t:'🟧 のこり時間 を -1 ずつ変える', nest:true },
+        { c:'blk-control', t:'🟠 もし のこり時間 = 0 なら', nest:true },
+        { c:'blk-event', t:'🟡 「終了」を 送る', nest2:true },
+        { c:'blk-control', t:'🟠 すべてを 止める', nest2:true },
+      ],
+      tip:'1秒 待つ → -1 → 0で終了 が タイマーの基本パターン！' },
+    { key:'score', label:'🏆 スコア（点数）',
+      stack: [
+        { c:'blk-event', t:'🟡 旗が押されたとき' },
+        { c:'blk-var', t:'🟧 スコア を 0 にする' },
+        { c:'blk-event', t:'🟡 このスプライトが クリックされたとき' },
+        { c:'blk-var', t:'🟧 スコア を 1 ずつ変える' },
+        { c:'blk-sound', t:'🟪 Pop の音を 鳴らす' },
+      ],
+      tip:'スタート時に 必ず 0に リセット！ クリックで +1。' },
+    { key:'random', label:'🎲 ランダム配置',
+      stack: [
+        { c:'blk-event', t:'🟡 旗が押されたとき' },
+        { c:'blk-control', t:'🟠 ずっと' },
+        { c:'blk-look', t:'🟣 隠す', nest:true },
+        { c:'blk-control', t:'🟠 1〜3秒 待つ', nest:true },
+        { c:'blk-motion', t:'🔵 x:(-200から200)・y:(-100から100) へ行く', nest:true },
+        { c:'blk-look', t:'🟣 表示する', nest:true },
+      ],
+      tip:'「乱数（らんすう）」を 演算カテゴリから 探そう！' },
+    { key:'message', label:'📨 メッセージで 知らせる',
+      stack: [
+        { c:'blk-event', t:'🟡 旗が押されたとき' },
+        { c:'blk-event', t:'🟡 「ゲーム終了」を 送る' },
+        { c:'blk-event', t:'🟡 「ゲーム終了」を 受け取ったとき' },
+        { c:'blk-look', t:'🟣 「GAME OVER」と 言う' },
+      ],
+      tip:'スプライト間の 通信は メッセージで！ 大きなゲームで 必須。' },
+    { key:'click', label:'🖱️ クリックで 何かが 起こる',
+      stack: [
+        { c:'blk-event', t:'🟡 このスプライトが クリックされたとき' },
+        { c:'blk-sound', t:'🟪 Pop の音を 鳴らす' },
+        { c:'blk-look', t:'🟣 大きさを 110% にする' },
+        { c:'blk-control', t:'🟠 0.2秒 待つ' },
+        { c:'blk-look', t:'🟣 大きさを 100% にする' },
+      ],
+      tip:'クリックで 反応 → 効果音 + 見た目が 動く と 気持ちいい！' },
+    { key:'result', label:'🎉 結果画面',
+      stack: [
+        { c:'blk-event', t:'🟡 旗が押されたとき' },
+        { c:'blk-look', t:'🟣 隠す' },
+        { c:'blk-event', t:'🟡 「ゲーム終了」を 受け取ったとき' },
+        { c:'blk-look', t:'🟣 表示する' },
+        { c:'blk-look', t:'🟣 最前面へ' },
+        { c:'blk-look', t:'🟣 「あなたのスコア：」 と スコア を 言う' },
+      ],
+      tip:'新しい スプライトを 作って 結果画面用に！ 普段は 隠す。' },
+  ];
+  const trPick = $('trPick');
+  const trResult = $('trResult');
+  TRANSLATE.forEach(t=>{
+    const b = document.createElement('button');
+    b.textContent = t.label;
+    b.addEventListener('click', ()=>{
+      [...trPick.querySelectorAll('button')].forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+      renderTranslate(t);
+    });
+    trPick.appendChild(b);
+  });
+  function renderTranslate(t){
+    let html = `<div class="label">📦 ${escapeHTML(t.label)} に 必要な ブロック</div>`;
+    html += '<div class="stack">';
+    let inNest = false;
+    t.stack.forEach(b=>{
+      const block = `<span class="blk ${b.c}">${escapeHTML(b.t)}</span>`;
+      if(b.nest2){
+        html += `<div class="nest"><div class="nest">${block}</div></div>`;
+      } else if(b.nest){
+        html += `<div class="nest">${block}</div>`;
+      } else {
+        html += block;
+      }
+    });
+    html += '</div>';
+    html += `<div style="margin-top:12px;font-size:14px;color:var(--muted)">💡 ${escapeHTML(t.tip)}</div>`;
+    trResult.innerHTML = html;
+  }
+
+  /* =========================================================
+     機能分割シミュレータ
+     ========================================================= */
+  const SPLIT_PATTERNS = {
+    'タイマー|たいまー|時間|秒': [
+      '変数「のこり時間」を 作る',
+      '旗で 初期値（25など）を セット',
+      '1秒ごとに -1 する',
+      '0になったら「終了」メッセージを 送る',
+      '画面に 残り時間を 表示'
+    ],
+    'スコア|点数|得点|スコアアップ|1上が': [
+      '変数「スコア」を 作る',
+      '旗で 0に リセット',
+      'クリック（または当たった）時に +1',
+      '画面に スコアを 表示',
+      '効果音を つける（オプション）'
+    ],
+    '効果音|音|拍手|サウンド|鳴る': [
+      'スプライトに 音を 追加（音タブから）',
+      'いつ 鳴らすか 決める（クリック時／正解時など）',
+      '「○○の音を 鳴らす」 ブロックを 入れる',
+      '音量チェック（パソコンも スピーカーも）'
+    ],
+    'カード|めく|ひっくり': [
+      'カード用 スプライトを 用意',
+      'コスチュームを 2つ（裏／表）',
+      'クリックで コスチュームを 切り替え',
+      '同じ絵で ペアか チェック',
+      '結果に応じて 効果音や 演出'
+    ],
+    '結果|リザルト|終了画面': [
+      '新しい スプライトを 作る（結果画面用）',
+      '最初は 隠す（旗 → 隠す）',
+      '「終了」メッセージを 受け取ったら 表示',
+      'スコア や メッセージを 言う',
+      '「もう一度」ボタンも あると 親切'
+    ],
+    'クリック|押す|タップ': [
+      'クリックされる スプライトを 決める',
+      '「このスプライトが クリックされたとき」を 置く',
+      'クリックで 何が 起こるか 1つに しぼる',
+      '効果音や 見た目の 変化を 追加'
+    ],
+    'ゲームオーバー|ゲームオーバ|gameover': [
+      '「ゲーム終了」メッセージを 用意',
+      '時間切れ や HP0 で 送る',
+      '結果画面 スプライトで 受け取り',
+      '全スプライトの 動きを 止める',
+      '「もう一度」 で やり直し できると 良い'
+    ],
+  };
+  function loadSplit(text){
+    $('spInput').value = text;
+    doSplit();
+  }
+  function doSplit(){
+    const q = $('spInput').value.trim();
+    const out = $('spOut');
+    out.innerHTML = '';
+    if(!q){ showToast('機能を 入力してね'); return; }
+    let steps = null;
+    for(const k in SPLIT_PATTERNS){
+      const re = new RegExp(k, 'i');
+      if(re.test(q)){ steps = SPLIT_PATTERNS[k]; break; }
+    }
+    if(!steps){
+      steps = [
+        'この機能の 中身を 「何ができれば 完成」 か 紙に書く',
+        '一番 大事な 部品 1つ を 決める',
+        'その部品 を Scratchで 作って 旗で 動かす',
+        '次の 部品 を 1つだけ 追加して 旗で 動かす',
+        '全部 つながったら 完成！'
+      ];
+      const note = document.createElement('div');
+      note.style.cssText = 'margin-bottom:10px;color:var(--muted);font-size:13px';
+      note.textContent = '※ サンプルに ない機能なので、一般的な ステップに 分けました。';
+      out.appendChild(note);
+    }
+    steps.forEach((s,i)=>{
+      const el = document.createElement('div');
+      el.className = 'splitter-step';
+      el.innerHTML = `<div class="n">${i+1}</div><div class="t">${escapeHTML(s)}</div>`;
+      out.appendChild(el);
+    });
+  }
+  function clearSplit(){
+    $('spInput').value = '';
+    $('spOut').innerHTML = '';
+  }
+  doSplit();
+
+  /* =========================================================
+     詰まった時 フローチャート
+     ========================================================= */
+  const FLOW_NODES = {
+    start: {
+      text: '🤔 どうやら 詰まっているね。<br>まず：何分くらい 考えた？',
+      opts: [
+        { label:'まだ 5分くらい', go:'thinkMore' },
+        { label:'15〜30分は 考えた', go:'check3' },
+      ]
+    },
+    thinkMore: {
+      text: '⏳ あと <b>20分</b> は 自分で 考えてみよう。<br>何を 試した？ メモに書くだけでも 整理になるよ。',
+      opts: [
+        { label:'やってみる', go:'start' },
+      ]
+    },
+    check3: {
+      text: '🔍 詰まりの 3大原因 を チェック ！<br>① ブロックの ペアは 合ってる？<br>② 変数の 初期化 入ってる？<br>③ スプライト ちがってない？',
+      opts: [
+        { label:'チェックで 解決した！', go:'solved', cls:'end' },
+        { label:'まだ ダメ', go:'askFriend' },
+      ]
+    },
+    askFriend: {
+      text: '👫 となりの 友だち に 30秒で 説明してみよう。<br>説明する だけで 自分も 整理できる！',
+      opts: [
+        { label:'説明したら 分かった', go:'solved', cls:'end' },
+        { label:'友だちも 分からない', go:'askAI' },
+      ]
+    },
+    askAI: {
+      text: '🤖 AIに 相談しよう。<br>「ぜんぶ コードを 書いて」は NG！<br>「どんな ブロックを使う？」「考え方を 教えて」と 聞く。',
+      opts: [
+        { label:'ヒントで 解決した', go:'solved', cls:'end' },
+        { label:'AIの 答えが 違う', go:'addPrompt' },
+        { label:'まだ 分からない', go:'askTeacher' },
+      ]
+    },
+    addPrompt: {
+      text: '✏️ 「違うところ」 を AIに 伝えて 書き直してもらおう！<br>「○○じゃない、××です」 と 事実を 教える。',
+      opts: [
+        { label:'やってみる', go:'askAI' },
+        { label:'それでも ダメ', go:'askTeacher' },
+      ]
+    },
+    askTeacher: {
+      text: '🧑‍🏫 先生に 聞こう ！<br>聞き方：<b>「○○を やりたい」「△△まで できた」「××で 詰まった」</b><br>これを 言えれば 30秒で 助けてもらえる！',
+      opts: [
+        { label:'OK', go:'solved', cls:'end' },
+      ]
+    },
+    solved: {
+      text: '🎉 解決！<br>次の 機能に 進もう！<br><small style="opacity:.85">→ 進捗チェックリストで 記録しておこう</small>',
+      cls: 'end',
+      opts: [
+        { label:'また 詰まったら 戻る', go:'start' },
+      ]
+    },
+  };
+  let flowHist = [];
+  function renderFlow(key){
+    const node = FLOW_NODES[key];
+    const step = $('flowStep');
+    const opts = $('flowOpts');
+    step.className = 'flow-step' + (node.cls ? ' ' + node.cls : '');
+    step.innerHTML = node.text;
+    opts.innerHTML = '';
+    (node.opts || []).forEach(o=>{
+      const b = document.createElement('button');
+      b.textContent = o.label;
+      b.addEventListener('click', ()=>{
+        flowHist.push(`「${o.label}」`);
+        renderFlow(o.go);
+        renderFlowHist();
+      });
+      opts.appendChild(b);
+    });
+  }
+  function renderFlowHist(){
+    const h = $('flowHist');
+    if(flowHist.length === 0){ h.classList.remove('show'); return; }
+    h.classList.add('show');
+    h.innerHTML = '<b>あなたの 流れ：</b><br>' + flowHist.join(' → ');
+  }
+  function flowReset(){
+    flowHist = [];
+    renderFlowHist();
+    renderFlow('start');
+  }
+  flowReset();
+
+  /* =========================================================
+     AI相談プロンプトメーカー
+     ========================================================= */
+  function buildAIPrompt(){
+    const what = ($('pmWhat').value || '（作っているもの）').trim();
+    const done = ($('pmDone').value || '（できたところ）').trim();
+    const stuck = ($('pmStuck').value || '（詰まった所）').trim();
+    const ask = ($('pmAsk').value || '（聞きたいこと）').trim();
+    return `わたしは 小学生です。
+${what} を 作っています。
+
+今 「${done}」 は できています。
+でも 「${stuck}」 で 詰まっています。
+
+${ask}
+
+コードは ぜんぶ 書かないで、考え方や ヒント を ください。`;
+  }
+  function refreshAIPrompt(){
+    $('aiPrompt').innerHTML = '<span class="corner">📝 プロンプト</span>' + escapeHTML(buildAIPrompt());
+  }
+  ['pmWhat','pmDone','pmStuck','pmAsk'].forEach(id => $(id).addEventListener('input', refreshAIPrompt));
+  function copyAIPrompt(){
+    navigator.clipboard.writeText(buildAIPrompt())
+      .then(()=>showToast('📋 プロンプトを コピーしました'))
+      .catch(()=>showToast('コピー できませんでした'));
+  }
+  function resetAIPrompt(){
+    $('pmWhat').value = 'Scratchで もぐらたたきゲーム';
+    $('pmDone').value = 'モグラを クリックしたら 隠れる ところまで';
+    $('pmStuck').value = 'クリックしたとき スコアを 上げたい';
+    $('pmAsk').value = 'どんなブロックを 使えばいい？';
+    refreshAIPrompt();
+  }
+  refreshAIPrompt();
+
+  /* =========================================================
+     AI使い方 ○×診断
+     ========================================================= */
+  const GB = [
+    { q:'もぐらたたきゲームを Scratchで ぜんぶ 作って',
+      ok:false, why:'❌ NG：「ぜんぶ 作って」は コードを 書かせてる。<br>→ <b>「考え方」 「ブロックの選び方」</b> を 聞く 形に 変えよう。' },
+    { q:'スコアを 0に リセット するには どこに 「0にする」を 入れる？',
+      ok:true, why:'⭕ OK：「どこに 入れる？」と <b>場所の 考え方</b> を 聞いている。 自分で コードは 書ける！' },
+    { q:'タイマーが 動かない。 ぜんぶ 書きなおして',
+      ok:false, why:'❌ NG：「書きなおして」も コードを 書かせてる。<br>→ <b>「どこを 直すと 動く？」</b> と 聞こう。' },
+    { q:'カードを ひっくり返す しくみ、 考え方だけ おしえて',
+      ok:true, why:'⭕ OK：「考え方だけ」と ちゃんと 制限している。 最後は 自分で 書く！' },
+    { q:'わたしの 名前は ○○ 学校は △△小です。 作品の紹介を 書いて',
+      ok:false, why:'❌ NG：<b>本名・学校名</b> を AIに 入れちゃダメ！ 個人情報は 絶対。' },
+    { q:'メッセージ機能 を 使うと 何が できる？ 教えて',
+      ok:true, why:'⭕ OK：「何が できる？」と <b>知識</b> を 聞いている。 これは AIの 一番 得意な使い方！' },
+  ];
+  const gbel = $('gbcards');
+  GB.forEach((g,i)=>{
+    const card = document.createElement('div');
+    card.className = 'gbcard';
+    card.innerHTML = `<div class="quote">${escapeHTML(g.q)}</div>
+      <div class="picks">
+        <button data-v="1">⭕ OK</button>
+        <button data-v="0">❌ NG</button>
+      </div>
+      <div class="why">${g.why}</div>`;
+    [...card.querySelectorAll('.picks button')].forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const v = parseInt(b.dataset.v, 10) === 1;
+        const correct = v === g.ok;
+        card.classList.add('judged', correct ? 'right' : 'wrong');
+      });
+    });
+    gbel.appendChild(card);
+  });
+
+  /* =========================================================
+     進捗チェックリスト
+     ========================================================= */
+  const progRoot = $('prog');
+  const progSum = $('progSum');
+  const progItems = [...progRoot.querySelectorAll('.check-item')];
+  function updateProg(){
+    const done = progItems.filter(x => x.classList.contains('on')).length;
+    progSum.textContent = `${done} / 7 達成`;
+    if(done === 7){
+      progSum.style.color = '#4CAF50';
+      progSum.textContent = '🎉 7 / 7 完全達成！ 8割クリア！';
+    } else if(done >= 5){
+      progSum.style.color = 'var(--accent)';
+      progSum.textContent = `${done} / 7 達成 — もう少しで 8割！`;
+    } else {
+      progSum.style.color = '';
+    }
+  }
+  progItems.forEach(it => it.addEventListener('click', ()=>{
+    it.classList.toggle('on');
+    updateProg();
+  }));
+  updateProg();
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

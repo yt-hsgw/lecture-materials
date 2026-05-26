@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小学生・上級 第3回｜テストしてなおそう</title>
+<style>
+  :root{
+    --primary:#7C4DFF; --secondary:#FFD54F; --accent:#00BFA5;
+    --warn:#FF5252; --dark:#1A1A2E; --light:#F8F5FF;
+    --panel:#FFFFFF; --muted:#5A5A75; --shadow:0 4px 0 rgba(0,0,0,.1);
+    --bug:#FF5252; --ui:#FFD54F; --good:#00BFA5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,select,textarea{font:inherit}
+
+  /* === Top progress + status === */
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* === Side nav === */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* === Modal === */
+  .modal-bg{position:fixed;inset:0;background:rgba(26,26,46,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  /* === Hero === */
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#7C4DFF 0%,#536DFE 50%,#00BFA5 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.25);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(18px,2.4vw,24px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,108px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px;font-weight:bold}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:8px}
+  .card.warn{border-left:8px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:8px solid var(--accent);background:#E0F7FA}
+  .card.tip{border-left:8px solid var(--secondary);background:#FFFCEE}
+
+  /* === Compare animeted === */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+  @media (max-width:680px){.compare{grid-template-columns:1fr}}
+  .compare > div{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+  .compare h3{margin-bottom:8px}
+  .compare .ng h3{color:var(--warn)}
+  .compare .ok h3{color:var(--accent)}
+  .compare ul{margin-left:20px;line-height:1.9}
+
+  /* === Test Checklist === */
+  .checklist{margin-top:14px}
+  .check-item{background:white;border-radius:12px;padding:14px 18px;margin-bottom:10px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);
+    transition:transform .12s,background .15s;border-left:6px solid #DDD}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#E0F7FA;border-left-color:var(--accent)}
+  .check-item .box{width:30px;height:30px;border:3px solid var(--muted);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;background:white}
+  .check-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .check-item .box::before{content:'✓';opacity:0}
+  .check-item.on .box::before{opacity:1}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;margin-bottom:2px}
+  .check-item .txt span{color:var(--muted);font-size:13px}
+  .check-progress{text-align:center;margin-top:14px;font-weight:bold;color:var(--primary);font-size:16px}
+
+  /* === Observation memo === */
+  .obs{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .obs-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+  .obs-form label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .obs-form input,.obs-form select{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA}
+  .obs-form input:focus,.obs-form select:focus{outline:none;border-color:var(--primary);background:white}
+  .obs-clock{background:var(--dark);color:white;padding:12px 18px;border-radius:10px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .obs-clock .time{font-family:'SF Mono','Menlo',monospace;font-size:24px;font-weight:bold;color:var(--secondary)}
+  .obs-clock button{background:var(--accent);color:white;border:none;border-radius:8px;
+    padding:8px 16px;cursor:pointer;font-family:inherit;font-weight:bold;font-size:13px}
+  .obs-clock button.gray{background:var(--muted)}
+  .obs-clock button:hover{transform:translateY(-1px)}
+  .obs-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .obs-quick button{background:#F3EFFF;border:2px solid var(--primary);color:var(--primary);
+    padding:6px 12px;border-radius:999px;cursor:pointer;font-family:inherit;font-weight:bold;font-size:13px}
+  .obs-quick button:hover{background:var(--primary);color:white}
+  .obs-notes{width:100%;min-height:200px;padding:14px;border:2px solid #DDD;border-radius:10px;
+    font-family:inherit;font-size:15px;line-height:1.8;resize:vertical;background:#FAFAFA}
+  .obs-notes:focus{outline:none;border-color:var(--primary);background:white}
+  .obs-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .obs-tools button{font-family:inherit;border:none;border-radius:10px;padding:10px 20px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .obs-tools button.gray{background:var(--muted)}
+  .obs-tools button.accent{background:var(--accent)}
+
+  /* === Feedback classifier === */
+  .fb{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .fb-add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .fb-add input{flex:1;min-width:200px;padding:10px 14px;border:2px solid #DDD;border-radius:10px;
+    font-family:inherit;font-size:15px;background:#FAFAFA}
+  .fb-add input:focus{outline:none;border-color:var(--primary);background:white}
+  .fb-add button{font-family:inherit;border:none;border-radius:10px;padding:10px 18px;
+    font-weight:bold;cursor:pointer;font-size:14px;background:var(--primary);color:white;
+    box-shadow:0 3px 0 rgba(0,0,0,.13)}
+  .fb-add button:hover{transform:translateY(-1px)}
+  .fb-examples{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;font-size:13px}
+  .fb-examples span{align-self:center;color:var(--muted)}
+  .fb-examples button{background:#F3EFFF;border:2px dashed var(--primary);color:var(--primary);
+    padding:4px 12px;border-radius:999px;cursor:pointer;font-family:inherit;font-weight:bold;font-size:12px}
+  .fb-examples button:hover{background:var(--primary);color:white}
+
+  .fb-buckets{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  @media (max-width:760px){.fb-buckets{grid-template-columns:1fr}}
+  .fb-bucket{background:#FAFAFF;border-radius:12px;padding:14px;min-height:160px;
+    border:3px dashed #DDD;transition:all .15s}
+  .fb-bucket.over{border-color:var(--primary);background:#F3EFFF;transform:scale(1.02)}
+  .fb-bucket h4{margin-bottom:10px;font-size:15px;text-align:center;padding-bottom:6px;
+    border-bottom:2px solid currentColor}
+  .fb-bucket.fix h4{color:var(--warn)}
+  .fb-bucket.later h4{color:#B8860B}
+  .fb-bucket.skip h4{color:var(--muted)}
+  .fb-item{background:white;border-radius:8px;padding:8px 10px;margin-bottom:6px;
+    cursor:grab;box-shadow:0 2px 4px rgba(0,0,0,.08);font-size:14px;
+    display:flex;align-items:center;gap:8px;border-left:4px solid var(--primary);
+    user-select:none}
+  .fb-item.dragging{opacity:.5}
+  .fb-item .x{background:transparent;border:none;color:var(--muted);
+    font-size:18px;cursor:pointer;padding:0 4px;line-height:1}
+  .fb-item .x:hover{color:var(--warn)}
+  .fb-counter{text-align:center;margin-top:14px;color:var(--muted);font-size:13px}
+
+  /* === Priority matrix === */
+  .matrix-wrap{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .matrix-axes{position:relative;width:100%;aspect-ratio:1;max-width:600px;margin:0 auto;
+    background:#FAFAFF;border:2px solid #E0E0E0;border-radius:14px;overflow:hidden}
+  .matrix-axes::before, .matrix-axes::after{
+    content:'';position:absolute;background:#BBB}
+  .matrix-axes::before{left:50%;top:0;width:1px;height:100%;border-left:1px dashed #BBB;background:none}
+  .matrix-axes::after{top:50%;left:0;height:1px;width:100%;border-top:1px dashed #BBB;background:none}
+  .quad{position:absolute;width:50%;height:50%;padding:14px;display:flex;align-items:flex-start;justify-content:flex-start;font-size:12px;font-weight:bold;color:#888}
+  .quad.tl{top:0;left:0;background:rgba(255,82,82,.05)}
+  .quad.tr{top:0;left:50%;background:rgba(255,213,79,.08)}
+  .quad.bl{bottom:0;left:0;background:rgba(0,191,165,.06)}
+  .quad.br{bottom:0;left:50%;background:rgba(149,117,205,.05)}
+  .axis-label{position:absolute;font-size:12px;color:var(--muted);font-weight:bold}
+  .axis-label.x-l{left:10px;top:50%;transform:translateY(-50%)}
+  .axis-label.x-r{right:10px;top:50%;transform:translateY(-50%)}
+  .axis-label.y-t{top:10px;left:50%;transform:translateX(-50%)}
+  .axis-label.y-b{bottom:10px;left:50%;transform:translateX(-50%)}
+  .quad-name{position:absolute;font-size:16px;font-weight:bold;opacity:.45}
+  .quad-name.tl{top:40px;left:14px;color:var(--warn)}
+  .quad-name.tr{top:40px;right:14px;color:#B8860B;text-align:right}
+  .quad-name.bl{bottom:40px;left:14px;color:var(--accent)}
+  .quad-name.br{bottom:40px;right:14px;color:#9C27B0;text-align:right}
+  .dot{position:absolute;background:var(--primary);color:white;border-radius:50%;
+    padding:6px 10px;font-size:12px;font-weight:bold;transform:translate(-50%,-50%);
+    box-shadow:0 3px 6px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap;max-width:180px;
+    text-overflow:ellipsis;overflow:hidden;z-index:2;transition:all .2s}
+  .dot:hover{transform:translate(-50%,-50%) scale(1.15);z-index:5}
+  .dot.fix{background:var(--warn)}
+  .dot.plan{background:#FFA500}
+  .dot.easy{background:var(--accent)}
+  .dot.no{background:#9C27B0}
+
+  /* === Bug report generator === */
+  .bugform{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .bugform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .bugform-grid .full{grid-column:1 / -1}
+  .bugform-grid label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .bugform-grid input,.bugform-grid textarea{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA}
+  .bugform-grid input:focus,.bugform-grid textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .bugform-grid textarea{min-height:60px;resize:vertical}
+  .bug-out{margin-top:18px;background:var(--dark);color:#E0F7FA;padding:18px 22px;border-radius:12px;
+    font-family:'SF Mono','Menlo',monospace;font-size:14px;line-height:1.8;white-space:pre-wrap;
+    box-shadow:var(--shadow);position:relative}
+  .bug-out .corner{position:absolute;top:8px;right:12px;font-size:12px;color:#999}
+  .bug-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .bug-tools button{font-family:inherit;border:none;border-radius:10px;padding:10px 22px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .qrow{margin-bottom:16px}
+  .qrow .q{font-weight:bold;font-size:17px;margin-bottom:8px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:2px solid var(--accent);color:var(--dark);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;
+    font-weight:bold;transition:all .15s}
+  .qrow .opts button:hover{background:#E0F7FA}
+  .qrow .opts button.right{background:#A5D6A7;border-color:#388E3C;color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:6px;display:none}
+  .qrow.answered .ex{display:block}
+
+  /* === Summary / next === */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .next{background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* === Toast === */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:12px 24px;border-radius:999px;
+    font-weight:bold;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第3回</span> <b>テストしてなおそう</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#compare">2<span>動く vs 使える</span><span class="ic">⚙️</span></a>
+  <a href="#selftest">3<span>自分テスト</span><span class="ic">🧐</span></a>
+  <a href="#obs">4<span>観察メモ</span><span class="ic">👀</span></a>
+  <a href="#feedback">5<span>意見の分類</span><span class="ic">📂</span></a>
+  <a href="#matrix">6<span>優先順位マトリックス</span><span class="ic">🎯</span></a>
+  <a href="#bug">7<span>バグ報告メモ</span><span class="ic">🐛</span></a>
+  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 小学生プログラミング教室・上級</div>
+    <h1>テストして<br>なおそう</h1>
+    <p>「動く」 → 「使える」 へ！ <b>友だちに使ってもらう</b> ＆ 改善</p>
+    <div class="em">🐛🔧✨</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「動く」 から 「使える」 へ</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:56px;display:block">🧐</span><h3>自分テスト</h3><p style="color:var(--muted)">10項目チェック</p></div>
+    <div class="card"><span style="font-size:56px;display:block">👫</span><h3>友だちテスト</h3><p style="color:var(--muted)">観察＆メモ</p></div>
+    <div class="card"><span style="font-size:56px;display:block">📂</span><h3>分類</h3><p style="color:var(--muted)">直す／次回／NO</p></div>
+    <div class="card"><span style="font-size:56px;display:block">🔧</span><h3>改善</h3><p style="color:var(--muted)">1個ずつ</p></div>
+  </div>
+</section>
+
+<!-- 1. 動く vs 使える -->
+<div class="divider" id="compare" data-snav-target>
+  <div class="num">1.</div>
+  <h2>「動く」 と 「使える」 は ちがう</h2>
+</div>
+
+<section class="section">
+  <h2>同じ作品 でも こんなに ちがう</h2>
+  <p class="lead">上級コースの ゴールは「<b>人に 使ってもらえた</b>」。 つまり 「動く」 だけでは 足りない！</p>
+
+  <div class="compare">
+    <div class="ng">
+      <h3>⚙️ 動く</h3>
+      <ul>
+        <li>エラーで 止まらない</li>
+        <li>旗を 押すと 反応する</li>
+        <li>機能が ぜんぶ ある</li>
+      </ul>
+      <p style="margin-top:10px;color:var(--muted);font-size:14px">→ 自分には 分かるけど…</p>
+    </div>
+    <div class="ok">
+      <h3>😊 使える</h3>
+      <ul>
+        <li>見て すぐ わかる</li>
+        <li>触って 楽しい</li>
+        <li>困らず 最後まで 進める</li>
+        <li>「もう一度」 と 思える</li>
+      </ul>
+      <p style="margin-top:10px;color:var(--accent);font-size:14px">→ 他の人にも わかる！</p>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:#B8860B">💡 直す順番は バグ → 使いにくさ</h3>
+    <p style="margin-top:6px"><b>バグ</b>（動かない）を 先に。<b>使いにくさ</b>（分かりにくい）は その次。 同時に やらない！</p>
+  </div>
+</section>
+
+<!-- 2. 自分テスト -->
+<div class="divider" id="selftest" data-snav-target>
+  <div class="num">2.</div>
+  <h2>自分テスト チェックリスト</h2>
+</div>
+
+<section class="section">
+  <h2>5分で やる 10項目</h2>
+  <p class="lead">クリックで チェック。10個 ぜんぶ ✓ なら 友だちテスト に 進める！</p>
+
+  <div class="checklist" id="selfcheck">
+    <div class="check-item"><div class="box"></div><div class="txt"><b>① 旗を 5回 押して 毎回 同じ動き</b><span>動作の安定性</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>② 全部の ボタンを 1回ずつ 押した</b><span>機能の網羅</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>③ スコアは 0から 始まる</b><span>初期化チェック</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>④ 終了したら ちゃんと 止まる</b><span>終了処理</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑤ もう一度 旗 → リセット される</b><span>再スタート</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑥ 全部の 音が 鳴る</b><span>音響チェック</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑦ 画面の はじまで 動かしても OK</b><span>境界チェック</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑧ 超速く クリック しても 平気</b><span>連打耐性</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑨ 何もしない で 30秒 待ってもOK</b><span>放置耐性</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⑩ タイトル → 結果画面 まで 通せる</b><span>1周クリア</span></div></div>
+  </div>
+  <div class="check-progress" id="selfProg">0 / 10 達成</div>
+</section>
+
+<!-- 3. 観察メモ -->
+<div class="divider" id="obs" data-snav-target>
+  <div class="num">3.</div>
+  <h2>友だちテスト 観察メモ</h2>
+</div>
+
+<section class="section">
+  <h2>「何も 教えず」 ただ 見守る</h2>
+  <p class="lead">スタートで タイマー開始（おすすめ：1人 <b>3〜5分</b>）。<br>クイックボタンで 観察メモを 素早く 記録できる！</p>
+
+  <div class="obs">
+    <div class="obs-form">
+      <div>
+        <label>テストして くれた人（ニックネーム）</label>
+        <input type="text" id="obsTester" value="" placeholder="例：あおいちゃん">
+      </div>
+      <div>
+        <label>作品名</label>
+        <input type="text" id="obsApp" value="" placeholder="例：ねこねこタイマー">
+      </div>
+    </div>
+
+    <div class="obs-clock">
+      <span style="font-weight:bold">⏱️ テスト時間：</span>
+      <span class="time" id="obsTime">00:00</span>
+      <button id="obsStart">▶ スタート</button>
+      <button id="obsStop" class="gray">⏸ ストップ</button>
+      <button id="obsResetClock" class="gray">↺ リセット</button>
+    </div>
+
+    <div style="margin-bottom:6px;font-weight:bold;font-size:14px;color:var(--muted)">クイック追加（時間付きで メモに）：</div>
+    <div class="obs-quick">
+      <button onclick="quickAdd('🤔 ここで 止まった')">🤔 止まった</button>
+      <button onclick="quickAdd('❓ ルールが 分からなかった')">❓ ルール不明</button>
+      <button onclick="quickAdd('🐛 バグ：')">🐛 バグ</button>
+      <button onclick="quickAdd('😄 楽しそうだった！')">😄 楽しそう</button>
+      <button onclick="quickAdd('🙋 質問された：')">🙋 質問された</button>
+      <button onclick="quickAdd('💡 アイデア：')">💡 アイデア</button>
+    </div>
+
+    <textarea class="obs-notes" id="obsNotes" placeholder="観察メモ：友だちが どこで困ったか、何を 楽しんだか…"></textarea>
+
+    <div class="obs-tools">
+      <button class="accent" onclick="copyObs()">📋 コピー</button>
+      <button onclick="downloadObs()">💾 保存 (.txt)</button>
+      <button class="gray" onclick="clearObs()">↺ クリア</button>
+    </div>
+  </div>
+</section>
+
+<!-- 4. フィードバック分類 -->
+<div class="divider" id="feedback" data-snav-target>
+  <div class="num">4.</div>
+  <h2>もらった意見を 3つに 分類</h2>
+</div>
+
+<section class="section">
+  <h2>「直す」 ／ 「次回まわし」 ／ 「直さない」</h2>
+  <p class="lead">意見を 入力 → <b>ドラッグ</b>で 3つの バケツに 分類！ どれも 大事だけど、<b>全部 直さない</b> のがコツ。</p>
+
+  <div class="fb">
+    <div class="fb-add">
+      <input type="text" id="fbInput" placeholder="例：ボタンが小さくて押しにくい" maxlength="50">
+      <button onclick="addFeedback()">+ 追加</button>
+    </div>
+    <div class="fb-examples">
+      <span>例：</span>
+      <button onclick="addExample('スコアが マイナスに なる')">バグ系</button>
+      <button onclick="addExample('ボタンが 小さい')">UI系</button>
+      <button onclick="addExample('音が もっと ほしい')">追加機能</button>
+      <button onclick="addExample('もっと キャラを 増やしてほしい')">大きな機能</button>
+    </div>
+
+    <div class="fb-buckets">
+      <div class="fb-bucket fix" data-bucket="fix">
+        <h4>🔥 すぐ 直す</h4>
+        <div class="fb-items" data-bucket="fix"></div>
+      </div>
+      <div class="fb-bucket later" data-bucket="later">
+        <h4>⏳ 次回まわし</h4>
+        <div class="fb-items" data-bucket="later"></div>
+      </div>
+      <div class="fb-bucket skip" data-bucket="skip">
+        <h4>🤔 直さない</h4>
+        <div class="fb-items" data-bucket="skip"></div>
+      </div>
+    </div>
+    <div class="fb-counter" id="fbCounter">未分類：0 個</div>
+  </div>
+</section>
+
+<!-- 5. 優先順位マトリックス -->
+<div class="divider" id="matrix" data-snav-target>
+  <div class="num">5.</div>
+  <h2>優先順位 マトリックス</h2>
+</div>
+
+<section class="section">
+  <h2>「大事さ × カンタンさ」 で 配置</h2>
+  <p class="lead">同じ意見を ここでも <b>4象限</b> で 整理。「直す」 と 決めたら、 一番 <b>カンタンで 大事</b> なものから 着手！</p>
+
+  <div class="matrix-wrap">
+    <div class="matrix-axes" id="matrixAxes">
+      <div class="quad tl"></div>
+      <div class="quad tr"></div>
+      <div class="quad bl"></div>
+      <div class="quad br"></div>
+      <div class="quad-name tl">🔥 すぐ直す</div>
+      <div class="quad-name tr">⏳ 計画して</div>
+      <div class="quad-name bl">😄 余裕あれば</div>
+      <div class="quad-name br">❌ やらない</div>
+      <span class="axis-label x-l">← カンタン</span>
+      <span class="axis-label x-r">むずかしい →</span>
+      <span class="axis-label y-t">↑ 大事</span>
+      <span class="axis-label y-b">↓ 小さい</span>
+      <!-- dots generated -->
+    </div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:10px">↑「意見の分類」で 入れたものが 自動的に 配置されます。<br>各点を クリックで 「カンタンさ」「大事さ」 を 設定！</p>
+  </div>
+</section>
+
+<!-- 6. バグ報告メモ -->
+<div class="divider" id="bug" data-snav-target>
+  <div class="num">6.</div>
+  <h2>バグ報告 メモ ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>AIや 先生に 相談するときの 型</h2>
+  <p class="lead">5項目 を 埋めると、相談しやすい バグ報告 が できあがる。</p>
+
+  <div class="bugform">
+    <div class="bugform-grid">
+      <div class="full">
+        <label>① 何を した？</label>
+        <input type="text" id="bgDid" value="旗を 5回 連打 した" maxlength="60">
+      </div>
+      <div class="full">
+        <label>② どうなった？（実際）</label>
+        <input type="text" id="bgGot" value="スコアが マイナスに なった" maxlength="60">
+      </div>
+      <div class="full">
+        <label>③ どうなる はずだった？（期待）</label>
+        <input type="text" id="bgExpect" value="スコアは 0より 下に ならない" maxlength="60">
+      </div>
+      <div>
+        <label>④ どこで？（作品名・画面）</label>
+        <input type="text" id="bgWhere" value="もぐらたたきゲーム" maxlength="40">
+      </div>
+      <div>
+        <label>⑤ 何回中 何回？</label>
+        <input type="text" id="bgFreq" value="5回中 5回（毎回）" maxlength="40">
+      </div>
+    </div>
+
+    <div class="bug-out" id="bugOut">
+      <span class="corner">📝 バグ報告</span>
+    </div>
+
+    <div class="bug-tools">
+      <button onclick="copyBug()">📋 コピー</button>
+      <button class="gray" onclick="resetBug()">↺ 初期値</button>
+    </div>
+
+    <div class="card tip" style="margin-top:14px">
+      <h3 style="color:#B8860B">💡 この型が なぜ 大事？</h3>
+      <p style="margin-top:6px">この5項目 が あれば AIや 先生は 30秒で 状況を 理解できる。<br>「動かない！」 だけだと <b>何も できない</b>。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう！</h2>
+  <p class="lead">何回 まちがえてもOK。答えがわかったら 説明が出るよ。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. 友だちテスト の とき、テストする 人に <b>何を 言う</b>？</div>
+      <div class="opts">
+        <button data-i="0">「ここから 始めて、つぎに あれを 押して」と 順番に 教える</button>
+        <button data-i="1">「楽しんで！」 だけ 言って 詳しい 操作を 教える</button>
+        <button data-i="2">作品名だけ 言って、あとは <b>黙って 見守る</b></button>
+        <button data-i="3">何も 言わない</button>
+      </div>
+      <div class="ex">✅ 正解：作品名だけ。 <b>困るところ</b> こそが 一番 大事な情報！ 教えてしまうと テストにならない。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q2. 5つの 意見を もらった！ どう する？</div>
+      <div class="opts">
+        <button data-i="0">3つに 分類して、優先順位で 1〜2個 直す</button>
+        <button data-i="1">ぜんぶ 一気に 直す</button>
+        <button data-i="2">どれも 直さない</button>
+        <button data-i="3">先生に 全部 直してもらう</button>
+      </div>
+      <div class="ex">✅ 全部 同時に 直すと どこで こわれたか 分からない！ <b>1〜2個 直して 動かす</b> を くり返す。</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q3. <b>「ボタンが 押しても 反応しない」</b> は…</div>
+      <div class="opts">
+        <button data-i="0">使いにくさ</button>
+        <button data-i="1">バグ</button>
+        <button data-i="2">アイデア</button>
+        <button data-i="3">わざと そうしている</button>
+      </div>
+      <div class="ex">✅ <b>動かない＝バグ</b>。 バグは <b>先に</b> 直す！ 「ボタンが 小さい」 なら 使いにくさ。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>「動く」 と 「使える」 のちがい</h3><p style="color:var(--muted)">使える を めざす</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>自分テストで 10項目 チェック</h3><p style="color:var(--muted)">5分で 一気に</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>友だちに 黙って 見てもらう</h3><p style="color:var(--muted)">困る所が 一番のヒント</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>意見を 3つに 分類</h3><p style="color:var(--muted)">直す／次回／直さない</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>1〜2個 を 確実に 直す</h3><p style="color:var(--muted)">同時直しは ぐちゃぐちゃのもと</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🎤✨</div>
+  <h2>次回 ｜ 発表会</h2>
+  <p>1人 3分で プレゼン！ 上級コース 修了 🎓</p>
+</div>
+
+<footer>小学生プログラミング教室 ／ 上級 第3回｜テストしてなおそう</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     自分テスト チェックリスト
+     ========================================================= */
+  (function(){
+    const root = $('selfcheck'), out = $('selfProg');
+    const items = [...root.querySelectorAll('.check-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      out.textContent = `${done} / 10 達成`;
+      if(done === 10){
+        out.style.color = '#4CAF50';
+        out.textContent = '🎉 10 / 10 達成！ 友だちテストへ GO！';
+      } else if(done >= 7){
+        out.style.color = 'var(--accent)';
+        out.textContent = `${done} / 10 達成 — もう少し！`;
+      } else {
+        out.style.color = '';
+      }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{
+      it.classList.toggle('on'); update();
+    }));
+    update();
+  })();
+
+  /* =========================================================
+     観察メモ（タイマー＋クイック追加）
+     ========================================================= */
+  let obsSec = 0, obsIntv = null;
+  function fmtTime(s){
+    const m = Math.floor(s/60), ss = s%60;
+    return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+  }
+  function obsUpdate(){ $('obsTime').textContent = fmtTime(obsSec); }
+  $('obsStart').addEventListener('click', ()=>{
+    if(obsIntv) return;
+    obsIntv = setInterval(()=>{ obsSec++; obsUpdate(); }, 1000);
+    showToast('⏱️ テスト 開始');
+  });
+  $('obsStop').addEventListener('click', ()=>{
+    clearInterval(obsIntv); obsIntv = null;
+  });
+  $('obsResetClock').addEventListener('click', ()=>{
+    clearInterval(obsIntv); obsIntv = null; obsSec = 0; obsUpdate();
+  });
+  obsUpdate();
+
+  function quickAdd(text){
+    const ta = $('obsNotes');
+    const stamp = '[' + fmtTime(obsSec) + '] ';
+    const cur = ta.value;
+    ta.value = cur + (cur && !cur.endsWith('\n') ? '\n' : '') + stamp + text + ' ';
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+  }
+  function copyObs(){
+    const tester = $('obsTester').value.trim() || '（テスター名）';
+    const app = $('obsApp').value.trim() || '（作品名）';
+    const text = `■ ${app} ／ テスター：${tester} ／ 時間：${fmtTime(obsSec)}\n\n${$('obsNotes').value}`;
+    navigator.clipboard.writeText(text)
+      .then(()=>showToast('📋 観察メモを コピーしました'))
+      .catch(()=>showToast('コピー できませんでした'));
+  }
+  function downloadObs(){
+    const tester = $('obsTester').value.trim() || 'tester';
+    const app = $('obsApp').value.trim() || 'app';
+    const text = `■ ${app} ／ テスター：${tester} ／ 時間：${fmtTime(obsSec)}\n\n${$('obsNotes').value}`;
+    const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '観察メモ_' + tester + '.txt';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 保存しました');
+  }
+  function clearObs(){
+    $('obsNotes').value = '';
+    $('obsTester').value = '';
+    $('obsApp').value = '';
+    obsSec = 0; obsUpdate();
+    clearInterval(obsIntv); obsIntv = null;
+  }
+
+  /* =========================================================
+     フィードバック分類（ドラッグ&ドロップ）+ マトリックス
+     ========================================================= */
+  let fbId = 0;
+  const fbItems = {}; // id -> {text, bucket, x:0-1, y:0-1}
+  function addFeedback(){
+    const v = $('fbInput').value.trim();
+    if(!v) return;
+    fbId++;
+    fbItems[fbId] = { id:fbId, text:v, bucket:'fix', x:.7, y:.7 };
+    $('fbInput').value = '';
+    renderFB();
+    renderMatrix();
+  }
+  function addExample(text){
+    $('fbInput').value = text;
+    addFeedback();
+  }
+  $('fbInput').addEventListener('keypress', e=>{
+    if(e.key === 'Enter'){ e.preventDefault(); addFeedback(); }
+  });
+
+  const buckets = [...document.querySelectorAll('.fb-bucket')];
+  function renderFB(){
+    buckets.forEach(b=>{
+      const inner = b.querySelector('.fb-items');
+      inner.innerHTML = '';
+      Object.values(fbItems).filter(it => it.bucket === b.dataset.bucket).forEach(it=>{
+        const el = document.createElement('div');
+        el.className = 'fb-item';
+        el.draggable = true;
+        el.dataset.id = it.id;
+        el.innerHTML = `<span style="flex:1">${escapeHTML(it.text)}</span><button class="x" title="削除">×</button>`;
+        el.querySelector('.x').addEventListener('click', e=>{
+          e.stopPropagation();
+          delete fbItems[it.id];
+          renderFB(); renderMatrix();
+        });
+        el.addEventListener('dragstart', e=>{
+          el.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', String(it.id));
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        el.addEventListener('dragend', ()=> el.classList.remove('dragging'));
+        inner.appendChild(el);
+      });
+    });
+    const total = Object.keys(fbItems).length;
+    const fixed = Object.values(fbItems).filter(x=>x.bucket==='fix').length;
+    const later = Object.values(fbItems).filter(x=>x.bucket==='later').length;
+    const skip = Object.values(fbItems).filter(x=>x.bucket==='skip').length;
+    $('fbCounter').textContent = `合計：${total} 個 ／ 🔥${fixed} ⏳${later} 🤔${skip}`;
+  }
+  buckets.forEach(b=>{
+    b.addEventListener('dragover', e=>{ e.preventDefault(); b.classList.add('over'); });
+    b.addEventListener('dragleave', ()=> b.classList.remove('over'));
+    b.addEventListener('drop', e=>{
+      e.preventDefault();
+      b.classList.remove('over');
+      const id = parseInt(e.dataTransfer.getData('text/plain'),10);
+      if(!fbItems[id]) return;
+      fbItems[id].bucket = b.dataset.bucket;
+      // bucketに応じてマトリックスのデフォルト位置も変える
+      const def = { fix:{x:.25,y:.75}, later:{x:.75,y:.75}, skip:{x:.25,y:.25} }[b.dataset.bucket];
+      if(def){ fbItems[id].x = def.x; fbItems[id].y = def.y; }
+      renderFB(); renderMatrix();
+    });
+  });
+
+  /* マトリックス */
+  const matrixEl = $('matrixAxes');
+  function renderMatrix(){
+    [...matrixEl.querySelectorAll('.dot')].forEach(d=>d.remove());
+    Object.values(fbItems).forEach(it=>{
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      // 象限から色付け
+      const easy = it.x < .5, important = it.y > .5;
+      if(easy && important) dot.classList.add('fix');
+      else if(!easy && important) dot.classList.add('plan');
+      else if(easy && !important) dot.classList.add('easy');
+      else dot.classList.add('no');
+      dot.textContent = it.text.length > 20 ? it.text.slice(0,18)+'…' : it.text;
+      dot.title = it.text;
+      const r = matrixEl.getBoundingClientRect();
+      dot.style.left = (it.x * 100) + '%';
+      dot.style.top = ((1 - it.y) * 100) + '%';
+      dot.addEventListener('click', ()=>{
+        // クリックで「大事さ / カンタンさ」を編集
+        info('🎯', it.text, `
+          <div style="text-align:left;font-size:14px;line-height:1.8">
+            <p>このフィードバックを 配置：</p>
+            <div style="margin-top:10px"><label style="font-weight:bold">カンタンさ（← カンタン　むずかしい →）</label>
+            <input type="range" min="0" max="100" value="${Math.round(it.x*100)}" id="rangeX" style="width:100%;accent-color:var(--primary)"></div>
+            <div style="margin-top:10px"><label style="font-weight:bold">大事さ（↓ 小さい　大事 ↑）</label>
+            <input type="range" min="0" max="100" value="${Math.round(it.y*100)}" id="rangeY" style="width:100%;accent-color:var(--primary)"></div>
+            <div style="text-align:center;margin-top:14px;color:var(--muted);font-size:13px">スライダーを 動かして 閉じてね</div>
+          </div>`);
+        setTimeout(()=>{
+          const rx = document.getElementById('rangeX');
+          const ry = document.getElementById('rangeY');
+          if(!rx) return;
+          rx.addEventListener('input', ()=>{ it.x = rx.value/100; renderMatrix(); });
+          ry.addEventListener('input', ()=>{ it.y = ry.value/100; renderMatrix(); });
+        }, 50);
+      });
+      matrixEl.appendChild(dot);
+    });
+  }
+  renderFB();
+  renderMatrix();
+
+  /* =========================================================
+     バグ報告ジェネレータ
+     ========================================================= */
+  function buildBug(){
+    const did = ($('bgDid').value || '(なにを した)').trim();
+    const got = ($('bgGot').value || '(どうなった)').trim();
+    const exp = ($('bgExpect').value || '(どうなる はず)').trim();
+    const where = ($('bgWhere').value || '(どこで)').trim();
+    const freq = ($('bgFreq').value || '(何回中 何回)').trim();
+    return `【何を した】 ${did}
+【どうなった】 ${got}
+【どうなる はず】 ${exp}
+【どこで】 ${where}
+【再現】 ${freq}`;
+  }
+  function refreshBug(){
+    $('bugOut').innerHTML = '<span class="corner">📝 バグ報告</span>' + escapeHTML(buildBug());
+  }
+  ['bgDid','bgGot','bgExpect','bgWhere','bgFreq'].forEach(id => $(id).addEventListener('input', refreshBug));
+  function copyBug(){
+    navigator.clipboard.writeText(buildBug())
+      .then(()=>showToast('📋 バグ報告を コピーしました'))
+      .catch(()=>showToast('コピー できませんでした'));
+  }
+  function resetBug(){
+    $('bgDid').value = '旗を 5回 連打 した';
+    $('bgGot').value = 'スコアが マイナスに なった';
+    $('bgExpect').value = 'スコアは 0より 下に ならない';
+    $('bgWhere').value = 'もぐらたたきゲーム';
+    $('bgFreq').value = '5回中 5回（毎回）';
+    refreshBug();
+  }
+  refreshBug();
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>
