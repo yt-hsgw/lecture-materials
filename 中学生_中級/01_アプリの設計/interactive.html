@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・中級 第1回｜アプリの設計</title>
+<style>
+  :root{
+    --primary:#4F46E5; --secondary:#F59E0B; --accent:#10B981;
+    --warn:#EF4444; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --code-key:#C4B5FD; --code-str:#FDBA74; --code-num:#6EE7B7; --code-com:#64748B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 50%,#EC4899 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFFBEB}
+
+  /* === Code blocks === */
+  .code{background:var(--code-bg);color:var(--code-text);border-radius:10px;
+    padding:18px 22px;font-family:'JetBrains Mono','SF Mono','Menlo',monospace;font-size:14px;
+    line-height:1.7;box-shadow:var(--shadow);overflow-x:auto;white-space:pre;}
+  .code .key{color:var(--code-key)}
+  .code .str{color:var(--code-str)}
+  .code .num{color:var(--code-num)}
+  .code .com{color:var(--code-com);font-style:italic}
+
+  /* === Requirements writer === */
+  .reqform{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .reqform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+  .reqform-grid label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px;letter-spacing:.3px}
+  .reqform-grid input,.reqform-grid textarea{width:100%;padding:9px 12px;
+    border:1.5px solid #CBD5E1;border-radius:8px;font-family:inherit;font-size:14px;background:#F8FAFC;color:var(--dark);transition:all .15s}
+  .reqform-grid input:focus,.reqform-grid textarea:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .reqform-grid textarea{min-height:50px;resize:vertical}
+  .reqform-examples{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .reqform-examples span{align-self:center;color:var(--muted);font-size:13px}
+  .reqform-examples button{background:#F1F5F9;border:1px solid var(--border);
+    color:var(--primary);padding:4px 12px;border-radius:6px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:12px}
+  .reqform-examples button:hover{background:var(--primary);color:white}
+
+  .req-out{margin-top:14px;background:var(--code-bg);color:var(--code-text);
+    padding:16px 20px;border-radius:10px;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-size:14px;line-height:1.9;white-space:pre-wrap;position:relative;min-height:120px}
+  .req-out .corner{position:absolute;top:8px;right:14px;font-size:11px;color:#64748B;letter-spacing:.5px}
+  .req-quality{text-align:center;margin-top:12px;font-size:14px;color:var(--muted)}
+  .req-quality .stars{font-size:22px;letter-spacing:5px;color:var(--secondary)}
+  .req-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .req-tools button{font-family:inherit;border:none;border-radius:8px;padding:9px 20px;
+    font-weight:600;cursor:pointer;font-size:14px;background:var(--primary);color:white;
+    box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .12s}
+  .req-tools button:hover{transform:translateY(-1px)}
+  .req-tools button.gray{background:var(--muted)}
+
+  /* === Scope manager === */
+  .scopebox{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .scope-input{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .scope-input input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid #CBD5E1;
+    border-radius:8px;font-family:inherit;font-size:14px;background:#F8FAFC}
+  .scope-input input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .scope-input button{font-family:inherit;border:none;border-radius:8px;padding:10px 18px;
+    font-weight:600;cursor:pointer;font-size:14px;background:var(--primary);color:white}
+  .scope-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:680px){.scope-cols{grid-template-columns:1fr}}
+  .scope-col{border-radius:10px;padding:14px;min-height:160px;border:2px dashed transparent;transition:all .15s}
+  .scope-col.yes{background:#ECFDF5;border-color:#A7F3D0}
+  .scope-col.no{background:#FEF2F2;border-color:#FECACA}
+  .scope-col.over{border-style:solid;transform:scale(1.01)}
+  .scope-col h4{margin-bottom:10px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .scope-col.yes h4{color:#047857}
+  .scope-col.no h4{color:#B91C1C}
+  .scope-item{background:white;border-radius:6px;padding:8px 10px;margin-bottom:6px;
+    cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.06);font-size:14px;
+    display:flex;align-items:center;gap:8px;user-select:none;border:1px solid var(--border)}
+  .scope-item.dragging{opacity:.5}
+  .scope-item .x{background:transparent;border:none;color:var(--muted);font-size:18px;
+    cursor:pointer;padding:0 4px;line-height:1;margin-left:auto}
+  .scope-item .x:hover{color:var(--warn)}
+
+  /* === Data model designer === */
+  .dm{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .dm-name{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .dm-name label{font-weight:600;font-size:14px;color:var(--muted)}
+  .dm-name input{padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;background:#F8FAFC;min-width:160px}
+  .dm-name input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+
+  .dm-fields{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .dm-field{display:grid;grid-template-columns:1fr 130px 1fr 40px;gap:8px;
+    align-items:center;background:#F8FAFC;border-radius:8px;padding:8px 10px;
+    border:1px solid var(--border)}
+  @media (max-width:680px){.dm-field{grid-template-columns:1fr 1fr 30px;grid-template-rows:auto auto}
+    .dm-field input:first-child{grid-column:1/-1}
+    .dm-field select{grid-column:1/2}
+    .dm-field input:nth-child(3){grid-column:2/3}}
+  .dm-field input,.dm-field select{padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;
+    font-family:inherit;font-size:13px;background:white}
+  .dm-field input{font-family:'JetBrains Mono','SF Mono',monospace}
+  .dm-field input:focus,.dm-field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(79,70,229,.1)}
+  .dm-field .del{background:transparent;border:none;color:var(--warn);font-size:18px;
+    cursor:pointer;padding:0;line-height:1}
+  .dm-add{background:#F1F5F9;border:1.5px dashed var(--primary);border-radius:8px;
+    padding:10px;width:100%;cursor:pointer;font-family:inherit;color:var(--primary);
+    font-weight:600;font-size:14px}
+  .dm-add:hover{background:var(--primary);color:white}
+
+  .dm-out{background:var(--code-bg);color:var(--code-text);border-radius:10px;
+    padding:18px 22px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;
+    line-height:1.7;margin-top:14px;overflow-x:auto;white-space:pre;position:relative;min-height:200px}
+  .dm-out .corner{position:absolute;top:8px;right:14px;font-size:11px;color:#64748B}
+  .dm-tabs{display:flex;gap:4px;margin-top:14px;border-bottom:2px solid #E2E8F0}
+  .dm-tabs button{background:transparent;border:none;padding:8px 16px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:13px;color:var(--muted);
+    border-bottom:3px solid transparent;margin-bottom:-2px}
+  .dm-tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+  .dm-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .dm-tools button{font-family:inherit;border:none;border-radius:8px;padding:9px 20px;
+    font-weight:600;cursor:pointer;font-size:14px;background:var(--primary);color:white}
+  .dm-tools button.gray{background:var(--muted)}
+  .dm-tools button.accent{background:var(--accent)}
+
+  /* === Sample plans === */
+  .samples{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+  .sample{background:white;border-radius:12px;padding:18px;box-shadow:var(--shadow);
+    cursor:pointer;border:2px solid transparent;transition:all .15s;border-left:5px solid var(--primary)}
+  .sample:hover{border-color:var(--primary);transform:translateY(-3px)}
+  .sample:nth-child(2){border-left-color:var(--secondary)}
+  .sample:nth-child(3){border-left-color:var(--accent)}
+  .sample h3{color:var(--dark);font-size:17px;margin-bottom:4px}
+  .sample p{font-size:13px;color:var(--muted);line-height:1.6}
+  .sample .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .sample .meta span{background:#F1F5F9;padding:2px 10px;border-radius:6px;
+    font-size:11px;color:var(--primary);font-weight:600;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  /* === Summary === */
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:50px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:72px;line-height:1}
+  .next h2{color:white;font-size:clamp(26px,5vw,38px);margin:12px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;
+    font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第1回</span> <b>アプリの設計</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#why">2<span>なぜ設計するか</span><span class="ic">📐</span></a>
+  <a href="#req">3<span>要件定義ツール</span><span class="ic">📋</span></a>
+  <a href="#scope">4<span>スコープ管理</span><span class="ic">✂️</span></a>
+  <a href="#data">5<span>データモデル設計</span><span class="ic">💾</span></a>
+  <a href="#samples">6<span>サンプル設計書</span><span class="ic">📚</span></a>
+  <a href="#quiz">7<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">8<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 中学生プログラミング塾・中級</div>
+    <h1>アプリの 設計</h1>
+    <p>要件 → 画面 → データ。 コードを 書く前に <b>紙の上で 1時間</b></p>
+    <div class="em">📐⚙️💾</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>設計＝3つの「決める」</h2>
+  <div class="grid grid-3">
+    <div class="card"><span style="font-size:42px;display:block">📋</span><h3>要件定義</h3><p style="color:var(--muted);font-size:14px">3行で 書く</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🖼️</span><h3>画面設計</h3><p style="color:var(--muted);font-size:14px">ワイヤフレーム</p></div>
+    <div class="card"><span style="font-size:42px;display:block">💾</span><h3>データ設計</h3><p style="color:var(--muted);font-size:14px">JSONで モデリング</p></div>
+  </div>
+</section>
+
+<!-- 1. なぜ設計するか -->
+<div class="divider" id="why" data-snav-target>
+  <div class="num">01.</div>
+  <h2>なぜ 設計するのか</h2>
+</div>
+
+<section class="section">
+  <h2>初級 → 中級 のパラダイムシフト</h2>
+  <p class="lead">「書ける」 から 「設計できる」 へ。 紙の上で 1時間 考えた分、 実装は <b>3時間 速くなる</b>。</p>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>📝 初級まで</h3>
+      <ul style="margin-left:20px;margin-top:8px;line-height:1.9;color:#475569">
+        <li>文法を 覚える</li>
+        <li>1ファイルの スクリプト</li>
+        <li>「書ける」が ゴール</li>
+        <li>動けば OK</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:5px solid var(--primary)">
+      <h3 style="color:var(--primary)">🚀 中級では</h3>
+      <ul style="margin-left:20px;margin-top:8px;line-height:1.9">
+        <li><b>設計の質</b> を 上げる</li>
+        <li>複数ファイル＋サーバー</li>
+        <li>「設計できる」が ゴール</li>
+        <li>再利用できる 形に</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card warn" style="margin-top:18px">
+    <h3>⚠️ いきなり コードを 書くと…</h3>
+    <ul style="margin-left:20px;margin-top:6px;line-height:1.8">
+      <li>何を作るか <b>途中で 変わる</b> → 書き直し</li>
+      <li>機能が <b>どんどん 増える</b> → 終わらない</li>
+      <li>データの <b>形が ぐちゃぐちゃ</b> → バグ多発</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 2. 要件定義ツール -->
+<div class="divider" id="req" data-snav-target>
+  <div class="num">02.</div>
+  <h2>要件定義 ライティングツール</h2>
+</div>
+
+<section class="section">
+  <h2>「だれが・いつ・何ができる」 3行で</h2>
+  <p class="lead">下の欄を 埋めると 整った要件定義文が 生成される。 ⭐評価で 完成度も チェック！</p>
+
+  <div class="reqform">
+    <div class="reqform-grid">
+      <div>
+        <label>① 主語：だれが</label>
+        <input type="text" id="reqWho" value="中学生が" placeholder="例：中学生が">
+      </div>
+      <div>
+        <label>② 状況：いつ・どこで・どうやって</label>
+        <input type="text" id="reqWhen" value="スマホで宿題の進捗を管理するために" placeholder="例：スマホで〜">
+      </div>
+      <div>
+        <label>③ 動詞：何ができる</label>
+        <input type="text" id="reqDo" value="タスクを 追加・完了・削除 できる" placeholder="例：〜できる">
+      </div>
+    </div>
+
+    <div class="reqform-examples">
+      <span>例：</span>
+      <button onclick="loadReq('todo')">TODOアプリ</button>
+      <button onclick="loadReq('memo')">メモアプリ</button>
+      <button onclick="loadReq('pomo')">ポモドーロ</button>
+      <button onclick="loadReq('quiz')">単語クイズ</button>
+    </div>
+
+    <div class="req-out" id="reqOut">
+      <span class="corner">// requirements.txt</span>
+    </div>
+    <div class="req-quality">
+      <div class="stars" id="reqStars">⭐⭐⭐⭐⭐</div>
+      <div style="margin-top:4px" id="reqHints">完璧！</div>
+    </div>
+
+    <div class="req-tools">
+      <button onclick="copyReq()">📋 コピー</button>
+      <button class="gray" onclick="resetReq()">↺ クリア</button>
+    </div>
+  </div>
+</section>
+
+<!-- 3. スコープ管理 -->
+<div class="divider" id="scope" data-snav-target>
+  <div class="num">03.</div>
+  <h2>スコープ管理（やる／やらない）</h2>
+</div>
+
+<section class="section">
+  <h2>「やらないこと」を 決める</h2>
+  <p class="lead">機能を 思いつくまま 入力 → <b>ドラッグ</b>で「やる／やらない」に 分類。 やらないと 決めると 実装が 軽くなる！</p>
+
+  <div class="scopebox">
+    <div class="scope-input">
+      <input type="text" id="scopeInput" placeholder="例：タスクの追加" maxlength="30">
+      <button onclick="addScope()">+ 追加</button>
+    </div>
+
+    <div class="scope-cols">
+      <div class="scope-col yes" data-bucket="yes">
+        <h4>🟢 やる（MVP）</h4>
+        <div class="scope-items" data-bucket="yes"></div>
+      </div>
+      <div class="scope-col no" data-bucket="no">
+        <h4>🔴 やらない（後回し）</h4>
+        <div class="scope-items" data-bucket="no"></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:12px;color:var(--muted);font-size:13px">
+      <b>MVP</b> = Minimum Viable Product（最小限の 動くもの）
+    </div>
+  </div>
+</section>
+
+<!-- 4. データモデル設計 -->
+<div class="divider" id="data" data-snav-target>
+  <div class="num">04.</div>
+  <h2>データモデル 設計</h2>
+</div>
+
+<section class="section">
+  <h2>1つのデータが 持つフィールド を 設計</h2>
+  <p class="lead">フィールド名と 型を 追加 → 右に <b>TypeScript / Python / JSON</b> 3つの形式で 自動生成。</p>
+
+  <div class="dm">
+    <div class="dm-name">
+      <label>モデル名:</label>
+      <input type="text" id="dmName" value="Task" maxlength="30" spellcheck="false">
+      <span style="color:var(--muted);font-size:13px">（PascalCase）</span>
+    </div>
+
+    <div class="dm-fields" id="dmFields">
+      <!-- generated -->
+    </div>
+    <button class="dm-add" onclick="addField()">+ フィールドを 追加</button>
+
+    <div class="dm-tabs">
+      <button class="active" data-fmt="json" onclick="setFmt('json')">JSON</button>
+      <button data-fmt="ts" onclick="setFmt('ts')">TypeScript</button>
+      <button data-fmt="py" onclick="setFmt('py')">Python (dataclass)</button>
+      <button data-fmt="sample" onclick="setFmt('sample')">サンプルデータ</button>
+    </div>
+    <div class="dm-out" id="dmOut">
+      <span class="corner" id="dmCorner">// JSON</span>
+    </div>
+
+    <div class="dm-tools">
+      <button onclick="copyDM()">📋 コピー</button>
+      <button class="accent" onclick="loadDMExample('task')">📚 Task の例</button>
+      <button onclick="loadDMExample('memo')">📚 Memo の例</button>
+      <button onclick="loadDMExample('user')">📚 User の例</button>
+      <button class="gray" onclick="resetDM()">↺ クリア</button>
+    </div>
+  </div>
+</section>
+
+<!-- 5. サンプル設計書 -->
+<div class="divider" id="samples" data-snav-target>
+  <div class="num">05.</div>
+  <h2>サンプル 設計書</h2>
+</div>
+
+<section class="section">
+  <h2>3つの 設計事例</h2>
+  <p class="lead">クリックで 詳細を 表示。 自分の 企画書の 参考に！</p>
+
+  <div class="samples" id="samplesBox">
+    <!-- generated -->
+  </div>
+</section>
+
+<!-- 6. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">06.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう</h2>
+  <p class="lead">答えがわかったら 解説が出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. 良い 要件定義 に <b>必須</b> な 3要素は？</div>
+      <div class="opts">
+        <button data-i="0">技術 ／ 予算 ／ 期限</button>
+        <button data-i="1">画面 ／ 色 ／ フォント</button>
+        <button data-i="2">だれが ／ いつ・どうやって ／ 何が できる</button>
+        <button data-i="3">入力 ／ 処理 ／ 出力</button>
+      </div>
+      <div class="ex">✅ 主語（誰）／状況（いつどこで）／動詞（何ができる）の3要素。 「すごい TODO」 はNG！</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q2. データモデルに <b>「id」 フィールド</b> を 入れる理由は？</div>
+      <div class="opts">
+        <button data-i="0">かっこいいから</button>
+        <button data-i="1">同じ内容でも 1つ1つを 区別するため</button>
+        <button data-i="2">データの 数を 数えるため</button>
+        <button data-i="3">セキュリティ のため</button>
+      </div>
+      <div class="ex">✅ 「歯みがき」が 2つあっても、id=1 と id=2 で 別物 と 区別できる。 削除・更新の <b>キー</b> になる。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. 中級コースの <b>「設計から始める」</b> 一番の メリットは？</div>
+      <div class="opts">
+        <button data-i="0">途中での 書き直しが 減って 結果的に 速い</button>
+        <button data-i="1">先生に ほめられる</button>
+        <button data-i="2">紙が きれいに 見える</button>
+        <button data-i="3">コードを 書かなくて 済む</button>
+      </div>
+      <div class="ex">✅ 設計に 1時間 → 実装が 3時間 速くなる。 「急がば回れ」 が プロのスタイル！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>設計 ＝ 要件・画面・データ の3つを 決める</h3><p style="color:var(--muted);font-size:14px">紙の上で 1時間</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>要件定義は「だれが・いつ・何ができる」3行</h3><p style="color:var(--muted);font-size:14px">「すごい」だけ はNG</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>「やらないこと」を 決める＝MVP</h3><p style="color:var(--muted);font-size:14px">機能を しぼる勇気</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>データモデル＝JSONで 1件の形を 決める</h3><p style="color:var(--muted);font-size:14px">id・本文・状態 の3点セット</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>急がば回れ＝設計で 実装が 速くなる</h3><p style="color:var(--muted);font-size:14px">プロの 共通スタイル</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">💻 ⚛️</div>
+  <h2>第2回 ｜ フロントエンド実装</h2>
+  <p>HTML / CSS / JavaScript で 設計を コードに！</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 中級 第1回｜アプリの設計</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     要件定義ツール
+     ========================================================= */
+  const REQ_EX = {
+    todo: { who:'中学生が', when:'スマホで宿題の進捗を管理するために', do:'タスクを 追加・完了・削除 できる' },
+    memo: { who:'勉強中の自分が', when:'授業の重要な点を 素早く 残せるように', do:'タイトルなしで メモを 書ける' },
+    pomo: { who:'集中したい人が', when:'25分作業・5分休憩を 自動でくり返すために', do:'タイマーを開始・停止・スキップ できる' },
+    quiz: { who:'英単語を覚えたい人が', when:'通学中に 自分の苦手を 集中復習できるように', do:'4択クイズに答えて 正答率を 記録できる' },
+  };
+  function loadReq(key){
+    const ex = REQ_EX[key];
+    if(!ex) return;
+    $('reqWho').value = ex.who;
+    $('reqWhen').value = ex.when;
+    $('reqDo').value = ex.do;
+    refreshReq();
+    showToast('📚 「' + key + '」 を 読み込みました');
+  }
+  function refreshReq(){
+    const who = ($('reqWho').value || '（だれが）').trim();
+    const when = ($('reqWhen').value || '（いつ・どうやって）').trim();
+    const dod = ($('reqDo').value || '（何ができる）').trim();
+    $('reqOut').innerHTML = `<span class="corner">// requirements.txt</span>\n${escapeHTML(who)}\n${escapeHTML(when)}\n${escapeHTML(dod)}`;
+
+    // 品質チェック
+    let stars = 5;
+    const hints = [];
+    if(!who || who === '（だれが）'){ stars--; hints.push('主語を 入れよう'); }
+    if(!when || when === '（いつ・どうやって）'){ stars--; hints.push('状況を 入れよう'); }
+    if(!dod || dod === '（何ができる）'){ stars--; hints.push('動詞を 入れよう'); }
+    if(dod && !/(できる|する|ます)/.test(dod)){ stars--; hints.push('動詞は 「〜できる」 で 終わらせよう'); }
+    if(who && who.length < 3){ stars--; hints.push('主語が 短すぎ'); }
+    if(when && when.length < 6){ stars--; hints.push('状況を もう少し くわしく'); }
+    stars = Math.max(1, Math.min(5, stars));
+    $('reqStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(5-stars);
+    $('reqHints').textContent = hints.length === 0 ? '完璧！ そのまま 使える' : 'ヒント： ' + hints.join(' / ');
+  }
+  ['reqWho','reqWhen','reqDo'].forEach(id => $(id).addEventListener('input', refreshReq));
+  function copyReq(){
+    const text = [$('reqWho').value, $('reqWhen').value, $('reqDo').value].join('\n');
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 コピーしました'));
+  }
+  function resetReq(){
+    $('reqWho').value = ''; $('reqWhen').value = ''; $('reqDo').value = '';
+    refreshReq();
+  }
+  refreshReq();
+
+  /* =========================================================
+     スコープ管理（やる／やらない）
+     ========================================================= */
+  let scopeId = 0;
+  const scopeItems = {}; // id -> {text, bucket}
+  function addScope(){
+    const v = $('scopeInput').value.trim();
+    if(!v) return;
+    scopeId++;
+    scopeItems[scopeId] = { id:scopeId, text:v, bucket:'yes' };
+    $('scopeInput').value = '';
+    renderScope();
+  }
+  $('scopeInput').addEventListener('keypress', e=>{
+    if(e.key === 'Enter'){ e.preventDefault(); addScope(); }
+  });
+  function renderScope(){
+    document.querySelectorAll('.scope-items').forEach(box=>{
+      box.innerHTML = '';
+      Object.values(scopeItems).filter(it => it.bucket === box.dataset.bucket).forEach(it=>{
+        const el = document.createElement('div');
+        el.className = 'scope-item';
+        el.draggable = true;
+        el.dataset.id = it.id;
+        el.innerHTML = `<span style="flex:1">${escapeHTML(it.text)}</span><button class="x">×</button>`;
+        el.querySelector('.x').addEventListener('click', e=>{
+          e.stopPropagation();
+          delete scopeItems[it.id];
+          renderScope();
+        });
+        el.addEventListener('dragstart', e=>{
+          el.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', String(it.id));
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        el.addEventListener('dragend', ()=> el.classList.remove('dragging'));
+        box.appendChild(el);
+      });
+    });
+  }
+  document.querySelectorAll('.scope-col').forEach(col=>{
+    col.addEventListener('dragover', e=>{ e.preventDefault(); col.classList.add('over'); });
+    col.addEventListener('dragleave', ()=> col.classList.remove('over'));
+    col.addEventListener('drop', e=>{
+      e.preventDefault();
+      col.classList.remove('over');
+      const id = parseInt(e.dataTransfer.getData('text/plain'),10);
+      if(!scopeItems[id]) return;
+      scopeItems[id].bucket = col.dataset.bucket;
+      renderScope();
+    });
+  });
+  // 初期サンプル
+  ['タスクの追加','完了チェック','削除','ユーザー登録','複数人共有','期限管理'].forEach((t,i)=>{
+    scopeId++;
+    scopeItems[scopeId] = { id:scopeId, text:t, bucket: i<3?'yes':'no' };
+  });
+  renderScope();
+
+  /* =========================================================
+     データモデル設計
+     ========================================================= */
+  const FIELD_TYPES = ['number','string','boolean','date','string[]','number[]'];
+  let fields = [
+    { name:'id', type:'number', desc:'識別子' },
+    { name:'text', type:'string', desc:'タスク内容' },
+    { name:'done', type:'boolean', desc:'完了フラグ' },
+  ];
+  let currentFmt = 'json';
+
+  const DM_EX = {
+    task: { name:'Task', fields:[
+      { name:'id', type:'number', desc:'識別子' },
+      { name:'text', type:'string', desc:'タスク内容' },
+      { name:'done', type:'boolean', desc:'完了フラグ' },
+    ]},
+    memo: { name:'Memo', fields:[
+      { name:'id', type:'number', desc:'識別子' },
+      { name:'body', type:'string', desc:'本文' },
+      { name:'createdAt', type:'date', desc:'作成日時' },
+      { name:'tags', type:'string[]', desc:'タグ' },
+    ]},
+    user: { name:'User', fields:[
+      { name:'id', type:'number', desc:'識別子' },
+      { name:'name', type:'string', desc:'ニックネーム' },
+      { name:'email', type:'string', desc:'メール' },
+      { name:'isAdmin', type:'boolean', desc:'管理者か' },
+    ]},
+  };
+
+  function renderFields(){
+    const root = $('dmFields');
+    root.innerHTML = '';
+    fields.forEach((f,i)=>{
+      const row = document.createElement('div');
+      row.className = 'dm-field';
+      row.innerHTML = `
+        <input type="text" value="${escapeHTML(f.name)}" placeholder="フィールド名" data-k="name" spellcheck="false">
+        <select data-k="type">
+          ${FIELD_TYPES.map(t=>`<option ${t===f.type?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <input type="text" value="${escapeHTML(f.desc)}" placeholder="説明（任意）" data-k="desc">
+        <button class="del" title="削除">×</button>
+      `;
+      row.querySelectorAll('input,select').forEach(el=>{
+        el.addEventListener('input', ()=>{
+          fields[i][el.dataset.k] = el.value;
+          renderDM();
+        });
+      });
+      row.querySelector('.del').addEventListener('click', ()=>{
+        fields.splice(i,1);
+        renderFields(); renderDM();
+      });
+      root.appendChild(row);
+    });
+  }
+  function addField(){
+    fields.push({ name:'field' + (fields.length+1), type:'string', desc:'' });
+    renderFields(); renderDM();
+  }
+  function setFmt(fmt){
+    currentFmt = fmt;
+    document.querySelectorAll('.dm-tabs button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.fmt === fmt);
+    });
+    renderDM();
+  }
+  function sampleValue(type){
+    switch(type){
+      case 'number': return Math.floor(Math.random()*100) + 1;
+      case 'boolean': return Math.random() < .5;
+      case 'string': return '"サンプル"';
+      case 'date': return '"2026-05-20T10:30:00Z"';
+      case 'string[]': return '["A","B"]';
+      case 'number[]': return '[1,2,3]';
+      default: return 'null';
+    }
+  }
+  function pyType(t){
+    return { number:'int', string:'str', boolean:'bool', date:'datetime',
+             'string[]':'list[str]', 'number[]':'list[int]' }[t] || 'Any';
+  }
+  function renderDM(){
+    const name = $('dmName').value.trim() || 'Model';
+    let out = '', corner = '';
+    if(currentFmt === 'json'){
+      corner = '// JSON Schema-like';
+      const obj = {};
+      fields.forEach(f => obj[f.name] = f.type);
+      out = JSON.stringify({ type:name, fields:obj }, null, 2);
+      out = colorJSON(out);
+    } else if(currentFmt === 'ts'){
+      corner = '// TypeScript';
+      const tsType = (t) => ({ 'string[]':'string[]', 'number[]':'number[]', date:'Date' })[t] || t;
+      out = `<span class="key">interface</span> <span class="str">${escapeHTML(name)}</span> <span class="key">{</span>\n`;
+      fields.forEach(f=>{
+        out += `  <span class="com">// ${escapeHTML(f.desc || '')}</span>\n`;
+        out += `  ${escapeHTML(f.name)}: <span class="num">${escapeHTML(tsType(f.type))}</span>;\n`;
+      });
+      out += `<span class="key">}</span>`;
+    } else if(currentFmt === 'py'){
+      corner = '# Python (dataclass)';
+      out = `<span class="key">from</span> <span class="str">dataclasses</span> <span class="key">import</span> dataclass\n`;
+      out += `<span class="key">from</span> <span class="str">datetime</span> <span class="key">import</span> datetime\n\n`;
+      out += `<span class="key">@dataclass</span>\n<span class="key">class</span> <span class="str">${escapeHTML(name)}</span>:\n`;
+      fields.forEach(f=>{
+        out += `    <span class="com"># ${escapeHTML(f.desc || '')}</span>\n`;
+        out += `    ${escapeHTML(f.name)}: <span class="num">${escapeHTML(pyType(f.type))}</span>\n`;
+      });
+    } else if(currentFmt === 'sample'){
+      corner = '// サンプルデータ (3件)';
+      const records = [1,2,3].map(n=>{
+        const o = {};
+        fields.forEach(f=>{
+          if(f.name === 'id') o[f.name] = n;
+          else if(f.type === 'string') o[f.name] = ['数学の宿題','歯みがき','部活 道具準備'][n-1] || 'sample';
+          else if(f.type === 'boolean') o[f.name] = n===2;
+          else if(f.type === 'number') o[f.name] = n*10;
+          else if(f.type === 'date') o[f.name] = `2026-05-${20+n}T10:00:00Z`;
+          else if(f.type === 'string[]') o[f.name] = ['仕事','勉強','遊び'].slice(0, n);
+          else if(f.type === 'number[]') o[f.name] = [1,2,3].slice(0, n);
+        });
+        return o;
+      });
+      out = colorJSON(JSON.stringify(records, null, 2));
+    }
+    $('dmOut').innerHTML = `<span class="corner">${corner}</span>${out}`;
+    $('dmCorner').textContent = corner;
+  }
+  function colorJSON(s){
+    return escapeHTML(s)
+      .replace(/&quot;([^&]+?)&quot;:/g, '<span class="key">"$1"</span>:')
+      .replace(/: &quot;(.*?)&quot;/g, ': <span class="str">"$1"</span>')
+      .replace(/: (\d+(?:\.\d+)?)/g, ': <span class="num">$1</span>')
+      .replace(/: (true|false|null)/g, ': <span class="num">$1</span>');
+  }
+  function copyDM(){
+    const text = $('dmOut').innerText.replace(/^[/#].*\n/,'');
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 コピーしました'));
+  }
+  function loadDMExample(key){
+    const ex = DM_EX[key];
+    if(!ex) return;
+    $('dmName').value = ex.name;
+    fields = JSON.parse(JSON.stringify(ex.fields));
+    renderFields(); renderDM();
+    showToast('📚 ' + ex.name + ' を 読み込みました');
+  }
+  function resetDM(){
+    $('dmName').value = 'Model';
+    fields = [{ name:'id', type:'number', desc:'識別子' }];
+    renderFields(); renderDM();
+  }
+  $('dmName').addEventListener('input', renderDM);
+  renderFields();
+  renderDM();
+
+  /* =========================================================
+     サンプル設計書
+     ========================================================= */
+  const SAMPLES = [
+    {
+      name:'TODO アプリ',
+      req:'中学生が、スマホで宿題の進捗を管理するために、タスクを 追加・完了・削除 できる',
+      do:['タスク追加','完了チェック','削除','ローカル保存'],
+      no:['ユーザー登録','複数人共有','期限管理','通知'],
+      model:'Task { id: number, text: string, done: boolean }',
+      tags:['基本','MVP','localStorage']
+    },
+    {
+      name:'メモ アプリ',
+      req:'勉強中の自分が、授業の重要な点を素早く残せるように、タイトルなしで メモを書き加える ことができる',
+      do:['メモ追加','タグ付け','検索','編集'],
+      no:['同期','画像','コラボ','履歴'],
+      model:'Memo { id: number, body: string, createdAt: date, tags: string[] }',
+      tags:['シンプル','検索']
+    },
+    {
+      name:'ポモドーロ',
+      req:'集中したい人が、25分作業・5分休憩を 自動でくり返すために、タイマーを 開始・停止 できる',
+      do:['タイマー開始','停止','25/5切替','音通知'],
+      no:['履歴グラフ','SNS共有','カスタム時間'],
+      model:'Session { id: number, mode: string, startedAt: date, durationSec: number }',
+      tags:['タイマー','音']
+    }
+  ];
+  const sBox = $('samplesBox');
+  SAMPLES.forEach(s=>{
+    const c = document.createElement('div');
+    c.className = 'sample';
+    c.innerHTML = `<h3>${escapeHTML(s.name)}</h3>
+      <p>${escapeHTML(s.req)}</p>
+      <div class="meta">${s.tags.map(t=>`<span>${escapeHTML(t)}</span>`).join('')}</div>`;
+    c.addEventListener('click', ()=>{
+      info('📚', s.name, `
+        <div style="text-align:left;font-size:14px;line-height:1.8">
+          <div><b>📋 要件：</b> ${escapeHTML(s.req)}</div>
+          <div style="margin-top:10px"><b>🟢 やる：</b><ul style="margin-left:22px">${s.do.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul></div>
+          <div style="margin-top:10px"><b>🔴 やらない：</b><ul style="margin-left:22px;color:var(--muted)">${s.no.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul></div>
+          <div style="margin-top:10px"><b>💾 データモデル：</b>
+            <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;margin-top:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px">${escapeHTML(s.model)}</div>
+          </div>
+        </div>`);
+    });
+    sBox.appendChild(c);
+  });
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

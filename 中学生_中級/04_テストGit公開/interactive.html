@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・中級 第4回｜テスト・Git・公開</title>
+<style>
+  :root{
+    --primary:#4F46E5; --secondary:#F59E0B; --accent:#10B981;
+    --warn:#EF4444; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --code-cmd:#FCD34D; --code-arg:#FDBA74; --code-ok:#6EE7B7; --code-err:#FCA5A5;
+    --code-com:#64748B;
+    --git:#F05033; --github:#181717;
+    --working:#3B82F6; --staged:#F59E0B; --committed:#10B981;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 50%,#EC4899 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFFBEB}
+
+  /* === Debug diagnosis === */
+  .diag{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .diag-q{font-weight:700;font-size:17px;margin-bottom:14px;color:var(--primary)}
+  .diag-opts{display:grid;gap:10px}
+  .diag-opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:12px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;
+    text-align:left;transition:all .15s;line-height:1.6}
+  .diag-opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .diag-result{margin-top:14px;padding:18px;border-radius:10px;display:none}
+  .diag-result.show{display:block;animation:popIn .3s}
+  .diag-result.ok{background:#ECFDF5;border-left:5px solid var(--accent)}
+  .diag-result.warn{background:#FEF2F2;border-left:5px solid var(--warn)}
+  .diag-result.info{background:#FFFBEB;border-left:5px solid var(--secondary)}
+  .diag-result h4{font-size:17px;margin-bottom:8px}
+  .diag-result.ok h4{color:#065F46}
+  .diag-result.warn h4{color:#991B1B}
+  .diag-result.info h4{color:#7C5800}
+  .diag-result code{background:var(--code-bg);color:var(--code-text);padding:2px 8px;border-radius:4px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px}
+  .diag-reset{background:var(--muted);color:white;border:none;border-radius:6px;
+    padding:6px 14px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;margin-top:12px}
+
+  /* === Git simulator === */
+  .gitsim{background:white;border-radius:12px;padding:0;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;overflow:hidden}
+  .gitsim-head{background:var(--dark);color:white;padding:12px 18px;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .gitsim-head .dots{display:flex;gap:5px;margin-right:8px}
+  .gitsim-head .dots span{width:10px;height:10px;border-radius:50%;background:#FF5F56}
+  .gitsim-head .dots span:nth-child(2){background:#FFBD2E}
+  .gitsim-head .dots span:nth-child(3){background:#27C93F}
+  .gitsim-head .path{flex:1;color:var(--secondary)}
+  .gitsim-head .branch{color:var(--code-ok);font-weight:600}
+
+  .gitsim-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  @media (max-width:880px){.gitsim-body{grid-template-columns:1fr}}
+  .gitsim-pane{padding:16px;border-right:1px solid var(--border)}
+  .gitsim-pane:last-child{border-right:none}
+  @media (max-width:880px){.gitsim-pane{border-right:none;border-bottom:1px solid var(--border)}}
+  .gitsim-pane h4{font-size:13px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+
+  /* file states */
+  .files{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .file-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:center;
+    background:#F8FAFC;border:1px solid var(--border);border-radius:6px;padding:6px 8px}
+  .file-row .fname{font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;font-weight:600}
+  .file-state{display:flex;align-items:center;justify-content:center;height:28px;border-radius:4px;
+    font-size:11px;font-family:'JetBrains Mono','SF Mono',monospace;font-weight:600;color:white}
+  .file-state.empty{background:#F1F5F9;color:#CBD5E1;border:1px dashed #CBD5E1}
+  .file-state.mod{background:var(--working)}
+  .file-state.staged{background:var(--staged);color:var(--dark)}
+  .file-state.committed{background:var(--committed)}
+  .file-state.committed-old{background:#A7F3D0;color:#065F46}
+
+  .file-headers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;
+    margin-bottom:6px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+  .file-headers div{text-align:center;padding:4px;border-radius:4px}
+  .file-headers .w{background:#DBEAFE;color:var(--working)}
+  .file-headers .s{background:#FEF3C7;color:#92400E}
+  .file-headers .c{background:#D1FAE5;color:#065F46}
+
+  /* file editor */
+  .file-edit{margin-top:14px}
+  .file-edit-row{display:flex;gap:6px;margin-bottom:6px;align-items:center;flex-wrap:wrap}
+  .file-edit-row select,.file-edit-row input{padding:6px 10px;border:1.5px solid #CBD5E1;border-radius:6px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;background:#F8FAFC}
+  .file-edit-row select:focus,.file-edit-row input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .file-edit-row input{flex:1;min-width:100px}
+  .file-edit-row button{background:var(--working);color:white;border:none;border-radius:6px;
+    padding:6px 12px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px}
+
+  /* commands */
+  .cmd-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .cmd-row button{background:#F8FAFC;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:6px 12px;border-radius:6px;cursor:pointer;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-weight:600;font-size:12px;transition:all .15s}
+  .cmd-row button:hover{border-color:var(--primary);background:#F1F5F9}
+  .cmd-row button.primary{background:var(--primary);color:white;border-color:var(--primary)}
+  .cmd-row button.danger{background:var(--warn);color:white;border-color:var(--warn)}
+
+  .terminal{background:var(--code-bg);color:var(--code-text);border-radius:8px;
+    padding:12px 14px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;
+    line-height:1.7;max-height:280px;overflow-y:auto;white-space:pre;margin-top:10px}
+  .terminal .prompt{color:var(--code-cmd)}
+  .terminal .ok{color:var(--code-ok)}
+  .terminal .err{color:var(--code-err)}
+  .terminal .com{color:var(--code-com);font-style:italic}
+  .terminal .arg{color:var(--code-arg)}
+
+  /* legend */
+  .gitsim-legend{padding:10px 16px;background:#F8FAFC;border-top:1px solid var(--border);
+    display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+  .gitsim-legend span b{padding:2px 8px;border-radius:4px;color:white;font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;margin-right:4px}
+
+  /* === .gitignore checker === */
+  .ignore{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .ignore-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .ignore-form input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;background:#F8FAFC}
+  .ignore-form input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .ignore-form button{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:10px 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px}
+  .ignore-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .ignore-presets span{align-self:center;color:var(--muted);font-size:12px}
+  .ignore-presets button{background:#F1F5F9;border:1px solid var(--border);
+    padding:4px 10px;border-radius:6px;cursor:pointer;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;font-weight:600;color:var(--primary)}
+  .ignore-presets button:hover{background:var(--primary);color:white}
+  .ignore-history{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
+  .ignore-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;
+    border-left:5px solid;background:#F8FAFC}
+  .ignore-row.ok{border-color:var(--accent);background:#ECFDF5}
+  .ignore-row.ng{border-color:var(--warn);background:#FEF2F2}
+  .ignore-row.warn{border-color:var(--secondary);background:#FFFBEB}
+  .ignore-row .icon{font-size:20px}
+  .ignore-row .name{font-family:'JetBrains Mono','SF Mono',monospace;font-weight:600;font-size:13px}
+  .ignore-row .verdict{font-size:13px;font-weight:600}
+  .ignore-row.ok .verdict{color:#065F46}
+  .ignore-row.ng .verdict{color:#991B1B}
+  .ignore-row.warn .verdict{color:#7C5800}
+  .ignore-row .reason{font-size:12px;color:var(--muted)}
+
+  /* === Service comparison === */
+  .services{overflow-x:auto;margin-top:14px;background:white;border-radius:12px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .services table{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
+  .services th{background:#F8FAFC;text-align:left;padding:12px 14px;font-size:12px;
+    color:var(--muted);font-weight:700;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+  .services td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  .services .name{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px}
+  .services .name .ic{font-size:18px}
+  .services .price{font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;
+    background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:4px;font-weight:600}
+
+  /* === Final checklist === */
+  .checklist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .check-item{background:white;border-radius:10px;padding:12px 16px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);
+    border:1px solid var(--border);border-left:5px solid #CBD5E1;
+    transition:all .15s}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#ECFDF5;border-left-color:var(--accent)}
+  .check-item .box{width:24px;height:24px;border:2px solid var(--muted);border-radius:5px;
+    display:flex;align-items:center;justify-content:center;font-size:14px;color:white;
+    flex-shrink:0;background:white;font-weight:bold}
+  .check-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .check-item.on .box::before{content:'✓'}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;margin-bottom:1px;font-size:14px}
+  .check-item .txt span{color:var(--muted);font-size:12px}
+  .check-progress{text-align:center;margin-top:14px;font-weight:700;color:var(--primary);font-size:15px}
+
+  /* === Certificate === */
+  .certbox{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .certform{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+  .certform label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .certform input{width:100%;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:inherit;font-size:14px;background:#F8FAFC}
+  .certform input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+
+  .cert{background:linear-gradient(135deg,#FFFBEB,#F3E8FF);
+    border:6px double var(--primary);border-radius:14px;padding:36px 28px;text-align:center;
+    position:relative;overflow:hidden}
+  .cert::before,.cert::after{content:'⭐';position:absolute;font-size:80px;opacity:.06;color:var(--primary)}
+  .cert::before{top:10px;left:20px} .cert::after{bottom:10px;right:20px}
+  .cert .badge{font-size:50px}
+  .cert h2{color:var(--primary);font-size:30px;margin:6px 0 14px;letter-spacing:6px;font-weight:800}
+  .cert .body{font-size:15px;line-height:1.9;color:var(--dark)}
+  .cert .name{font-size:26px;font-weight:bold;color:var(--accent);margin:14px 0;
+    padding:8px 0;border-top:2px solid var(--primary);border-bottom:2px solid var(--primary);
+    display:inline-block;min-width:240px}
+  .cert .footer{margin-top:14px;font-size:12px;color:var(--muted)}
+  .cert-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .cert-tools button{font-family:inherit;border:none;border-radius:8px;padding:10px 22px;
+    font-weight:700;cursor:pointer;font-size:14px;background:var(--primary);color:white;
+    box-shadow:0 3px 0 rgba(0,0,0,.1)}
+  .cert-tools button:hover{transform:translateY(-1px)}
+  .cert-tools button.accent{background:var(--accent)}
+  .cert-tools button.celebrate{background:var(--secondary);color:var(--dark)}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.7}
+  .qrow.answered .ex{display:block}
+  .qrow .ex code{background:var(--code-bg);color:var(--code-text);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .finale{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 50%,var(--secondary) 100%);
+    color:white;text-align:center;padding:60px 24px;border-radius:14px;margin:32px 24px;}
+  .finale .em{font-size:72px;line-height:1}
+  .finale h2{color:white;font-size:clamp(26px,5vw,38px);margin:12px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;
+    font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Confetti */
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:10px;height:14px;top:-20px;border-radius:2px;
+    animation:fall linear forwards}
+  @keyframes fall{ to { transform: translateY(110vh) rotate(720deg); } }
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+
+  /* print: cert only */
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,.confetti,
+    .hero,.divider,.section{display:none !important}
+    .cert-print{display:block !important;padding:30px !important}
+  }
+  .cert-print{display:none}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第4回</span> <b>テスト・Git・公開</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#debug">2<span>デバッグ診断</span><span class="ic">🐛</span></a>
+  <a href="#git">3<span>Git シミュレータ</span><span class="ic">🌿</span></a>
+  <a href="#ignore">4<span>.gitignore 判定</span><span class="ic">🛡️</span></a>
+  <a href="#deploy">5<span>公開サービス</span><span class="ic">🚀</span></a>
+  <a href="#course">6<span>コース総まとめ</span><span class="ic">📊</span></a>
+  <a href="#cert">7<span>修了証</span><span class="ic">🎓</span></a>
+  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 中学生プログラミング塾・中級 ／ 最終回</div>
+    <h1>テスト・Git<br>公開</h1>
+    <p>開発の <b>最後の1マイル</b>！ DevTools / git / Deploy → コース修了 🎓</p>
+    <div class="em">🐛✅🚀</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「ローカルで動く」 から 「世界 で 動く」 へ</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:42px;display:block">🐛</span><h3>デバッグ</h3><p style="color:var(--muted);font-size:14px">3つの 原因</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🌿</span><h3>Git</h3><p style="color:var(--muted);font-size:14px">init/add/commit</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🛡️</span><h3>セキュリティ</h3><p style="color:var(--muted);font-size:14px">.gitignore</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🚀</span><h3>公開</h3><p style="color:var(--muted);font-size:14px">Pages / Render</p></div>
+  </div>
+</section>
+
+<!-- 1. デバッグ診断 -->
+<div class="divider" id="debug" data-snav-target>
+  <div class="num">01.</div>
+  <h2>デバッグ「動かない！」 診断</h2>
+</div>
+
+<section class="section">
+  <h2>5問で 原因を 切り分け</h2>
+  <p class="lead">バグが あって 困った時、どこを 見ればいいか？ 5つの質問に 答えて 切り分けよう！</p>
+
+  <div class="diag">
+    <div id="diagQ" class="diag-q">読み込み中…</div>
+    <div id="diagOpts" class="diag-opts"></div>
+    <div id="diagResult" class="diag-result"></div>
+    <button class="diag-reset" onclick="diagReset()">↺ 最初から</button>
+  </div>
+</section>
+
+<!-- 2. Git シミュレータ -->
+<div class="divider" id="git" data-snav-target>
+  <div class="num">02.</div>
+  <h2>Git コマンド シミュレータ</h2>
+</div>
+
+<section class="section">
+  <h2>3層モデル を 体感する</h2>
+  <p class="lead">ファイルを 編集 → <b>add</b> → <b>commit</b> の流れを コマンドボタンで 体験。<br>
+  3つの場所（<span style="color:var(--working);font-weight:700">作業ディレクトリ</span> / <span style="color:#92400E;font-weight:700">ステージ</span> / <span style="color:var(--committed);font-weight:700">リポジトリ</span>）でファイルが どう 動くか 見える！</p>
+
+  <div class="gitsim">
+    <div class="gitsim-head">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div class="path">~/todo-app</div>
+      <div class="branch">git:(<span id="gsBranch">main</span>)</div>
+    </div>
+
+    <div class="gitsim-body">
+      <div class="gitsim-pane">
+        <h4>📁 ファイル状態</h4>
+        <div class="file-headers">
+          <div class="w">作業ディレクトリ</div>
+          <div class="s">ステージ</div>
+          <div class="c">リポジトリ</div>
+        </div>
+        <div class="files" id="gsFiles"></div>
+
+        <div class="file-edit">
+          <h4 style="margin-top:6px">✏️ 編集する ファイル</h4>
+          <div class="file-edit-row">
+            <select id="gsEditFile">
+              <option>app.py</option>
+              <option>index.html</option>
+              <option>README.md</option>
+              <option>.env</option>
+            </select>
+            <button onclick="gsEdit()">編集</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="gitsim-pane">
+        <h4>💻 git コマンド</h4>
+        <div class="cmd-row">
+          <button onclick="gsCmd('status')">git status</button>
+          <button onclick="gsCmd('add-all')">git add .</button>
+          <button onclick="gsCmd('add')">git add ＜選択中＞</button>
+          <button class="primary" onclick="gsCmd('commit')">git commit -m</button>
+          <button onclick="gsCmd('log')">git log</button>
+          <button onclick="gsCmd('diff')">git diff</button>
+          <button class="danger" onclick="gsReset()">↺ リセット</button>
+        </div>
+        <div class="terminal" id="gsTerm"></div>
+      </div>
+    </div>
+
+    <div class="gitsim-legend">
+      <span><b style="background:var(--working)">M</b>変更あり (modified)</span>
+      <span><b style="background:var(--staged);color:var(--dark)">S</b>ステージ済み (staged)</span>
+      <span><b style="background:var(--committed)">✓</b>コミット済み (committed)</span>
+      <span style="color:var(--muted)">— 同じ内容（変更なし）</span>
+    </div>
+  </div>
+</section>
+
+<!-- 3. .gitignore チェッカー -->
+<div class="divider" id="ignore" data-snav-target>
+  <div class="num">03.</div>
+  <h2>.gitignore 判定ツール</h2>
+</div>
+
+<section class="section">
+  <h2>このファイル、Git に 入れていい？</h2>
+  <p class="lead">ファイル名を 入力 or プリセット → 判定（✅入れる / ⚠️注意 / ❌絶対NG）</p>
+
+  <div class="ignore">
+    <div class="ignore-form">
+      <input type="text" id="ignoreInput" placeholder=".env / app.py / node_modules/ ..." maxlength="60">
+      <button onclick="checkIgnore()">判定</button>
+    </div>
+    <div class="ignore-presets">
+      <span>例：</span>
+      <button onclick="presetIgnore('.env')">.env</button>
+      <button onclick="presetIgnore('app.py')">app.py</button>
+      <button onclick="presetIgnore('node_modules/')">node_modules/</button>
+      <button onclick="presetIgnore('config.json')">config.json</button>
+      <button onclick="presetIgnore('.DS_Store')">.DS_Store</button>
+      <button onclick="presetIgnore('password.txt')">password.txt</button>
+      <button onclick="presetIgnore('README.md')">README.md</button>
+      <button onclick="presetIgnore('__pycache__/')">__pycache__/</button>
+      <button onclick="presetIgnore('id_rsa')">id_rsa</button>
+    </div>
+    <div class="ignore-history" id="ignoreHistory"></div>
+  </div>
+</section>
+
+<!-- 4. 公開サービス -->
+<div class="divider" id="deploy" data-snav-target>
+  <div class="num">04.</div>
+  <h2>公開サービス 比較</h2>
+</div>
+
+<section class="section">
+  <h2>用途別 4選</h2>
+  <p class="lead">TODOアプリ なら <b>GitHub Pages</b>（フロント）＋ <b>Render</b>（Flask）の 組み合わせ が おすすめ！</p>
+
+  <div class="services">
+    <table>
+      <thead>
+        <tr><th>サービス</th><th>用途</th><th>無料 枠</th><th>デプロイ方法</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="name"><span class="ic">🌐</span>GitHub Pages</div></td>
+          <td>静的サイト<br><span style="color:var(--muted);font-size:12px">HTML / CSS / JS のみ</span></td>
+          <td><span class="price">無料</span></td>
+          <td>リポジトリ設定 → Pages → ブランチを 選ぶ だけ</td>
+        </tr>
+        <tr>
+          <td><div class="name"><span class="ic">🚀</span>Render</div></td>
+          <td>Webサービス<br><span style="color:var(--muted);font-size:12px">Flask / Express など</span></td>
+          <td><span class="price">無料 枠あり</span></td>
+          <td>GitHub 連携 → ビルドコマンド／起動コマンド を 指定</td>
+        </tr>
+        <tr>
+          <td><div class="name"><span class="ic">▲</span>Vercel</div></td>
+          <td>静的サイト + Next.js<br><span style="color:var(--muted);font-size:12px">サーバーレス関数も</span></td>
+          <td><span class="price">無料 枠あり</span></td>
+          <td>GitHub 連携 → 自動 ビルド</td>
+        </tr>
+        <tr>
+          <td><div class="name"><span class="ic">🚂</span>Railway</div></td>
+          <td>サーバー + DB<br><span style="color:var(--muted);font-size:12px">PostgreSQL / Redis 含む</span></td>
+          <td><span class="price">無料 枠あり</span></td>
+          <td>GitHub 連携 → サービス 追加</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card warn" style="margin-top:18px">
+    <h3>⚠️ 公開する前 チェック</h3>
+    <ol style="margin-left:22px;margin-top:6px;line-height:1.9">
+      <li><b>.gitignore</b> に <code>.env</code> が 入っている？</li>
+      <li>サンプル データに <b>本名・住所・学校名</b> が ない？</li>
+      <li><b>CORS</b> は 自分のドメイン だけ 許可？</li>
+      <li><b>保護者・先生</b> に 公開のOK を もらった？</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 5. コース総まとめ -->
+<div class="divider" id="course" data-snav-target>
+  <div class="num">05.</div>
+  <h2>中級コース ふり返り</h2>
+</div>
+
+<section class="section">
+  <h2>4回で 身についた 10項目</h2>
+  <p class="lead">クリックで チェック！ 7つ以上で 修了レベル ✨</p>
+
+  <div class="checklist" id="courseCheck">
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📋 要件定義 を「だれが・いつ・何ができる」3行で 書ける</b><span>第1回 設計</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>💾 データモデル を JSON / TypeScript で 設計できる</b><span>第1回 設計</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🏗️ HTML / CSS / JS の 3層を 説明できる</b><span>第2回 フロント</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⚡ querySelector / addEventListener で DOM 操作できる</b><span>第2回 フロント</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>💾 localStorage で データ永続化 できる</b><span>第2回 フロント</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🐍 Flask で @app.route の API を 書ける</b><span>第3回 バック</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⚡ fetch() で API を 呼び出せる</b><span>第3回 バック</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🐛 DevTools 4タブを 使い分けて デバッグ できる</b><span>第4回 テスト</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🌿 Git の init / add / commit / push が 使える</b><span>第4回 Git</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🚀 GitHub Pages / Render で 公開できる</b><span>第4回 公開</span></div></div>
+  </div>
+  <div class="check-progress" id="courseProg">0 / 10 達成</div>
+</section>
+
+<!-- 6. 修了証 -->
+<div class="divider" id="cert" data-snav-target>
+  <div class="num">06.</div>
+  <h2>修了証 ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>君 専用の 修了証</h2>
+  <p class="lead">名前と 教室を 入力 → 印刷 or 保存！</p>
+
+  <div class="certbox">
+    <div class="certform">
+      <div>
+        <label>ニックネーム</label>
+        <input type="text" id="certName" value="ゆうた" maxlength="30">
+      </div>
+      <div>
+        <label>教室名</label>
+        <input type="text" id="certSchool" value="○○ プログラミング塾" maxlength="40">
+      </div>
+      <div>
+        <label>修了日</label>
+        <input type="text" id="certDate" value="" placeholder="例：2026年5月">
+      </div>
+    </div>
+
+    <div class="cert-print" id="certPrint">
+      <div class="cert" id="certView">
+        <div class="badge">🏆</div>
+        <h2>修　了　証</h2>
+        <div class="body">
+          上記の者は<br>
+          <b>中学生プログラミング塾・中級コース</b> を<br>
+          修了したことを 証します
+          <div class="name" id="certNameView">ゆうた</div>
+          「設計 → 実装 → テスト → 公開」<br>
+          の 一周を やり遂げた
+        </div>
+        <div class="footer">
+          <div id="certDateView"></div>
+          <div id="certSchoolView">○○ プログラミング塾</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cert" id="certScreen" style="margin-top:18px">
+      <div class="badge">🏆</div>
+      <h2>修　了　証</h2>
+      <div class="body">
+        上記の者は<br>
+        <b>中学生プログラミング塾・中級コース</b> を<br>
+        修了したことを 証します
+        <div class="name" id="certNameView2">ゆうた</div>
+        「設計 → 実装 → テスト → 公開」<br>
+        の 一周を やり遂げた
+      </div>
+      <div class="footer">
+        <div id="certDateView2"></div>
+        <div id="certSchoolView2">○○ プログラミング塾</div>
+      </div>
+    </div>
+
+    <div class="cert-tools">
+      <button class="accent" onclick="window.print()">🖨️ 印刷する</button>
+      <button onclick="downloadCert()">💾 .html で 保存</button>
+      <button class="celebrate" onclick="celebrate()">🎊 おめでとう ボタン</button>
+    </div>
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">07.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>4問 やってみよう</h2>
+  <p class="lead">答えがわかったら 解説が出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. Git の <b>3層モデル</b> の 正しい流れは？</div>
+      <div class="opts">
+        <button data-i="0">作業 → リポジトリ → ステージ</button>
+        <button data-i="1">リポジトリ → 作業 → ステージ</button>
+        <button data-i="2">作業 → ステージ → リポジトリ</button>
+        <button data-i="3">ステージ → 作業 → リポジトリ</button>
+      </div>
+      <div class="ex">✅ <code>git add</code> でステージへ、 <code>git commit</code> でリポジトリへ。 直接 ジャンプ できない 3層モデル！</div>
+    </div>
+
+    <div class="qrow" data-a="3">
+      <div class="q">Q2. <code>.env</code> ファイルを <b>絶対に</b> やってはいけない 行為は？</div>
+      <div class="opts">
+        <button data-i="0">読み取り</button>
+        <button data-i="1">編集</button>
+        <button data-i="2">削除</button>
+        <button data-i="3">git に commit / push する</button>
+      </div>
+      <div class="ex">✅ <code>.env</code> には APIキー など 秘密情報。 commit → push したら 履歴に 残り、 GitHub から 見える！ <b>.gitignore に 必ず 入れる</b>。</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q3. Flask アプリを <b>無料で 公開</b> する のに 向いている サービス は？</div>
+      <div class="opts">
+        <button data-i="0">GitHub Pages</button>
+        <button data-i="1">Render</button>
+        <button data-i="2">YouTube</button>
+        <button data-i="3">Google Drive</button>
+      </div>
+      <div class="ex">✅ GitHub Pages は <b>静的サイト 専用</b>。 Flask の 動的な サーバーは <b>Render / Railway / Vercel</b> など。</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q4. 良い コミットメッセージ は？</div>
+      <div class="opts">
+        <button data-i="0">「ちょっと修正」</button>
+        <button data-i="1">「update」</button>
+        <button data-i="2">「GET /api/tasks を追加」</button>
+        <button data-i="3">「あああ」</button>
+      </div>
+      <div class="ex">✅ <b>動詞 + 何を どうしたか</b>。 半年後の 自分でも わかる 言葉に。 「fix bug」 より 「タイマーが 0で止まらないバグを 修正」 の方が ベター！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. 修了 -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>修了！</h2>
+</div>
+
+<section class="section">
+  <h2>中級コース 4回 ふり返り</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📋 第1回：アプリの設計</h3><p style="color:var(--muted);font-size:14px">要件定義・ワイヤフレーム・データモデル</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>💻 第2回：フロントエンド実装</h3><p style="color:var(--muted);font-size:14px">HTML/CSS/JS で TODOアプリ</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🐍 第3回：バックエンド入門</h3><p style="color:var(--muted);font-size:14px">Flask で REST API、 fetch() で 接続</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🚀 第4回：テスト・Git・公開</h3><p style="color:var(--muted);font-size:14px">DevTools / git / Pages・Render</p></div></div>
+  </div>
+</section>
+
+<div class="finale">
+  <div class="em">🎓✨🎉</div>
+  <h2>中級コース 修了 おめでとう！</h2>
+  <p style="font-size:18px;margin-top:8px">「Webサービス を 0 から 1人で 公開」 する力 が ついた！<br>
+  これからも 作り続けよう！</p>
+  <button onclick="celebrate()" style="margin-top:20px;background:white;color:var(--primary);
+    border:none;padding:14px 32px;border-radius:10px;font-family:inherit;font-size:16px;
+    font-weight:700;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18)">🎊 おめでとう ボタン</button>
+</div>
+
+<footer>中学生プログラミング塾 ／ 中級 第4回｜テスト・Git・公開</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレス／ナビ／モーダル／トースト
+     ========================================================= */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     デバッグ診断（決定木）
+     ========================================================= */
+  const DIAG = {
+    start: {
+      q: 'アプリが 「動かない」 ！ まず ブラウザの DevTools を 開きました。 <b>Console タブ</b> に 何か 出ていますか？',
+      opts: [
+        { t:'赤い JS エラーが 出ている', go:'jsErr' },
+        { t:'何も 出ていない', go:'network' },
+        { t:'CORS の エラーが 出ている', go:'cors' },
+      ]
+    },
+    jsErr: {
+      q: 'JS エラーは どんな メッセージ？',
+      opts: [
+        { t:'Cannot read property of null', go:'null' },
+        { t:'Uncaught SyntaxError', go:'syntax' },
+        { t:'is not a function', go:'fn' },
+      ]
+    },
+    null: {
+      result: { type:'warn', title:'❌ 要素が 見つかっていない',
+        body:'<code>querySelector</code> や <code>getElementById</code> が <b>null</b> を 返している。<br><br><b>確認：</b><br>1. <code>id="..."</code> や <code>class="..."</code> の <b>タイポ</b>（綴り違い）<br>2. その HTMLが <b>script より 後</b> に 読まれていないか（<code>defer</code> 推奨）<br>3. DevTools の Elements タブ で 実在を 確認' }
+    },
+    syntax: {
+      result: { type:'warn', title:'❌ 文法ミス',
+        body:'JS の カッコ／クォート／<code>;</code> の <b>閉じ忘れ</b>。<br><br><b>確認：</b><br>1. エラーの 行番号 を Console から たどる<br>2. VS Code なら 赤い 波線 が 出る<br>3. <code>{}, (), []</code> の <b>対応</b> を 数える' }
+    },
+    fn: {
+      result: { type:'warn', title:'❌ 関数じゃない',
+        body:'<code>x is not a function</code>。 x は 関数じゃないオブジェクト。<br><br><b>確認：</b><br>1. <code>console.log(x)</code> で 実態を 見る<br>2. <code>document.queryselector</code> ＝ 小文字 NG → <code>querySelector</code><br>3. import を 忘れていないか' }
+    },
+    network: {
+      q: '<b>Network タブ</b> を 見ます。 fetch リクエストの 色は？',
+      opts: [
+        { t:'赤い（失敗）', go:'failed' },
+        { t:'緑（200 / 201）', go:'success' },
+        { t:'4xx / 5xx の 数字', go:'status' },
+      ]
+    },
+    failed: {
+      result: { type:'warn', title:'❌ 通信 自体が 失敗',
+        body:'<b>(failed)</b> や <b>ERR_CONNECTION_REFUSED</b>。<br><br><b>確認：</b><br>1. Flask サーバーが <b>起動している？</b><br>2. URL の <b>ポート番号</b> は あってる？（例：5000）<br>3. ターミナルで <code>curl http://localhost:5000/api/tasks</code> を 試す' }
+    },
+    success: {
+      result: { type:'info', title:'🤔 通信は 成功してる',
+        body:'200 が 返ってきている けど 画面に 出ない…<br><br><b>確認：</b><br>1. <code>console.log(data)</code> で <b>レスポンス を 確認</b><br>2. <code>render(data)</code> を 呼び忘れていないか<br>3. <b>CSS の display:none</b> で 隠れていないか' }
+    },
+    status: {
+      result: { type:'warn', title:'❌ ステータスコード を 確認',
+        body:'<b>4xx</b> ＝ クライアント側（URLや body のミス）<br><b>5xx</b> ＝ サーバー側（Flask の バグ）<br><br><b>確認：</b><br>1. <b>Network タブ → Response タブ</b> で 詳細メッセージ<br>2. <b>Flask の ターミナル</b> に エラーが 出ている はず<br>3. <code>print()</code> や <code>traceback</code> で 原因 特定' }
+    },
+    cors: {
+      result: { type:'warn', title:'❌ CORS エラー',
+        body:'<code>Cross-Origin Request Blocked</code>。<br>フロントの オリジン（例: localhost:3000）から、別オリジン（例: localhost:5000）への fetch が ブラウザに 拒否された。<br><br><b>解決：</b>Flask 側 で<br><code>from flask_cors import CORS</code><br><code>CORS(app)</code><br>を 追加！' }
+    },
+  };
+  function diagShow(key){
+    const node = DIAG[key];
+    if(!node) return;
+    if(node.result){
+      $('diagQ').innerHTML = '';
+      $('diagOpts').innerHTML = '';
+      const r = $('diagResult');
+      r.className = 'diag-result show ' + node.result.type;
+      r.innerHTML = `<h4>${node.result.title}</h4><div style="font-size:14px;line-height:1.7">${node.result.body}</div>`;
+      return;
+    }
+    $('diagQ').innerHTML = node.q;
+    const opts = $('diagOpts');
+    opts.innerHTML = '';
+    node.opts.forEach(o => {
+      const b = document.createElement('button');
+      b.innerHTML = o.t;
+      b.addEventListener('click', ()=>diagShow(o.go));
+      opts.appendChild(b);
+    });
+    $('diagResult').className = 'diag-result';
+    $('diagResult').innerHTML = '';
+  }
+  function diagReset(){ diagShow('start'); }
+  diagReset();
+
+  /* =========================================================
+     Git シミュレータ
+     ========================================================= */
+  const GS_FILES = ['app.py', 'index.html', 'README.md', '.env'];
+  // 各ファイルの 3層の content（簡単のため version番号 で 比較）
+  // working, staged, committed のそれぞれの version。空 = 存在しない
+  let gsState = {};
+  let gsLog = []; // [{hash, msg, files: {name: ver, ...}}, ...]
+  let gsTerm = [];
+  let gsNextVer = 1;
+
+  function gsInit(){
+    gsState = {};
+    GS_FILES.forEach(f => {
+      gsState[f] = { working: null, staged: null, committed: null };
+    });
+    gsLog = [];
+    gsTerm = [];
+    gsNextVer = 1;
+    // 初期コミット相当：ファイルが まだ どこにも 無い 状態
+    appendTerm('com', '# 新しい Gitリポジトリ。「編集」 ボタンから 始めよう！');
+    renderFiles();
+    renderTerm();
+  }
+
+  function renderFiles(){
+    const root = $('gsFiles');
+    root.innerHTML = '';
+    GS_FILES.forEach(f => {
+      const s = gsState[f];
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      row.innerHTML = `<div class="fname">${escapeHTML(f)}</div>
+        ${cellHTML(s.working, 'working')}
+        ${cellHTML(s.staged, 'staged')}
+        ${cellHTML(s.committed, 'committed')}`;
+      root.appendChild(row);
+    });
+  }
+  function cellHTML(ver, col){
+    if(ver === null){
+      return `<div class="file-state empty">—</div>`;
+    }
+    if(col === 'working'){
+      // working は staged or committed と 比べて 変更があるか
+      const cur = gsState[Object.keys(gsState).find(()=>true)]; // dummy
+      return `<div class="file-state mod">v${ver}</div>`;
+    } else if(col === 'staged'){
+      return `<div class="file-state staged">v${ver}</div>`;
+    } else {
+      return `<div class="file-state committed">v${ver}</div>`;
+    }
+  }
+  // file-state の 表示を 改善（変更なしも 表現）
+  function cellHTMLv2(ver, col, sameAsBase){
+    if(ver === null) return `<div class="file-state empty">—</div>`;
+    if(sameAsBase) return `<div class="file-state empty">v${ver}</div>`;
+    const cls = col === 'working' ? 'mod' : (col === 'staged' ? 'staged' : 'committed');
+    return `<div class="file-state ${cls}">v${ver}</div>`;
+  }
+  function renderFilesV2(){
+    const root = $('gsFiles');
+    root.innerHTML = '';
+    GS_FILES.forEach(f => {
+      const s = gsState[f];
+      const workingMod = s.working !== null && s.working !== s.staged && s.working !== s.committed;
+      const stagedNew = s.staged !== null && s.staged !== s.committed;
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      row.innerHTML = `<div class="fname">${escapeHTML(f)}</div>
+        ${cellHTMLv2(s.working, 'working', !workingMod)}
+        ${cellHTMLv2(s.staged, 'staged', !stagedNew)}
+        ${cellHTMLv2(s.committed, 'committed', false)}`;
+      root.appendChild(row);
+    });
+  }
+  // renderFiles を上書き
+  renderFiles = renderFilesV2;
+
+  function appendTerm(cls, text){
+    gsTerm.push({ cls, text });
+    if(gsTerm.length > 50) gsTerm.shift();
+  }
+  function renderTerm(){
+    const t = $('gsTerm');
+    t.innerHTML = gsTerm.map(e => `<span class="${e.cls}">${escapeHTML(e.text)}</span>`).join('\n');
+    t.scrollTop = t.scrollHeight;
+  }
+
+  function gsEdit(){
+    const f = $('gsEditFile').value;
+    const ver = gsNextVer++;
+    gsState[f].working = ver;
+    appendTerm('prompt', '$ ');
+    appendTerm('com', `# ${f} を 編集（v${ver}）`);
+    renderFiles(); renderTerm();
+  }
+
+  function gsCmd(cmd){
+    if(cmd === 'status'){
+      appendTerm('prompt', '$ git status');
+      appendTerm('ok', 'On branch main');
+      const modified = [], stagedFiles = [], untracked = [];
+      GS_FILES.forEach(f => {
+        const s = gsState[f];
+        if(s.committed === null && s.staged === null && s.working !== null) untracked.push(f);
+        else if(s.staged !== null && s.staged !== s.committed) stagedFiles.push(f);
+        if(s.working !== null && s.working !== s.staged && s.working !== s.committed && s.committed !== null) modified.push(f);
+      });
+      if(stagedFiles.length){
+        appendTerm('ok', 'Changes to be committed:');
+        stagedFiles.forEach(f => appendTerm('ok', '  ' + (gsState[f].committed === null ? 'new file:   ' : 'modified:   ') + f));
+      }
+      if(modified.length){
+        appendTerm('err', 'Changes not staged for commit:');
+        modified.forEach(f => appendTerm('err', '  modified:   ' + f));
+      }
+      if(untracked.length){
+        appendTerm('err', 'Untracked files:');
+        untracked.forEach(f => appendTerm('err', '  ' + f));
+      }
+      if(!stagedFiles.length && !modified.length && !untracked.length){
+        appendTerm('ok', 'nothing to commit, working tree clean');
+      }
+    }
+    else if(cmd === 'add-all'){
+      appendTerm('prompt', '$ git add .');
+      let n = 0;
+      GS_FILES.forEach(f => {
+        if(gsState[f].working !== null && gsState[f].working !== gsState[f].staged){
+          gsState[f].staged = gsState[f].working;
+          n++;
+        }
+      });
+      if(n === 0) appendTerm('com', '# add するファイル なし');
+      else appendTerm('ok', '# ' + n + ' ファイル を ステージに 追加');
+      renderFiles();
+    }
+    else if(cmd === 'add'){
+      const f = $('gsEditFile').value;
+      appendTerm('prompt', '$ git add ' + f);
+      const s = gsState[f];
+      if(s.working === null){
+        appendTerm('err', 'fatal: pathspec \'' + f + '\' did not match any files');
+      } else if(s.working === s.staged){
+        appendTerm('com', '# 既に ステージ済み （変更なし）');
+      } else {
+        s.staged = s.working;
+        appendTerm('ok', '# ' + f + ' を ステージに 追加');
+      }
+      renderFiles();
+    }
+    else if(cmd === 'commit'){
+      // ステージにあるものをコミット
+      const msg = prompt('コミットメッセージを 入力（例：app.py を 追加）', 'app.py を 追加');
+      if(!msg) return;
+      appendTerm('prompt', '$ git commit -m "' + msg + '"');
+      const changed = {};
+      GS_FILES.forEach(f => {
+        const s = gsState[f];
+        if(s.staged !== null && s.staged !== s.committed){
+          changed[f] = s.staged;
+          s.committed = s.staged;
+        }
+      });
+      const n = Object.keys(changed).length;
+      if(n === 0){
+        appendTerm('err', 'nothing to commit, working tree clean');
+        return;
+      }
+      const hash = Math.random().toString(36).slice(2,9);
+      gsLog.unshift({ hash, msg, files: changed });
+      appendTerm('ok', '[main ' + hash + '] ' + msg);
+      appendTerm('ok', ' ' + n + ' file' + (n>1?'s':'') + ' changed');
+      renderFiles();
+    }
+    else if(cmd === 'log'){
+      appendTerm('prompt', '$ git log --oneline');
+      if(gsLog.length === 0){
+        appendTerm('err', 'fatal: your current branch \'main\' does not have any commits yet');
+      } else {
+        gsLog.forEach(l => appendTerm('ok', l.hash + ' ' + l.msg));
+      }
+    }
+    else if(cmd === 'diff'){
+      appendTerm('prompt', '$ git diff');
+      let any = false;
+      GS_FILES.forEach(f => {
+        const s = gsState[f];
+        if(s.working !== null && s.working !== s.staged && s.working !== s.committed){
+          appendTerm('ok', 'diff --git a/' + f + ' b/' + f);
+          appendTerm('err', '- 古いバージョン（v' + (s.staged !== null ? s.staged : s.committed || '0') + '）');
+          appendTerm('ok', '+ 新しいバージョン（v' + s.working + '）');
+          any = true;
+        }
+      });
+      if(!any) appendTerm('com', '# 差分 なし');
+    }
+    renderTerm();
+  }
+  function gsReset(){
+    if(!confirm('リセットしてOK？')) return;
+    gsInit();
+  }
+  gsInit();
+
+  /* =========================================================
+     .gitignore チェッカー
+     ========================================================= */
+  const IGNORE_RULES = [
+    // [pattern (regex), verdict, icon, reason]
+    [/^\.env(\..*)?$/, 'ng', '🚫', '環境変数。 APIキー・パスワード が 入る。 絶対 NG'],
+    [/(^|\/)id_rsa(\..*)?$/, 'ng', '🚫', 'SSH 秘密鍵。 漏れると 他人 に なりすまされる！'],
+    [/^password|secret|credentials/i, 'ng', '🚫', '名前に「password / secret / credentials」が 入る → 中身を 確認！'],
+    [/^node_modules\/?$/, 'ng', '📦', '依存パッケージ。 巨大すぎ＋npm installで再生成可能。 絶対 NG'],
+    [/^__pycache__\/?$/, 'ng', '🐍', 'Python の キャッシュ。 再生成 可能。 NG'],
+    [/\.pyc$/, 'ng', '🐍', 'Python の コンパイル済み。 自動生成。 NG'],
+    [/^\.DS_Store$/, 'ng', '🍎', 'macOS の メタデータ。 他人に 不要。 NG'],
+    [/^Thumbs\.db$/, 'ng', '🪟', 'Windows の サムネキャッシュ。 NG'],
+    [/^build\/?$|^dist\/?$/, 'ng', '🏗️', 'ビルド成果物。 ソースから 再生成 可能。 NG'],
+    [/\.(log|tmp)$/, 'ng', '📝', 'ログ／一時ファイル。 大量に 増える。 NG'],
+    [/^config\.json$/, 'warn', '⚠️', '中身次第。 APIキー が 入っているなら NG、 公開設定だけなら OK'],
+    [/^app\.py$|^index\.html$|^style\.css$|^script\.js$/, 'ok', '✅', 'ソースコード。 入れて 共有！'],
+    [/^README/, 'ok', '✅', 'ドキュメント。 入れて OK'],
+    [/^package\.json$|^requirements\.txt$|^Pipfile/, 'ok', '✅', '依存リスト。 必ず 入れる！'],
+    [/^\.gitignore$/, 'ok', '✅', 'gitignore 自体。 入れて OK'],
+  ];
+
+  function checkIgnore(){
+    const v = $('ignoreInput').value.trim();
+    if(!v) return;
+    addIgnoreRow(v);
+    $('ignoreInput').value = '';
+  }
+  function presetIgnore(name){
+    addIgnoreRow(name);
+  }
+  function addIgnoreRow(name){
+    let verdict = 'ok', icon = '📄', reason = 'おそらく OK（ソースファイル）';
+    for(const [pat, v, ic, r] of IGNORE_RULES){
+      if(pat.test(name)){
+        verdict = v; icon = ic; reason = r;
+        break;
+      }
+    }
+    const text = verdict === 'ok' ? '入れて OK' :
+                 verdict === 'warn' ? '⚠️ 注意：中身次第' :
+                 '❌ 絶対 NG（.gitignore に 入れて）';
+    const row = document.createElement('div');
+    row.className = 'ignore-row ' + verdict;
+    row.innerHTML = `<div class="icon">${icon}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+        <div class="name">${escapeHTML(name)}</div>
+        <div class="reason">${reason}</div>
+      </div>
+      <div class="verdict">${text}</div>`;
+    const hist = $('ignoreHistory');
+    hist.insertBefore(row, hist.firstChild);
+  }
+  $('ignoreInput').addEventListener('keypress', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); checkIgnore(); }
+  });
+
+  /* =========================================================
+     コースチェック
+     ========================================================= */
+  (function(){
+    const root = $('courseCheck'), out = $('courseProg');
+    const items = [...root.querySelectorAll('.check-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      out.textContent = done + ' / 10 達成';
+      if(done >= 10){
+        out.style.color = '#4CAF50';
+        out.textContent = '🎉 10 / 10 完全制覇！';
+      } else if(done >= 7){
+        out.style.color = 'var(--accent)';
+        out.textContent = done + ' / 10 達成 — 修了レベル ✨';
+      } else {
+        out.style.color = '';
+      }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{
+      it.classList.toggle('on'); update();
+    }));
+    update();
+  })();
+
+  /* =========================================================
+     修了証
+     ========================================================= */
+  function refreshCert(){
+    const n = $('certName').value.trim() || '（名前）';
+    const s = $('certSchool').value.trim() || '（教室名）';
+    let d = $('certDate').value.trim();
+    if(!d) d = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long'});
+    $('certNameView').textContent = n;
+    $('certNameView2').textContent = n;
+    $('certSchoolView').textContent = s;
+    $('certSchoolView2').textContent = s;
+    $('certDateView').textContent = d;
+    $('certDateView2').textContent = d;
+  }
+  ['certName','certSchool','certDate'].forEach(id => $(id).addEventListener('input', refreshCert));
+  refreshCert();
+
+  function downloadCert(){
+    const n = $('certName').value.trim() || 'me';
+    const cert = $('certScreen').outerHTML;
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHTML(n)} 修了証</title>
+<style>
+body{font-family:'Inter','Hiragino Sans',sans-serif;padding:40px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.cert{background:linear-gradient(135deg,#FFFBEB,#F3E8FF);border:6px double #4F46E5;border-radius:18px;padding:50px 40px;text-align:center;max-width:600px;box-shadow:0 8px 20px rgba(79,70,229,.18)}
+.cert .badge{font-size:60px}
+.cert h2{color:#4F46E5;font-size:32px;margin:6px 0 14px;letter-spacing:6px;font-weight:800}
+.cert .body{font-size:16px;line-height:2;color:#0F172A}
+.cert .name{font-size:30px;font-weight:bold;color:#10B981;margin:14px 0;padding:8px 0;border-top:2px solid #4F46E5;border-bottom:2px solid #4F46E5;display:inline-block;min-width:240px}
+.cert .footer{margin-top:14px;font-size:13px;color:#64748B}
+@media print{body{background:white;padding:20px}.cert{box-shadow:none}}
+</style></head><body>${cert}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '修了証_' + n.replace(/[\/\\?<>:|"*]/g,'_') + '.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 修了証を 保存しました');
+  }
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     紙吹雪
+     ========================================================= */
+  const confetti = $('confetti');
+  function celebrate(){
+    confetti.innerHTML = '';
+    confetti.classList.add('on');
+    const colors = ['#4F46E5','#F59E0B','#10B981','#EF4444','#7C3AED','#EC4899'];
+    for(let i = 0; i < 100; i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+      s.style.animationDelay = (Math.random() * 1.2) + 's';
+      s.style.transform = `rotate(${Math.random()*360}deg)`;
+      confetti.appendChild(s);
+    }
+    setTimeout(()=>confetti.classList.remove('on'), 5000);
+    info('🎓','中級コース 修了！',`<div style="text-align:center;line-height:2">
+      中学生・中級コース 4回 完全制覇！<br>
+      <b>設計 → 実装 → テスト → 公開</b><br>
+      が 自分の力 に なりました。<br><br>
+      これからも Web を 作りつづけよう！</div>`);
+  }
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

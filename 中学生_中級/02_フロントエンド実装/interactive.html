@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・中級 第2回｜フロントエンド実装</title>
+<style>
+  :root{
+    --primary:#4F46E5; --secondary:#F59E0B; --accent:#10B981;
+    --warn:#EF4444; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --code-tag:#93C5FD; --code-at:#FCD34D; --code-str:#FDBA74;
+    --code-key:#C4B5FD; --code-num:#6EE7B7; --code-com:#64748B; --code-fn:#5EEAD4;
+    --html:#E34F26; --css:#2965F1; --js:#DAA520;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 50%,#EC4899 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+  .badge{display:inline-block;padding:4px 12px;border-radius:6px;font-size:14px;font-weight:bold;color:white;margin:0 3px}
+  .badge.html{background:var(--html)} .badge.css{background:var(--css)}
+  .badge.js{background:var(--dark);color:#F7DF1E}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFFBEB}
+
+  .code{background:var(--code-bg);color:var(--code-text);border-radius:10px;
+    padding:18px 22px;font-family:'JetBrains Mono','SF Mono','Menlo',monospace;font-size:14px;
+    line-height:1.7;box-shadow:var(--shadow);overflow-x:auto;white-space:pre;}
+  .code .tag{color:var(--code-tag)} .code .at{color:var(--code-at)} .code .str{color:var(--code-str)}
+  .code .key{color:var(--code-key)} .code .num{color:var(--code-num)}
+  .code .com{color:var(--code-com);font-style:italic} .code .fn{color:var(--code-fn)}
+
+  /* === Three layers card === */
+  .layers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+  @media (max-width:760px){.layers{grid-template-columns:1fr}}
+  .layer{background:white;border-radius:12px;padding:20px;box-shadow:var(--shadow);
+    border-top:5px solid;text-align:center;cursor:pointer;transition:all .15s}
+  .layer:hover{transform:translateY(-4px)}
+  .layer.html{border-top-color:var(--html)}
+  .layer.css{border-top-color:var(--css)}
+  .layer.js{border-top-color:var(--js)}
+  .layer .icon{font-size:48px}
+  .layer h3{font-size:18px;margin-top:6px;font-weight:700}
+  .layer.html h3{color:var(--html)}
+  .layer.css h3{color:var(--css)}
+  .layer.js h3{color:#B45309}
+  .layer p{color:var(--muted);font-size:13px;margin-top:4px}
+  .layer .role{display:inline-block;background:#F1F5F9;padding:2px 10px;border-radius:4px;
+    font-size:11px;color:var(--dark);margin-top:8px;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  /* === Live TODO demo === */
+  .live{background:white;border-radius:14px;padding:0;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;overflow:hidden}
+  .live-tabs{display:flex;background:#F1F5F9;border-bottom:1px solid var(--border)}
+  .live-tabs button{flex:0 0 auto;background:transparent;border:none;padding:12px 20px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:13px;color:var(--muted);
+    border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.3px}
+  .live-tabs button.active{color:var(--primary);border-bottom-color:var(--primary);background:white}
+  .live-tabs button .badge{font-size:11px;padding:1px 8px;margin-left:4px}
+  .live-tabs .demoT.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .live-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  @media (max-width:880px){.live-grid{grid-template-columns:1fr}}
+  .live-pane{padding:0;min-height:420px;display:flex;flex-direction:column}
+  .live-pane.code-pane{background:var(--code-bg)}
+  .live-pane.code-pane pre{padding:16px 20px;color:var(--code-text);
+    font-family:'JetBrains Mono','SF Mono','Menlo',monospace;font-size:13px;line-height:1.7;
+    flex:1;overflow:auto;margin:0;white-space:pre}
+  .live-pane.demo-pane{background:#FAFAFC;border-left:1px solid var(--border)}
+  @media (max-width:880px){.live-pane.demo-pane{border-left:none;border-top:1px solid var(--border)}}
+
+  /* TODO app (demo) */
+  .todoApp{padding:20px;max-width:480px;width:100%;margin:0 auto}
+  .todoApp h1{font-size:24px;color:var(--primary);margin-bottom:14px;font-weight:700}
+  .todoApp form{display:flex;gap:6px;margin-bottom:14px}
+  .todoApp input[type=text]{flex:1;padding:10px 12px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:inherit;font-size:14px}
+  .todoApp input[type=text]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .todoApp button[type=submit]{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:0 16px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px}
+  .todoApp ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+  .todoApp .task-item{display:flex;align-items:center;gap:10px;padding:10px 12px;
+    background:white;border-radius:8px;border:1px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .todoApp .task-item.done{opacity:.6}
+  .todoApp .task-item.done .text{text-decoration:line-through;color:var(--muted)}
+  .todoApp .task-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+  .todoApp .task-item .text{flex:1;font-size:14px;cursor:default}
+  .todoApp .task-item .del{background:transparent;border:none;color:var(--warn);
+    cursor:pointer;font-size:18px;padding:0 4px;line-height:1}
+  .todoApp .empty{text-align:center;color:var(--muted);font-size:13px;padding:20px;
+    border:2px dashed var(--border);border-radius:8px;background:white}
+  .todoApp .stats{margin-top:14px;display:flex;justify-content:space-between;
+    font-size:13px;color:var(--muted);padding:6px 4px;border-top:1px dashed var(--border)}
+
+  /* === Selector playground === */
+  .selplay{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .selplay-input{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .selplay-input label{font-weight:600;font-size:13px;color:var(--muted);font-family:'JetBrains Mono','SF Mono',monospace}
+  .selplay-input input{flex:1;min-width:180px;padding:10px 14px;border:1.5px solid #CBD5E1;
+    border-radius:8px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;background:#F8FAFC}
+  .selplay-input input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .selplay-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .selplay-presets button{background:#F1F5F9;border:1px solid var(--border);color:var(--primary);
+    padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-weight:600;font-size:12px}
+  .selplay-presets button:hover{background:var(--primary);color:white}
+  .selplay-stage{background:#F8FAFC;border:1px solid var(--border);border-radius:10px;
+    padding:16px;font-family:'Inter',sans-serif}
+  .selplay-stage .hl{outline:3px solid var(--accent);outline-offset:2px;border-radius:3px;transition:all .15s}
+  .selplay-count{text-align:center;margin-top:10px;font-size:13px;color:var(--muted)}
+  .selplay-count b{color:var(--accent);font-family:'JetBrains Mono','SF Mono',monospace}
+
+  /* === LocalStorage observer === */
+  .lsobs{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .lsobs-form{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;margin-bottom:14px}
+  @media (max-width:680px){.lsobs-form{grid-template-columns:1fr}}
+  .lsobs-form input{padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;background:#F8FAFC}
+  .lsobs-form input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .lsobs-form button{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:0 18px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .lsobs-table{width:100%;border-collapse:collapse;font-size:13px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .lsobs-table th,.lsobs-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+  .lsobs-table th{background:#F8FAFC;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.3px}
+  .lsobs-table td.val{max-width:300px;word-break:break-all;color:var(--code-str)}
+  .lsobs-table .del{background:transparent;border:none;color:var(--warn);cursor:pointer;font-size:16px}
+  .lsobs-empty{text-align:center;padding:30px;color:var(--muted);font-size:13px;
+    border:2px dashed var(--border);border-radius:8px}
+  .lsobs-note{background:#FFFBEB;border-left:4px solid var(--secondary);border-radius:8px;
+    padding:10px 14px;margin-top:14px;font-size:13px;color:#7C5800;line-height:1.7}
+
+  /* === DevTools cards === */
+  .devtools{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:14px}
+  .devcard{background:white;border-radius:10px;padding:18px;box-shadow:var(--shadow);
+    border:1px solid var(--border);border-top:4px solid var(--primary)}
+  .devcard:nth-child(2){border-top-color:var(--secondary)}
+  .devcard:nth-child(3){border-top-color:var(--accent)}
+  .devcard:nth-child(4){border-top-color:#9C27B0}
+  .devcard h3{font-size:16px;margin-bottom:6px;font-weight:700}
+  .devcard p{color:var(--muted);font-size:13px;margin-bottom:8px}
+  .devcard code{background:var(--code-bg);color:var(--code-text);padding:2px 8px;
+    border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;display:inline-block}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:50px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:72px;line-height:1}
+  .next h2{color:white;font-size:clamp(26px,5vw,38px);margin:12px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;
+    font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第2回</span> <b>フロントエンド実装</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#layers">2<span>3層モデル</span><span class="ic">🏗️</span></a>
+  <a href="#liveapp">3<span>ライブTODO</span><span class="ic">💻</span></a>
+  <a href="#selector">4<span>セレクタプレイ</span><span class="ic">🎯</span></a>
+  <a href="#localstorage">5<span>localStorage</span><span class="ic">💾</span></a>
+  <a href="#devtools">6<span>DevTools</span><span class="ic">🛠️</span></a>
+  <a href="#quiz">7<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">8<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 中学生プログラミング塾・中級</div>
+    <h1>フロントエンド実装</h1>
+    <p>設計を 動く画面に！ <span class="badge html">HTML</span> <span class="badge css">CSS</span> <span class="badge js">JS</span></p>
+    <div class="em">💻⚡🎨</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>動く TODOアプリ を 作る</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:42px;display:block">🏗️</span><h3>HTML</h3><p style="color:var(--muted);font-size:14px">骨組み</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🎨</span><h3>CSS</h3><p style="color:var(--muted);font-size:14px">見た目</p></div>
+    <div class="card"><span style="font-size:42px;display:block">⚡</span><h3>JS</h3><p style="color:var(--muted);font-size:14px">動的操作</p></div>
+    <div class="card"><span style="font-size:42px;display:block">💾</span><h3>保存</h3><p style="color:var(--muted);font-size:14px">localStorage</p></div>
+  </div>
+</section>
+
+<!-- 1. 3層モデル -->
+<div class="divider" id="layers" data-snav-target>
+  <div class="num">01.</div>
+  <h2>フロントエンド 3層モデル</h2>
+</div>
+
+<section class="section">
+  <h2>3つの言語＝役割分担</h2>
+  <p class="lead">クリックで 各層の 詳細が モーダルで 開きます。</p>
+
+  <div class="layers">
+    <div class="layer html" onclick="layerInfo('html')">
+      <div class="icon">🏗️</div>
+      <h3>HTML</h3>
+      <p>何が あるか</p>
+      <div class="role">骨組み</div>
+    </div>
+    <div class="layer css" onclick="layerInfo('css')">
+      <div class="icon">🎨</div>
+      <h3>CSS</h3>
+      <p>どう 見えるか</p>
+      <div class="role">見た目</div>
+    </div>
+    <div class="layer js" onclick="layerInfo('js')">
+      <div class="icon">⚡</div>
+      <h3>JavaScript</h3>
+      <p>どう 動くか</p>
+      <div class="role">振る舞い</div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:#B8860B">💡 関心の分離（Separation of Concerns）</h3>
+    <p style="margin-top:6px">3層に 分けると、HTMLを変えても CSS/JS は そのまま。<br>
+    デザイナーと エンジニアが <b>並行作業</b> できる！</p>
+  </div>
+</section>
+
+<!-- 2. ライブTODO -->
+<div class="divider" id="liveapp" data-snav-target>
+  <div class="num">02.</div>
+  <h2>ライブ TODOアプリ</h2>
+</div>
+
+<section class="section">
+  <h2>動く実物 ＋ コードを 見比べる</h2>
+  <p class="lead">タブで <b>HTML / CSS / JS</b> のコードを 切り替え。 右側で <b>実物が動く</b>！ 追加・完了・削除・保存 すべて 体験できます。</p>
+
+  <div class="live">
+    <div class="live-tabs">
+      <button class="codeT active" data-fmt="html" onclick="showCode('html')"><span class="badge html">HTML</span></button>
+      <button class="codeT" data-fmt="css" onclick="showCode('css')"><span class="badge css">CSS</span></button>
+      <button class="codeT" data-fmt="js" onclick="showCode('js')"><span class="badge js">JS</span></button>
+      <button class="demoT active" disabled style="margin-left:auto;cursor:default">▶ DEMO</button>
+    </div>
+    <div class="live-grid">
+      <div class="live-pane code-pane">
+        <pre id="codeView"></pre>
+      </div>
+      <div class="live-pane demo-pane">
+        <div class="todoApp">
+          <h1>📝 My Tasks</h1>
+          <form id="taskForm">
+            <input type="text" id="taskInput" placeholder="何をする？" maxlength="50">
+            <button type="submit">追加</button>
+          </form>
+          <ul id="taskList"></ul>
+          <div class="empty" id="empty" style="display:none">タスクは まだ ありません。 上の フォームから 追加！</div>
+          <div class="stats" id="stats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:#B8860B">💡 これが まさに 今日の ゴール</h3>
+    <p style="margin-top:6px">右の TODOは <b>本物</b> ！ 追加・チェック・削除・更新 — すべて localStorage に 保存され、 リロードしても 残ります。<br>
+    タブを 切り替えて <b>どこの コードが 何を しているか</b> 観察しよう。</p>
+  </div>
+</section>
+
+<!-- 3. CSSセレクタ プレイグラウンド -->
+<div class="divider" id="selector" data-snav-target>
+  <div class="num">03.</div>
+  <h2>CSS セレクタ プレイグラウンド</h2>
+</div>
+
+<section class="section">
+  <h2>セレクタを 試そう</h2>
+  <p class="lead">下の <b>セレクタ</b> を 変えると、 当たった 要素が <b>緑で 光ります</b>。 プリセットボタンで 色々 試して！</p>
+
+  <div class="selplay">
+    <div class="selplay-input">
+      <label>セレクタ:</label>
+      <input type="text" id="selInput" value=".task" placeholder="例：.task or li.done">
+    </div>
+    <div class="selplay-presets">
+      <button onclick="setSel('li')">li</button>
+      <button onclick="setSel('.task')">.task</button>
+      <button onclick="setSel('.task.done')">.task.done</button>
+      <button onclick="setSel('#first')">#first</button>
+      <button onclick="setSel('li:not(.done)')">li:not(.done)</button>
+      <button onclick="setSel('ul > li:first-child')">ul > li:first-child</button>
+      <button onclick="setSel('li:nth-child(2)')">li:nth-child(2)</button>
+      <button onclick="setSel('[data-priority=&quot;high&quot;]')">[data-priority=&quot;high&quot;]</button>
+    </div>
+    <div class="selplay-stage" id="selStage">
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px">
+        <li id="first" class="task done" data-priority="low">☑ <s>朝の歯みがき</s></li>
+        <li class="task" data-priority="high">☐ 数学の宿題</li>
+        <li class="task" data-priority="high">☐ 理科レポート</li>
+        <li class="task done" data-priority="low">☑ <s>洗濯物 たたみ</s></li>
+        <li class="task" data-priority="mid">☐ 部活の道具 準備</li>
+      </ul>
+    </div>
+    <div class="selplay-count">マッチ数: <b id="selCount">0</b></div>
+  </div>
+</section>
+
+<!-- 4. localStorage Observer -->
+<div class="divider" id="localstorage" data-snav-target>
+  <div class="num">04.</div>
+  <h2>localStorage 観察ツール</h2>
+</div>
+
+<section class="section">
+  <h2>ブラウザの 中の キー・値 を のぞく</h2>
+  <p class="lead">右上の TODOアプリも 実は localStorage を 使っています！ <br>
+  ここで キー / 値 を 手動で追加・削除できる。 DevToolsの「Application」 タブと 同じ感覚！</p>
+
+  <div class="lsobs">
+    <div class="lsobs-form">
+      <input type="text" id="lsKey" placeholder="key (例: myKey)" maxlength="40">
+      <input type="text" id="lsVal" placeholder="value（文字列 or JSON）" maxlength="200">
+      <button onclick="lsSet()">setItem</button>
+    </div>
+    <table class="lsobs-table" id="lsTable">
+      <thead><tr><th style="width:30%">key</th><th>value</th><th style="width:40px"></th></tr></thead>
+      <tbody id="lsBody"></tbody>
+    </table>
+    <div class="lsobs-empty" id="lsEmpty" style="display:none">localStorage は 空です</div>
+
+    <div class="lsobs-note">
+      ℹ️ このページの localStorage のみ表示します。 「tasks」 キーは ライブTODOアプリ が 自動で 書き込みます。<br>
+      実際の DevTools では <b>Application タブ → Storage → Local Storage</b> から 見ます。
+    </div>
+  </div>
+</section>
+
+<!-- 5. DevTools -->
+<div class="divider" id="devtools" data-snav-target>
+  <div class="num">05.</div>
+  <h2>DevTools（開発者ツール）</h2>
+</div>
+
+<section class="section">
+  <h2>F12 で 開く 開発の必需品</h2>
+  <p class="lead"><b>F12</b>（Windows）／ <b>⌥⌘I</b>（Mac）で 起動。 4つの タブを 覚えれば 十分！</p>
+
+  <div class="devtools">
+    <div class="devcard">
+      <h3>📜 Console</h3>
+      <p>JS の エラー が 出る。 自分で 値を 確かめる：</p>
+      <code>console.log(tasks)</code>
+    </div>
+    <div class="devcard">
+      <h3>🏗️ Elements</h3>
+      <p>HTML が 今 どう なってるか。 CSS も その場で 編集可能：</p>
+      <code>右クリック → Inspect</code>
+    </div>
+    <div class="devcard">
+      <h3>🌐 Network</h3>
+      <p>fetch / 通信を 監視。 第3回で 使います：</p>
+      <code>GET /api/tasks 200</code>
+    </div>
+    <div class="devcard">
+      <h3>💾 Application</h3>
+      <p>localStorage / Cookies / IndexedDB を 確認・編集：</p>
+      <code>Storage → Local Storage</code>
+    </div>
+  </div>
+</section>
+
+<!-- 6. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">06.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう</h2>
+  <p class="lead">答えがわかったら 解説が出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="1">
+      <div class="q">Q1. JS から HTML 要素を 取得する <b>万能</b> な 方法は？</div>
+      <div class="opts">
+        <button data-i="0">document.<br>getElementByTag()</button>
+        <button data-i="1">document.<br>querySelector()</button>
+        <button data-i="2">document.<br>find()</button>
+        <button data-i="3">$('selector')</button>
+      </div>
+      <div class="ex">✅ <code>querySelector()</code> は CSSセレクタ で 探せる万能関数。 <code>'#id'</code> も <code>'.class'</code> も <code>'tag.class'</code> も OK。 複数取得は <code>querySelectorAll()</code>。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q2. ユーザー入力を 画面に 出すとき <b>安全</b> なのは？</div>
+      <div class="opts">
+        <button data-i="0">element.textContent = input</button>
+        <button data-i="1">element.innerHTML = input</button>
+        <button data-i="2">eval(input)</button>
+        <button data-i="3">document.write(input)</button>
+      </div>
+      <div class="ex">✅ <code>textContent</code> は <b>そのまま テキスト</b> として表示。 <code>innerHTML</code> は HTML として 解釈されるので、 入力に <code>&lt;script&gt;</code> が 入ると 実行されちゃう（<b>XSS</b>）！</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q3. localStorage に オブジェクトを <b>正しく</b> 保存する 方法は？</div>
+      <div class="opts">
+        <button data-i="0">localStorage.setItem('k', obj)</button>
+        <button data-i="1">localStorage[k] = obj</button>
+        <button data-i="2">localStorage.setItem('k', JSON.stringify(obj))</button>
+        <button data-i="3">localStorage.save('k', obj)</button>
+      </div>
+      <div class="ex">✅ localStorage は <b>文字列だけ</b> 保存できる。 オブジェクトは <code>JSON.stringify()</code> で 文字列化、 読むときは <code>JSON.parse()</code> で 戻す！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>HTML / CSS / JS の 3層モデル</h3><p style="color:var(--muted);font-size:14px">骨組み / 見た目 / 振る舞い</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>querySelector で 要素取得</h3><p style="color:var(--muted);font-size:14px">CSSセレクタ で 万能 アクセス</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>addEventListener で イベント</h3><p style="color:var(--muted);font-size:14px">submit / click に 反応</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>配列 + forEach で 画面描画</h3><p style="color:var(--muted);font-size:14px">tasks.forEach(render)</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>localStorage で 永続化</h3><p style="color:var(--muted);font-size:14px">JSON.stringify / JSON.parse</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🐍 🌐</div>
+  <h2>第3回 ｜ バックエンド入門</h2>
+  <p>Python Flask で API サーバー！ localStorage が fetch() に なる</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 中級 第2回｜フロントエンド実装</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     3層モデル モーダル
+     ========================================================= */
+  const LAYER_INFO = {
+    html: { emoji:'🏗️', title:'HTML — 骨組み',
+      body:`<b>HyperText Markup Language</b><br>
+      文章や ボタン などの <b>要素</b> を 並べる。<br><br>
+      <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;white-space:pre">&lt;ul id="taskList"&gt;
+  &lt;li class="task"&gt;数学の宿題&lt;/li&gt;
+&lt;/ul&gt;</div>
+      <br>セマンティック（意味のある）タグを 使うのが ベスト。`},
+    css: { emoji:'🎨', title:'CSS — 見た目',
+      body:`<b>Cascading Style Sheets</b><br>
+      色・大きさ・配置を セレクタで 当てる。<br><br>
+      <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;white-space:pre">.task {
+  display: flex;
+  padding: 12px;
+  background: white;
+}</div>
+      <br>Flexbox / Grid を 使うと レイアウトが ラク！`},
+    js: { emoji:'⚡', title:'JavaScript — 振る舞い',
+      body:`<b>動的な 操作</b> を 担当。<br>
+      クリックに 反応、データを 更新、画面を 書き換える。<br><br>
+      <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;white-space:pre">btn.addEventListener('click', () => {
+  tasks.push({ id: Date.now(), text, done: false });
+  render();
+});</div>`},
+  };
+  function layerInfo(k){
+    const i = LAYER_INFO[k];
+    if(i) info(i.emoji, i.title, i.body);
+  }
+
+  /* =========================================================
+     ライブ TODOアプリ
+     ========================================================= */
+  const LS_KEY = 'frontend02:tasks';
+  let tasks = [];
+  function loadTasks(){
+    try {
+      const s = localStorage.getItem(LS_KEY);
+      tasks = s ? JSON.parse(s) : [];
+    } catch(e){ tasks = []; }
+  }
+  function saveTasks(){
+    localStorage.setItem(LS_KEY, JSON.stringify(tasks));
+    renderLS(); // observer 更新
+  }
+  function renderTasks(){
+    const list = $('taskList');
+    const empty = $('empty');
+    const stats = $('stats');
+    list.innerHTML = '';
+    if(tasks.length === 0){
+      empty.style.display = 'block';
+      stats.textContent = '';
+      return;
+    }
+    empty.style.display = 'none';
+    tasks.forEach((t, idx)=>{
+      const li = document.createElement('li');
+      li.className = 'task-item' + (t.done ? ' done' : '');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = t.done;
+      cb.addEventListener('change', ()=>{ tasks[idx].done = cb.checked; saveTasks(); renderTasks(); });
+      const span = document.createElement('span');
+      span.className = 'text';
+      span.textContent = t.text;
+      const del = document.createElement('button');
+      del.className = 'del'; del.textContent = '×';
+      del.title = '削除';
+      del.addEventListener('click', ()=>{ tasks.splice(idx,1); saveTasks(); renderTasks(); });
+      li.appendChild(cb); li.appendChild(span); li.appendChild(del);
+      list.appendChild(li);
+    });
+    const done = tasks.filter(t => t.done).length;
+    stats.innerHTML = `<span>合計 <b>${tasks.length}</b> 件</span><span>完了 <b style="color:var(--accent)">${done}</b> 件</span>`;
+  }
+  $('taskForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const v = $('taskInput').value.trim();
+    if(!v) return;
+    tasks.push({ id: Date.now(), text: v, done: false });
+    $('taskInput').value = '';
+    saveTasks();
+    renderTasks();
+  });
+  loadTasks();
+  renderTasks();
+
+  /* =========================================================
+     コード ビュー（ライブTODOのコードを 表示）
+     ========================================================= */
+  const CODE_SAMPLES = {
+    html: `<!-- HTML -->
+<main class="todo-app">
+  <h1>📝 My Tasks</h1>
+
+  <form id="taskForm">
+    <input id="taskInput" type="text" placeholder="何をする？">
+    <button type="submit">追加</button>
+  </form>
+
+  <ul id="taskList">
+    <!-- JS が ここに <li> を 追加 -->
+  </ul>
+</main>`,
+    css: `/* CSS */
+.todo-app { max-width: 480px; margin: 0 auto; }
+
+form {
+  display: flex; gap: 6px;
+  margin-bottom: 14px;
+}
+
+ul {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.task-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: white; border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.task-item.done .text {
+  text-decoration: line-through;
+  color: #94A3B8;
+}`,
+    js: `// JavaScript
+const LS_KEY = 'tasks';
+let tasks = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+
+const form = document.querySelector('#taskForm');
+const input = document.querySelector('#taskInput');
+const list = document.querySelector('#taskList');
+
+function save() {
+  localStorage.setItem(LS_KEY, JSON.stringify(tasks));
+}
+
+function render() {
+  list.innerHTML = '';
+  tasks.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.className = 'task-item' + (t.done ? ' done' : '');
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = t.done;
+    cb.onchange = () => { t.done = cb.checked; save(); render(); };
+
+    const span = document.createElement('span');
+    span.className = 'text';
+    span.textContent = t.text;
+
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.onclick = () => { tasks.splice(i, 1); save(); render(); };
+
+    li.append(cb, span, del);
+    list.appendChild(li);
+  });
+}
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  tasks.push({ id: Date.now(), text, done: false });
+  input.value = '';
+  save();
+  render();
+});
+
+render();`,
+  };
+  function showCode(fmt){
+    [...document.querySelectorAll('.codeT')].forEach(b => b.classList.toggle('active', b.dataset.fmt === fmt));
+    $('codeView').textContent = CODE_SAMPLES[fmt] || '';
+  }
+  showCode('html');
+
+  /* =========================================================
+     セレクタ プレイグラウンド
+     ========================================================= */
+  const selInput = $('selInput'), selStage = $('selStage'), selCount = $('selCount');
+  function applySel(){
+    [...selStage.querySelectorAll('.hl')].forEach(e=>e.classList.remove('hl'));
+    let sel = selInput.value.trim();
+    if(!sel){ selCount.textContent = '0'; return; }
+    try {
+      const matches = selStage.querySelectorAll(sel);
+      matches.forEach(m => m.classList.add('hl'));
+      selCount.textContent = matches.length;
+      selCount.style.color = matches.length > 0 ? '' : 'var(--warn)';
+    } catch(e){
+      selCount.textContent = 'invalid';
+      selCount.style.color = 'var(--warn)';
+    }
+  }
+  selInput.addEventListener('input', applySel);
+  function setSel(v){
+    selInput.value = v;
+    applySel();
+  }
+  applySel();
+
+  /* =========================================================
+     localStorage 観察ツール
+     ========================================================= */
+  function renderLS(){
+    const tbody = $('lsBody');
+    const empty = $('lsEmpty');
+    tbody.innerHTML = '';
+    const keys = Object.keys(localStorage);
+    if(keys.length === 0){
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    keys.sort().forEach(k=>{
+      const tr = document.createElement('tr');
+      const v = localStorage.getItem(k);
+      let preview = v;
+      try {
+        const parsed = JSON.parse(v);
+        preview = JSON.stringify(parsed, null, 2);
+      } catch(_){}
+      tr.innerHTML = `<td><b>${escapeHTML(k)}</b></td>
+        <td class="val">${escapeHTML(preview.length > 200 ? preview.slice(0,200)+'…' : preview)}</td>
+        <td></td>`;
+      const del = document.createElement('button');
+      del.className = 'del'; del.textContent = '×';
+      del.title = '削除';
+      del.addEventListener('click', ()=>{
+        if(confirm(`「${k}」 を 削除してOK？`)){
+          localStorage.removeItem(k);
+          if(k === LS_KEY){ tasks = []; renderTasks(); }
+          renderLS();
+        }
+      });
+      tr.lastElementChild.appendChild(del);
+      tbody.appendChild(tr);
+    });
+  }
+  function lsSet(){
+    const k = $('lsKey').value.trim();
+    const v = $('lsVal').value;
+    if(!k){ showToast('key を 入力してね'); return; }
+    localStorage.setItem(k, v);
+    if(k === LS_KEY){ loadTasks(); renderTasks(); }
+    $('lsKey').value = ''; $('lsVal').value = '';
+    renderLS();
+    showToast('💾 setItem しました');
+  }
+  renderLS();
+  // 他タブで変わった時に追随
+  window.addEventListener('storage', ()=>{ loadTasks(); renderTasks(); renderLS(); });
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

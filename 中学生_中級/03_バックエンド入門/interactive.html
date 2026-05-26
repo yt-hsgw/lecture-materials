@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中学生・中級 第3回｜バックエンド入門 (Flask)</title>
+<style>
+  :root{
+    --primary:#4F46E5; --secondary:#F59E0B; --accent:#10B981;
+    --warn:#EF4444; --dark:#0F172A; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B; --shadow:0 2px 8px rgba(15,23,42,.08);
+    --border:rgba(15,23,42,.08);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --code-tag:#93C5FD; --code-at:#FCD34D; --code-str:#FDBA74;
+    --code-key:#C4B5FD; --code-num:#6EE7B7; --code-com:#64748B; --code-fn:#5EEAD4;
+    --get:#10B981; --post:#4F46E5; --put:#F59E0B; --del:#EF4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;
+    padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:500;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;left:auto;
+    background:var(--secondary);width:18px;height:18px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:10px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.7);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+    border:1px solid var(--border);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;
+    background:var(--warn);color:white;border:3px solid white;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer;}
+
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 50%,#10B981 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;
+    border-radius:6px;font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,84px);line-height:1.15;margin-bottom:18px;letter-spacing:-1.5px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95;font-weight:300}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(28px,4vw,42px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:30px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(32px,5vw,52px);margin-top:6px;letter-spacing:-.5px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:20px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFFBEB}
+
+  .code{background:var(--code-bg);color:var(--code-text);border-radius:10px;
+    padding:18px 22px;font-family:'JetBrains Mono','SF Mono','Menlo',monospace;font-size:14px;
+    line-height:1.7;box-shadow:var(--shadow);overflow-x:auto;white-space:pre;}
+  .code .tag{color:var(--code-tag)} .code .at{color:var(--code-at)} .code .str{color:var(--code-str)}
+  .code .key{color:var(--code-key)} .code .num{color:var(--code-num)}
+  .code .com{color:var(--code-com);font-style:italic} .code .fn{color:var(--code-fn)}
+
+  .verb{display:inline-block;padding:3px 12px;border-radius:6px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-weight:bold;
+    font-size:13px;color:white;letter-spacing:.5px;}
+  .verb.GET{background:var(--get)} .verb.POST{background:var(--post)}
+  .verb.PUT{background:var(--put);color:var(--dark)} .verb.DELETE{background:var(--del)}
+
+  .status{display:inline-block;padding:2px 10px;border-radius:6px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-weight:bold;font-size:13px;}
+  .status.s2{background:#D1FAE5;color:#065F46}
+  .status.s3{background:#DBEAFE;color:#1E40AF}
+  .status.s4{background:#FEF3C7;color:#92400E}
+  .status.s5{background:#FEE2E2;color:#991B1B}
+
+  /* === Architecture diagram === */
+  .arch{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;text-align:center}
+  .arch-row{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin:14px 0}
+  .arch-box{background:#F8FAFC;border:2px solid var(--primary);border-radius:10px;
+    padding:14px 22px;min-width:140px;font-weight:600}
+  .arch-box .icon{font-size:36px;display:block;margin-bottom:4px}
+  .arch-box .lbl{font-size:13px;color:var(--muted);font-weight:400}
+  .arch-box.server{border-color:var(--accent);background:#ECFDF5}
+  .arch-arrow{font-family:'JetBrains Mono','SF Mono',monospace;color:var(--primary);
+    font-size:14px;white-space:nowrap}
+  .arch-arrow.down{font-size:24px}
+
+  /* === Status code dictionary === */
+  .statuses{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
+  .stcell{background:white;border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;
+    transition:all .15s;display:flex;align-items:center;gap:10px}
+  .stcell:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .stcell .code{flex-shrink:0;font-family:'JetBrains Mono','SF Mono',monospace;font-weight:bold;
+    font-size:16px;padding:4px 10px;border-radius:6px;background:#F1F5F9;color:var(--dark);box-shadow:none}
+  .stcell.s2 .code{background:#D1FAE5;color:#065F46}
+  .stcell.s3 .code{background:#DBEAFE;color:#1E40AF}
+  .stcell.s4 .code{background:#FEF3C7;color:#92400E}
+  .stcell.s5 .code{background:#FEE2E2;color:#991B1B}
+  .stcell .name{font-size:13px;color:var(--muted);flex:1}
+  .stcell .name b{display:block;color:var(--dark);font-size:14px;margin-bottom:2px}
+
+  /* === Mock API tester === */
+  .api{background:white;border-radius:14px;padding:0;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;overflow:hidden}
+  .api-head{background:var(--dark);color:white;padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .api-head .url{flex:1;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;color:var(--secondary)}
+  .api-head .url b{color:white}
+  .api-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  @media (max-width:880px){.api-grid{grid-template-columns:1fr}}
+  .api-pane{padding:18px;min-height:280px}
+  .api-pane.left{border-right:1px solid var(--border)}
+  @media (max-width:880px){.api-pane.left{border-right:none;border-bottom:1px solid var(--border)}}
+  .api-pane h4{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase}
+  .api-verbs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .api-verbs button{background:#F1F5F9;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-weight:600;font-size:12px;letter-spacing:.5px;transition:all .15s}
+  .api-verbs button:hover{transform:translateY(-1px)}
+  .api-verbs button.GET.sel{background:var(--get);border-color:var(--get);color:white}
+  .api-verbs button.POST.sel{background:var(--post);border-color:var(--post);color:white}
+  .api-verbs button.PUT.sel{background:var(--put);border-color:var(--put);color:var(--dark)}
+  .api-verbs button.DELETE.sel{background:var(--del);border-color:var(--del);color:white}
+  .api-pane input[type=text]{width:100%;padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:6px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;background:#F8FAFC;margin-bottom:10px}
+  .api-pane input[type=text]:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .api-pane textarea{width:100%;min-height:90px;padding:10px 12px;border:1.5px solid #CBD5E1;
+    border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;
+    background:#F8FAFC;line-height:1.6;resize:vertical;margin-bottom:10px}
+  .api-pane textarea:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+  .api-pane .send{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:10px 22px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px;
+    width:100%}
+  .api-pane .send:hover{transform:translateY(-1px)}
+  .api-resp{background:var(--code-bg);color:var(--code-text);border-radius:8px;
+    padding:14px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;
+    line-height:1.7;min-height:200px;overflow:auto;white-space:pre;max-height:380px;margin-top:8px}
+  .api-meta{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted);
+    font-family:'JetBrains Mono','SF Mono',monospace;margin-bottom:6px;flex-wrap:wrap}
+  .api-server{background:#0F172A;color:#E2E8F0;border-radius:8px;padding:14px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.7;
+    margin-top:14px;max-height:200px;overflow:auto}
+  .api-server .label{color:var(--secondary);font-size:11px;letter-spacing:.5px}
+  .api-server pre{margin:6px 0 0;color:var(--code-text);white-space:pre}
+  .api-reset{background:var(--muted);color:white;border:none;border-radius:6px;
+    padding:6px 14px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;margin-top:8px}
+
+  /* === CRUD comparison === */
+  .crud{background:white;border-radius:12px;padding:18px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;overflow:auto}
+  .crud table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
+  .crud th{background:#F8FAFC;text-align:left;padding:10px 12px;font-size:12px;
+    color:var(--muted);font-weight:600;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+  .crud td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6}
+  .crud td:first-child{font-family:inherit;font-weight:600}
+  .crud td code{background:#0F172A;color:#E2E8F0;padding:6px 10px;border-radius:4px;
+    font-size:11px;display:block;white-space:pre-wrap;line-height:1.6}
+  .crud-tabs{display:flex;gap:4px;margin-bottom:12px}
+  .crud-tabs button{background:#F1F5F9;border:1px solid var(--border);color:var(--muted);
+    padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px}
+  .crud-tabs button.active{background:var(--primary);color:white;border-color:var(--primary)}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:16px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F1F5F9}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#991B1B}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.7}
+  .qrow.answered .ex{display:block}
+  .qrow .ex code{background:var(--code-bg);color:var(--code-text);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:10px;padding:18px;
+    display:flex;align-items:center;gap:16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:42px;height:42px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace;}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:50px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:72px;line-height:1}
+  .next h2{color:white;font-size:clamp(26px,5vw,38px);margin:12px 0}
+  footer{padding:36px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;
+    font-weight:600;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第3回</span> <b>バックエンド入門 (Flask)</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#why">2<span>なぜサーバー</span><span class="ic">🏪</span></a>
+  <a href="#http">3<span>HTTPメソッド</span><span class="ic">🔀</span></a>
+  <a href="#status">4<span>ステータスコード</span><span class="ic">📊</span></a>
+  <a href="#api">5<span>API テスター</span><span class="ic">🐍</span></a>
+  <a href="#crud">6<span>CRUD対応表</span><span class="ic">📋</span></a>
+  <a href="#cors">7<span>CORS の壁</span><span class="ic">🚧</span></a>
+  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 中学生プログラミング塾・中級</div>
+    <h1>バックエンド入門</h1>
+    <p>Python Flask で REST API を 立てる！ <b>localStorage → fetch</b></p>
+    <div class="em">🐍🌐💾</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4 ステップで <span style="font-family:'JetBrains Mono','SF Mono',monospace">localhost:5000</span> へ</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:42px;display:block">🏪</span><h3>サーバー</h3><p style="color:var(--muted);font-size:14px">役割を 理解</p></div>
+    <div class="card"><span style="font-size:42px;display:block">📨</span><h3>HTTP</h3><p style="color:var(--muted);font-size:14px">メソッド/ステータス</p></div>
+    <div class="card"><span style="font-size:42px;display:block">🐍</span><h3>Flask</h3><p style="color:var(--muted);font-size:14px">@app.route</p></div>
+    <div class="card"><span style="font-size:42px;display:block">⚡</span><h3>fetch</h3><p style="color:var(--muted);font-size:14px">フロント連携</p></div>
+  </div>
+</section>
+
+<!-- 1. なぜサーバー -->
+<div class="divider" id="why" data-snav-target>
+  <div class="num">01.</div>
+  <h2>なぜ サーバーが 必要か</h2>
+</div>
+
+<section class="section">
+  <h2>localStorage の 3つの 限界</h2>
+  <p class="lead">第2回のTODOアプリは <b>ブラウザに 閉じこもっている</b>。 サーバーで <b>解放</b> する！</p>
+
+  <div class="grid grid-3">
+    <div class="card warn">
+      <h3>📱 端末ごと に 別物</h3>
+      <p style="color:var(--muted);font-size:13px">PC で 追加した タスクが スマホで 見えない</p>
+    </div>
+    <div class="card warn">
+      <h3>👥 共有できない</h3>
+      <p style="color:var(--muted);font-size:13px">友だちと 1つの TODOを 一緒に 使えない</p>
+    </div>
+    <div class="card warn">
+      <h3>🗑️ 消える リスク</h3>
+      <p style="color:var(--muted);font-size:13px">ブラウザ削除 / シークレットモード で 消失</p>
+    </div>
+  </div>
+
+  <div class="arch">
+    <h3 style="color:var(--primary)">クライアント — サーバー モデル</h3>
+    <div class="arch-row">
+      <div class="arch-box">
+        <span class="icon">💻</span>
+        ブラウザ A
+        <div class="lbl">クライアント</div>
+      </div>
+      <div class="arch-arrow">─── HTTP ───▶</div>
+      <div class="arch-box server">
+        <span class="icon">🏪</span>
+        サーバー
+        <div class="lbl">Flask + DB</div>
+      </div>
+    </div>
+    <div class="arch-row" style="margin-top:0">
+      <div class="arch-box">
+        <span class="icon">📱</span>
+        ブラウザ B
+        <div class="lbl">クライアント</div>
+      </div>
+      <div class="arch-arrow">─── HTTP ───▶</div>
+      <div class="arch-box server" style="opacity:.6">同じ サーバー へ</div>
+    </div>
+    <p style="margin-top:10px;color:var(--muted);font-size:13px">何人が アクセスしても <b>同じデータ</b> を 返せる</p>
+  </div>
+</section>
+
+<!-- 2. HTTP メソッド -->
+<div class="divider" id="http" data-snav-target>
+  <div class="num">02.</div>
+  <h2>HTTP メソッド</h2>
+</div>
+
+<section class="section">
+  <h2>4つの 動詞 で すべて 表現</h2>
+  <p class="lead">クリックで 各メソッドの 使い方と Flask実装例 を 表示。</p>
+
+  <div class="grid grid-2">
+    <div class="card" onclick="verbInfo('GET')" style="cursor:pointer;border-top:5px solid var(--get)">
+      <h3><span class="verb GET">GET</span> 取得</h3>
+      <p style="color:var(--muted);font-size:14px">データを <b>読み取る</b>。 副作用なし（安全）</p>
+      <p style="margin-top:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px"><span style="color:var(--get)">GET</span> /api/tasks</p>
+    </div>
+    <div class="card" onclick="verbInfo('POST')" style="cursor:pointer;border-top:5px solid var(--post)">
+      <h3><span class="verb POST">POST</span> 新規作成</h3>
+      <p style="color:var(--muted);font-size:14px">新しい データを <b>追加</b>。 body に JSON を 載せる</p>
+      <p style="margin-top:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px"><span style="color:var(--post)">POST</span> /api/tasks</p>
+    </div>
+    <div class="card" onclick="verbInfo('PUT')" style="cursor:pointer;border-top:5px solid var(--put)">
+      <h3><span class="verb PUT">PUT</span> 更新</h3>
+      <p style="color:var(--muted);font-size:14px">既存データの <b>差し替え</b>。 ID 指定が 必須</p>
+      <p style="margin-top:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px"><span style="color:#B45309">PUT</span> /api/tasks/<b>1</b></p>
+    </div>
+    <div class="card" onclick="verbInfo('DELETE')" style="cursor:pointer;border-top:5px solid var(--del)">
+      <h3><span class="verb DELETE">DELETE</span> 削除</h3>
+      <p style="color:var(--muted);font-size:14px">データを <b>消す</b>。 成功時 204 No Content</p>
+      <p style="margin-top:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px"><span style="color:var(--del)">DELETE</span> /api/tasks/<b>1</b></p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. ステータスコード -->
+<div class="divider" id="status" data-snav-target>
+  <div class="num">03.</div>
+  <h2>ステータスコード 辞典</h2>
+</div>
+
+<section class="section">
+  <h2>頻出 12 個 を おぼえる</h2>
+  <p class="lead">クリックで 詳細表示。 上1桁 で 分類：<b>2xx</b>=成功 / <b>3xx</b>=リダイレクト / <b>4xx</b>=ミス / <b>5xx</b>=サーバー</p>
+
+  <div class="statuses" id="statusList">
+    <!-- generated -->
+  </div>
+</section>
+
+<!-- 4. API テスター -->
+<div class="divider" id="api" data-snav-target>
+  <div class="num">04.</div>
+  <h2>モック Flask API テスター</h2>
+</div>
+
+<section class="section">
+  <h2>本物の Flask の代わりに ブラウザ内で 動く</h2>
+  <p class="lead">左で <b>fetch() のリクエスト</b> を 組み立てて 送信 → 右の <b>仮想Flaskサーバー</b> が 応答！<br>
+  <b>tasks 配列</b> も リアルタイムで 見える。 実物の Flask と <b>同じ挙動</b>。</p>
+
+  <div class="api">
+    <div class="api-head">
+      <span class="url"><b>http://localhost:5000</b> <span id="apiPath">/api/tasks</span></span>
+      <button class="api-reset" onclick="resetApi()">↺ 初期化</button>
+    </div>
+
+    <div class="api-grid">
+      <div class="api-pane left">
+        <h4>🔧 リクエスト 組み立て</h4>
+        <div class="api-verbs" id="apiVerbs">
+          <button class="GET sel" data-v="GET">GET</button>
+          <button class="POST" data-v="POST">POST</button>
+          <button class="PUT" data-v="PUT">PUT</button>
+          <button class="DELETE" data-v="DELETE">DELETE</button>
+        </div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600">URL（path）</label>
+        <input type="text" id="apiUrl" value="/api/tasks" placeholder="/api/tasks or /api/tasks/1">
+
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600">Body（JSON / POST・PUT のみ）</label>
+        <textarea id="apiBody" placeholder='例：{"text":"買い物","done":false}'></textarea>
+
+        <button class="send" onclick="sendApi()">▶ Send Request</button>
+
+        <div style="margin-top:14px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono','SF Mono',monospace">
+          <b>fetch コード:</b><br>
+          <code id="apiFetchPreview" style="display:block;background:var(--code-bg);color:var(--code-text);padding:8px 10px;border-radius:6px;margin-top:4px;white-space:pre-wrap;font-size:11px;line-height:1.6"></code>
+        </div>
+      </div>
+
+      <div class="api-pane right">
+        <h4>📥 レスポンス</h4>
+        <div class="api-meta" id="apiMeta">
+          <span class="status" id="apiStatus">--- ---</span>
+          <span id="apiTime"></span>
+        </div>
+        <div class="api-resp" id="apiResp">// 上の Send Request を 押してね</div>
+
+        <h4 style="margin-top:14px">🗄️ サーバー側 tasks 配列</h4>
+        <div class="api-server">
+          <div class="label">app.py 内の tasks 変数</div>
+          <pre id="apiServer"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. CRUD 対応表 -->
+<div class="divider" id="crud" data-snav-target>
+  <div class="num">05.</div>
+  <h2>CRUD 対応表 (Flask / curl / fetch)</h2>
+</div>
+
+<section class="section">
+  <h2>同じ操作を 3つの 書き方で</h2>
+  <p class="lead">タブで 切り替え。 Flaskで サーバーを 書き、 curlで テストし、 fetchで フロントから 呼ぶ。</p>
+
+  <div class="crud">
+    <div class="crud-tabs">
+      <button class="active" data-fmt="flask" onclick="setCrudFmt('flask')">🐍 Flask (app.py)</button>
+      <button data-fmt="curl" onclick="setCrudFmt('curl')">$ curl (test)</button>
+      <button data-fmt="fetch" onclick="setCrudFmt('fetch')">⚡ JS fetch()</button>
+    </div>
+    <table id="crudTable">
+      <thead>
+        <tr><th>操作</th><th>メソッド</th><th>コード</th></tr>
+      </thead>
+      <tbody id="crudBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 6. CORS -->
+<div class="divider" id="cors" data-snav-target>
+  <div class="num">06.</div>
+  <h2>CORS の 壁</h2>
+</div>
+
+<section class="section">
+  <h2>「別の オリジン だと 拒否」 を 解決</h2>
+  <p class="lead">CORS = Cross-Origin Resource Sharing。 別ポート の Flask に fetchすると 出る エラー。</p>
+
+  <div class="grid grid-2">
+    <div class="card warn">
+      <h3>🚫 拒否される パターン</h3>
+      <div class="code" style="margin-top:8px;font-size:12px">
+<span class="com">// フロント: localhost:3000</span>
+<span class="key">await</span> <span class="fn">fetch</span>(<span class="str">'http://localhost:5000/api/tasks'</span>);
+<span class="com">// → CORSエラー</span>
+      </div>
+    </div>
+    <div class="card ok">
+      <h3>✅ Flask 側で 許可</h3>
+      <div class="code" style="margin-top:8px;font-size:12px">
+<span class="com"># app.py</span>
+<span class="key">from</span> flask_cors <span class="key">import</span> CORS
+
+app = <span class="fn">Flask</span>(__name__)
+<span class="fn">CORS</span>(app)  <span class="com"># これだけ</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3 style="color:#B8860B">💡 オリジン (Origin) とは</h3>
+    <p style="margin-top:6px"><code style="background:var(--code-bg);color:var(--code-text);padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px">scheme + host + port</code> の組み合わせ。<br>
+    <code style="background:var(--code-bg);color:var(--code-text);padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px">http://localhost:3000</code> と <code style="background:var(--code-bg);color:var(--code-text);padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px">http://localhost:5000</code> は <b>別オリジン</b>！</p>
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">07.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>4問 やってみよう</h2>
+  <p class="lead">答えがわかったら 解説が出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="1">
+      <div class="q">Q1. 「タスク 一覧を 取得」 に <b>適切な</b> メソッドは？</div>
+      <div class="opts">
+        <button data-i="0">POST</button>
+        <button data-i="1">GET</button>
+        <button data-i="2">PUT</button>
+        <button data-i="3">DELETE</button>
+      </div>
+      <div class="ex">✅ <b>GET</b> は「取得」専用。 副作用がない（呼んでもデータが変わらない）ので 何度呼んでもOK。</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q2. Flask で「成功時に新しい task を JSON で返し、ステータスは 201」 と したい：</div>
+      <div class="opts">
+        <button data-i="0">return new_task</button>
+        <button data-i="1">return jsonify(new_task)</button>
+        <button data-i="2">return jsonify(new_task), 201</button>
+        <button data-i="3">return 201, jsonify(new_task)</button>
+      </div>
+      <div class="ex">✅ Flask は <code>(body, status_code)</code> のタプル を 返せる。 <code>201 Created</code> は新規作成成功の 慣例。</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q3. fetch で POST する とき <b>必須</b> なのは？</div>
+      <div class="opts">
+        <button data-i="0">method のみ</button>
+        <button data-i="1">body のみ</button>
+        <button data-i="2">method + headers + body</button>
+        <button data-i="3">何も いらない</button>
+      </div>
+      <div class="ex">✅ <code>method:'POST'</code>、 <code>headers:{'Content-Type':'application/json'}</code>、 <code>body:JSON.stringify(data)</code> の 3点セット。 headers を 忘れると サーバーが JSON と 認識できない！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q4. <code>http://localhost:3000</code> から <code>http://localhost:5000</code> に fetch → エラー。 原因は？</div>
+      <div class="opts">
+        <button data-i="0">CORS (別オリジン制約)</button>
+        <button data-i="1">Flask が 起動してない</button>
+        <button data-i="2">JS の 構文エラー</button>
+        <button data-i="3">ブラウザの バージョン</button>
+      </div>
+      <div class="ex">✅ ポート番号 が 違う＝<b>別オリジン</b>。 Flask 側で <code>from flask_cors import CORS; CORS(app)</code> で 許可！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>クライアント／サーバー モデル</h3><p style="color:var(--muted);font-size:14px">中央サーバーで 共有・永続</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>HTTP = メソッド + URL + ステータス + JSON</h3><p style="color:var(--muted);font-size:14px">GET / POST / PUT / DELETE</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>Flask で @app.route で ルーティング</h3><p style="color:var(--muted);font-size:14px">jsonify で JSON 返却</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>fetch() で フロントから 呼び出し</h3><p style="color:var(--muted);font-size:14px">async/await でスッキリ</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>CORS は flask-cors で 許可</h3><p style="color:var(--muted);font-size:14px">CORS(app) だけ</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🐛 ✅</div>
+  <h2>第4回 ｜ テスト・Git・公開</h2>
+  <p>DevTools / git / GitHub Pages・Render で 公開！</p>
+</div>
+
+<footer>中学生プログラミング塾 ／ 中級 第3回｜バックエンド入門 (Flask)</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     HTTPメソッド モーダル
+     ========================================================= */
+  const VERB_INFO = {
+    GET: { emoji:'🟢', title:'GET — 取得',
+      body:`<div style="font-size:14px;line-height:1.8"><b>使い道：</b>データを 読み取る（変更しない）<br>
+      <b>特徴：</b>副作用なし（idempotent）／何回 呼んでもOK／URLに ?key=value も OK<br><br>
+      <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;white-space:pre">@app.route('/api/tasks', methods=['GET'])
+def list_tasks():
+    return jsonify(tasks)</div>
+      <br><b>成功 ステータス：</b><code style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:4px">200 OK</code></div>`},
+    POST: { emoji:'🔵', title:'POST — 新規作成',
+      body:`<div style="font-size:14px;line-height:1.8"><b>使い道：</b>新しい データを 追加<br>
+      <b>特徴：</b>副作用あり／呼ぶたびに 新規 作成／body に JSON<br><br>
+      <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;white-space:pre">@app.route('/api/tasks', methods=['POST'])
+def create_task():
+    data = request.get_json()
+    new = { 'id': next_id(), 'text': data['text'], 'done': False }
+    tasks.append(new)
+    return jsonify(new), 201</div>
+      <br><b>成功 ステータス：</b><code style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:4px">201 Created</code></div>`},
+    PUT: { emoji:'🟡', title:'PUT — 更新',
+      body:`<div style="font-size:14px;line-height:1.8"><b>使い道：</b>既存データの 差し替え／部分更新<br>
+      <b>特徴：</b>idempotent（何回 呼んでも 結果同じ）／ID 必須<br><br>
+      <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;white-space:pre">@app.route('/api/tasks/&lt;int:tid&gt;', methods=['PUT'])
+def update_task(tid):
+    task = find(tid)
+    if not task: return '', 404
+    task['done'] = request.get_json()['done']
+    return jsonify(task)</div>
+      <br><b>成功：</b><code style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:4px">200</code> ／ <b>無い：</b><code style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:4px">404</code></div>`},
+    DELETE: { emoji:'🔴', title:'DELETE — 削除',
+      body:`<div style="font-size:14px;line-height:1.8"><b>使い道：</b>データを 消す<br>
+      <b>特徴：</b>idempotent（2回 消しても 同じ＝もう 無い）／成功時 body 空<br><br>
+      <div style="background:#0F172A;color:#E2E8F0;padding:10px;border-radius:6px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;white-space:pre">@app.route('/api/tasks/&lt;int:tid&gt;', methods=['DELETE'])
+def delete_task(tid):
+    global tasks
+    tasks = [t for t in tasks if t['id'] != tid]
+    return '', 204</div>
+      <br><b>成功 ステータス：</b><code style="background:#D1FAE5;color:#065F46;padding:2px 8px;border-radius:4px">204 No Content</code></div>`},
+  };
+  function verbInfo(v){
+    const i = VERB_INFO[v];
+    if(i) info(i.emoji, i.title, i.body);
+  }
+
+  /* =========================================================
+     ステータスコード辞典
+     ========================================================= */
+  const STATUSES = [
+    { code:200, name:'OK', cls:'s2', desc:'リクエスト 成功' },
+    { code:201, name:'Created', cls:'s2', desc:'新規 作成 成功（POST）' },
+    { code:204, name:'No Content', cls:'s2', desc:'成功 だが 本文なし（DELETE）' },
+    { code:301, name:'Moved Permanently', cls:'s3', desc:'恒久的 リダイレクト' },
+    { code:304, name:'Not Modified', cls:'s3', desc:'キャッシュ そのまま' },
+    { code:400, name:'Bad Request', cls:'s4', desc:'リクエストの 形式 ミス' },
+    { code:401, name:'Unauthorized', cls:'s4', desc:'認証 が 必要' },
+    { code:403, name:'Forbidden', cls:'s4', desc:'認証済みだが 権限 なし' },
+    { code:404, name:'Not Found', cls:'s4', desc:'リソース 無し（URL ミス）' },
+    { code:409, name:'Conflict', cls:'s4', desc:'状態が 競合' },
+    { code:500, name:'Internal Server Error', cls:'s5', desc:'サーバー 側の バグ' },
+    { code:503, name:'Service Unavailable', cls:'s5', desc:'サーバー 一時 ダウン' },
+  ];
+  const stList = $('statusList');
+  STATUSES.forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'stcell ' + s.cls;
+    div.innerHTML = `<span class="code">${s.code}</span><span class="name"><b>${escapeHTML(s.name)}</b>${escapeHTML(s.desc)}</span>`;
+    div.addEventListener('click', ()=>{
+      info(s.cls === 's2' ? '✅' : (s.cls === 's3' ? '🔀' : (s.cls === 's4' ? '⚠️' : '🔥')),
+        `${s.code} ${s.name}`,
+        `<div style="font-size:14px;line-height:1.8">
+          <b>分類：</b>${ {s2:'2xx 成功',s3:'3xx リダイレクト',s4:'4xx クライアント側ミス',s5:'5xx サーバー側エラー'}[s.cls] }<br>
+          <b>意味：</b>${s.desc}<br><br>
+          <b>Flask で 返すコード：</b><br>
+          <code style="background:#0F172A;color:#E2E8F0;padding:6px 10px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;display:block;margin-top:4px">return jsonify({...}), ${s.code}</code>
+        </div>`);
+    });
+    stList.appendChild(div);
+  });
+
+  /* =========================================================
+     モック Flask API テスター
+     ========================================================= */
+  let serverTasks = [
+    { id:1, text:'数学の宿題', done:false },
+    { id:2, text:'歯みがき', done:true },
+    { id:3, text:'部活 道具準備', done:false },
+  ];
+  let nextId = 4;
+  let selectedVerb = 'GET';
+
+  function renderServer(){
+    $('apiServer').textContent = 'tasks = ' + JSON.stringify(serverTasks, null, 2);
+  }
+  renderServer();
+
+  // verb selection
+  document.querySelectorAll('#apiVerbs button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('#apiVerbs button').forEach(x=>x.classList.remove('sel'));
+      b.classList.add('sel');
+      selectedVerb = b.dataset.v;
+      // 自動的に URL と body のヒントを 更新
+      const url = $('apiUrl');
+      const body = $('apiBody');
+      if(selectedVerb === 'GET'){
+        if(!url.value.startsWith('/api/tasks')) url.value = '/api/tasks';
+        body.value = '';
+        body.placeholder = '（GET は body なし）';
+      } else if(selectedVerb === 'POST'){
+        url.value = '/api/tasks';
+        if(!body.value.trim()) body.value = '{"text":"買い物に行く"}';
+        body.placeholder = '例：{"text":"買い物","done":false}';
+      } else if(selectedVerb === 'PUT'){
+        url.value = '/api/tasks/1';
+        if(!body.value.trim()) body.value = '{"done":true}';
+        body.placeholder = '例：{"done":true}';
+      } else if(selectedVerb === 'DELETE'){
+        url.value = '/api/tasks/2';
+        body.value = '';
+        body.placeholder = '（DELETE は body なし）';
+      }
+      updateFetchPreview();
+    });
+  });
+
+  function updateFetchPreview(){
+    const url = $('apiUrl').value;
+    let code = '';
+    if(selectedVerb === 'GET'){
+      code = `const res = await fetch('${url}');\nconst data = await res.json();`;
+    } else if(selectedVerb === 'DELETE'){
+      code = `const res = await fetch('${url}', {\n  method: '${selectedVerb}'\n});`;
+    } else {
+      const body = $('apiBody').value.trim() || '{}';
+      code = `const res = await fetch('${url}', {\n  method: '${selectedVerb}',\n  headers: {'Content-Type': 'application/json'},\n  body: JSON.stringify(${body})\n});\nconst data = await res.json();`;
+    }
+    $('apiFetchPreview').textContent = code;
+    $('apiPath').textContent = url;
+  }
+  $('apiUrl').addEventListener('input', updateFetchPreview);
+  $('apiBody').addEventListener('input', updateFetchPreview);
+  updateFetchPreview();
+
+  async function sendApi(){
+    const url = $('apiUrl').value.trim();
+    const verb = selectedVerb;
+    const t0 = performance.now();
+
+    // 模擬応答処理（Flaskのロジックを ブラウザで 再現）
+    let status = 200, statusText = 'OK', body = null;
+
+    // URL パターン
+    const matchList = url === '/api/tasks';
+    const matchId = url.match(/^\/api\/tasks\/(\d+)$/);
+
+    try {
+      if(verb === 'GET'){
+        if(matchList){ body = serverTasks; }
+        else if(matchId){
+          const t = serverTasks.find(x => x.id === +matchId[1]);
+          if(t){ body = t; }
+          else { status = 404; statusText = 'Not Found'; body = { error: 'task not found' }; }
+        } else { status = 404; statusText = 'Not Found'; body = { error: 'unknown route' }; }
+      }
+      else if(verb === 'POST'){
+        if(!matchList){ status = 404; statusText = 'Not Found'; body = { error: 'POST は /api/tasks のみ' }; }
+        else {
+          const data = JSON.parse($('apiBody').value || '{}');
+          if(!data.text){ status = 400; statusText = 'Bad Request'; body = { error: 'text フィールドが 必須' }; }
+          else {
+            const created = { id: nextId++, text: String(data.text), done: !!data.done };
+            serverTasks.push(created);
+            status = 201; statusText = 'Created'; body = created;
+          }
+        }
+      }
+      else if(verb === 'PUT'){
+        if(!matchId){ status = 400; statusText = 'Bad Request'; body = { error: 'PUT は /api/tasks/<id> 形式' }; }
+        else {
+          const id = +matchId[1];
+          const t = serverTasks.find(x => x.id === id);
+          if(!t){ status = 404; statusText = 'Not Found'; body = { error: 'task not found' }; }
+          else {
+            const data = JSON.parse($('apiBody').value || '{}');
+            if(data.text !== undefined) t.text = String(data.text);
+            if(data.done !== undefined) t.done = !!data.done;
+            body = t;
+          }
+        }
+      }
+      else if(verb === 'DELETE'){
+        if(!matchId){ status = 400; statusText = 'Bad Request'; body = { error: 'DELETE は /api/tasks/<id> 形式' }; }
+        else {
+          const id = +matchId[1];
+          const before = serverTasks.length;
+          serverTasks = serverTasks.filter(x => x.id !== id);
+          if(serverTasks.length === before){ status = 404; statusText = 'Not Found'; body = { error: 'task not found' }; }
+          else { status = 204; statusText = 'No Content'; body = null; }
+        }
+      }
+    } catch(e){
+      status = 400; statusText = 'Bad Request'; body = { error: 'JSON のパース エラー：' + e.message };
+    }
+
+    // 表示
+    const t1 = performance.now();
+    const cls = status >= 500 ? 's5' : (status >= 400 ? 's4' : (status >= 300 ? 's3' : 's2'));
+    const stEl = $('apiStatus');
+    stEl.className = 'status ' + cls;
+    stEl.textContent = `${status} ${statusText}`;
+    $('apiTime').textContent = `⏱ ${(t1-t0).toFixed(1)}ms`;
+    $('apiResp').textContent = body === null
+      ? '(No Content)'
+      : JSON.stringify(body, null, 2);
+    renderServer();
+  }
+
+  function resetApi(){
+    serverTasks = [
+      { id:1, text:'数学の宿題', done:false },
+      { id:2, text:'歯みがき', done:true },
+      { id:3, text:'部活 道具準備', done:false },
+    ];
+    nextId = 4;
+    renderServer();
+    $('apiResp').textContent = '// 初期化しました';
+    $('apiStatus').className = 'status';
+    $('apiStatus').textContent = '--- ---';
+    $('apiTime').textContent = '';
+    showToast('🔄 サーバー状態を リセット');
+  }
+
+  /* =========================================================
+     CRUD 対応表
+     ========================================================= */
+  const CRUD = [
+    { op:'一覧取得', verb:'GET', path:'/api/tasks',
+      flask:`@app.route('/api/tasks', methods=['GET'])\ndef list_tasks():\n    return jsonify(tasks)`,
+      curl:`curl http://localhost:5000/api/tasks`,
+      fetch:`const res = await fetch('/api/tasks');\nconst tasks = await res.json();` },
+    { op:'1件取得', verb:'GET', path:'/api/tasks/1',
+      flask:`@app.route('/api/tasks/<int:tid>', methods=['GET'])\ndef get_task(tid):\n    t = find(tid)\n    if not t: return '', 404\n    return jsonify(t)`,
+      curl:`curl http://localhost:5000/api/tasks/1`,
+      fetch:`const res = await fetch('/api/tasks/1');\nconst task = await res.json();` },
+    { op:'新規作成', verb:'POST', path:'/api/tasks',
+      flask:`@app.route('/api/tasks', methods=['POST'])\ndef create_task():\n    data = request.get_json()\n    new = { 'id': next_id(), 'text': data['text'], 'done': False }\n    tasks.append(new)\n    return jsonify(new), 201`,
+      curl:`curl -X POST http://localhost:5000/api/tasks \\\n  -H "Content-Type: application/json" \\\n  -d '{"text":"買い物"}'`,
+      fetch:`await fetch('/api/tasks', {\n  method: 'POST',\n  headers: {'Content-Type': 'application/json'},\n  body: JSON.stringify({ text: '買い物' })\n});` },
+    { op:'更新', verb:'PUT', path:'/api/tasks/1',
+      flask:`@app.route('/api/tasks/<int:tid>', methods=['PUT'])\ndef update_task(tid):\n    t = find(tid)\n    if not t: return '', 404\n    t['done'] = request.get_json()['done']\n    return jsonify(t)`,
+      curl:`curl -X PUT http://localhost:5000/api/tasks/1 \\\n  -H "Content-Type: application/json" \\\n  -d '{"done":true}'`,
+      fetch:`await fetch('/api/tasks/1', {\n  method: 'PUT',\n  headers: {'Content-Type': 'application/json'},\n  body: JSON.stringify({ done: true })\n});` },
+    { op:'削除', verb:'DELETE', path:'/api/tasks/1',
+      flask:`@app.route('/api/tasks/<int:tid>', methods=['DELETE'])\ndef delete_task(tid):\n    global tasks\n    tasks = [t for t in tasks if t['id'] != tid]\n    return '', 204`,
+      curl:`curl -X DELETE http://localhost:5000/api/tasks/1`,
+      fetch:`await fetch('/api/tasks/1', { method: 'DELETE' });` },
+  ];
+  let crudFmt = 'flask';
+  function renderCrud(){
+    const tb = $('crudBody');
+    tb.innerHTML = '';
+    CRUD.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHTML(r.op)}</td>
+        <td><span class="verb ${r.verb}">${r.verb}</span><br><span style="color:var(--muted);font-size:11px;font-family:'JetBrains Mono','SF Mono',monospace">${escapeHTML(r.path)}</span></td>
+        <td><code>${escapeHTML(r[crudFmt])}</code></td>`;
+      tb.appendChild(tr);
+    });
+  }
+  function setCrudFmt(fmt){
+    crudFmt = fmt;
+    document.querySelectorAll('.crud-tabs button').forEach(b=>b.classList.toggle('active', b.dataset.fmt === fmt));
+    renderCrud();
+  }
+  renderCrud();
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>
