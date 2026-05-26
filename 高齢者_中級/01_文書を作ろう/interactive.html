@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高齢者・中級 第1回｜文書を作ろう</title>
+<style>
+  :root{
+    --primary:#00838F; --secondary:#FFA000; --accent:#43A047;
+    --warn:#C62828; --dark:#263238; --light:#F5F7F8;
+    --panel:#FFFFFF; --muted:#546E7A; --shadow:0 3px 10px rgba(38,50,56,.12);
+    --border:rgba(38,50,56,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px;}
+  body{font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:15px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.05);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.1)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:6px 16px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:15px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:22px;height:22px;padding:0;border-radius:50%;
+    border:2px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.96);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:42px;height:42px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(38,50,56,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:18px;padding:32px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:70px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.9;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#00838F 0%,#0097A7 50%,#43A047 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:10px 26px;
+    border-radius:999px;font-weight:bold;margin-bottom:22px;backdrop-filter:blur(4px);font-size:16px}
+  .hero h1{font-size:clamp(46px,8vw,90px);line-height:1.2;margin-bottom:22px;
+    text-shadow:0 4px 16px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(20px,2.6vw,28px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,110px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:16px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:8px;font-weight:bold;font-size:15px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(34px,5vw,48px);color:var(--primary);margin-bottom:10px;font-weight:800}
+  .lead{font-size:21px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,58px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:10px;font-weight:700}
+  .card p{font-size:18px;line-height:1.8}
+  .card.warn{border-left:6px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:6px solid var(--accent);background:#E8F5E9}
+  .card.tip{border-left:6px solid var(--secondary);background:#FFF8E1}
+
+  /* Keyboard key */
+  .key{display:inline-block;background:white;border:2px solid var(--dark);
+    border-radius:8px;padding:4px 14px;font-family:'SF Mono','Menlo','Consolas',monospace;
+    font-weight:bold;font-size:18px;box-shadow:0 3px 0 rgba(0,0,0,.2);margin:0 3px;color:var(--dark)}
+
+  /* Word-like editor */
+  .editor{background:white;border-radius:12px;padding:0;box-shadow:var(--shadow);
+    border:2px solid var(--border);margin-top:14px;overflow:hidden}
+  .editor-toolbar{background:#F5F7F8;border-bottom:2px solid var(--border);padding:10px 14px;
+    display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .editor-toolbar .group{display:flex;gap:4px;padding:4px 8px;border-right:1px solid var(--border)}
+  .editor-toolbar .group:last-child{border-right:none}
+  .editor-toolbar button,.editor-toolbar select{background:white;border:1.5px solid #CFD8DC;
+    color:var(--dark);padding:8px 14px;border-radius:6px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:15px;transition:all .12s;min-width:40px}
+  .editor-toolbar button:hover{border-color:var(--primary);background:#E0F7FA}
+  .editor-toolbar button.active{background:var(--primary);color:white;border-color:var(--primary)}
+  .editor-toolbar button.bold{font-weight:900}
+  .editor-toolbar button.italic{font-style:italic}
+  .editor-toolbar button.underline{text-decoration:underline}
+  .editor-toolbar select{padding:7px 10px;min-width:80px}
+  .editor-body{padding:30px 36px;min-height:280px;font-size:18px;line-height:1.8;
+    background:white;outline:none;font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif}
+  .editor-body:focus{box-shadow:inset 0 0 0 3px rgba(0,131,143,.15)}
+  .editor-tools{display:flex;gap:10px;justify-content:center;padding:12px;background:#F5F7F8;border-top:1px solid var(--border);flex-wrap:wrap}
+  .editor-tools button{background:white;border:2px solid var(--primary);color:var(--primary);
+    padding:10px 22px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;font-size:15px;
+    transition:all .12s}
+  .editor-tools button:hover{background:var(--primary);color:white}
+  .editor-tools button.danger{border-color:var(--warn);color:var(--warn)}
+  .editor-tools button.danger:hover{background:var(--warn);color:white}
+
+  /* Shortcut cards */
+  .shortcuts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+  .scut{background:white;border-radius:12px;padding:18px;box-shadow:var(--shadow);
+    border:1px solid var(--border);cursor:pointer;transition:all .15s;
+    display:flex;align-items:center;gap:14px}
+  .scut:hover{transform:translateY(-3px);border-color:var(--primary)}
+  .scut .ic{font-size:42px;flex-shrink:0;width:60px;text-align:center}
+  .scut .info{flex:1}
+  .scut .info h4{font-size:18px;color:var(--primary);margin-bottom:4px}
+  .scut .info p{font-size:14px;color:var(--muted);margin-bottom:6px}
+  .scut .keys{display:flex;gap:4px;align-items:center}
+  .scut .keys .key{padding:3px 10px;font-size:14px;border-width:1.5px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+  .scut .keys span{color:var(--muted)}
+
+  /* Print preview */
+  .printprev{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .printprev-controls{display:flex;gap:10px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+  .printprev-controls label{font-size:15px;color:var(--muted);font-weight:bold}
+  .printprev-controls select{padding:8px 12px;border:1.5px solid #CFD8DC;border-radius:8px;
+    font-family:inherit;font-size:15px;background:white;font-weight:bold}
+  .printprev-controls select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,131,143,.15)}
+  .paper-area{display:flex;justify-content:center;padding:20px;background:#ECEFF1;border-radius:10px}
+  .paper{background:white;box-shadow:0 10px 30px rgba(0,0,0,.18);
+    width:300px;min-height:424px;padding:30px;font-size:14px;line-height:1.6;
+    transition:all .25s;border:1px solid #DDD;color:var(--dark)}
+  .paper.a4{width:300px;min-height:424px} /* A4 ratio approx */
+  .paper.b5{width:280px;min-height:396px}
+  .paper.postcard{width:260px;min-height:175px}
+  .paper.landscape{transform:rotate(0)}
+  .paper-meta{margin-top:14px;text-align:center;font-size:14px;color:var(--muted)}
+
+  /* Notice generator */
+  .gen{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .gen-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+  .gen-form .full{grid-column:1 / -1}
+  .gen-form label{display:block;font-weight:700;font-size:15px;color:var(--muted);margin-bottom:6px}
+  .gen-form input,.gen-form select,.gen-form textarea{width:100%;padding:11px 14px;
+    border:1.5px solid #CFD8DC;border-radius:8px;font-family:inherit;font-size:16px;background:white;color:var(--dark)}
+  .gen-form input:focus,.gen-form select:focus,.gen-form textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,131,143,.15)}
+  .gen-form textarea{min-height:60px;resize:vertical}
+
+  .gen-notice{background:white;border:3px solid var(--primary);border-radius:10px;
+    padding:30px;font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;
+    margin-top:18px;box-shadow:var(--shadow)}
+  .gen-notice .title{text-align:center;font-size:32px;font-weight:bold;color:var(--primary);margin-bottom:6px}
+  .gen-notice .subtitle{text-align:center;font-size:22px;color:var(--accent);font-weight:bold;margin-bottom:18px}
+  .gen-notice .row{font-size:19px;margin:8px 0;display:flex;gap:10px}
+  .gen-notice .row .lbl{flex-shrink:0;min-width:60px;font-weight:bold}
+  .gen-notice .row .val{font-weight:bold}
+  .gen-notice .row.highlight .val{color:var(--warn)}
+  .gen-notice .body{margin-top:18px;font-size:17px;line-height:1.9}
+  .gen-notice .signature{text-align:right;font-size:17px;margin-top:24px;color:var(--muted)}
+
+  .gen-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .gen-tools button{font-family:inherit;border:none;border-radius:8px;padding:12px 26px;
+    font-weight:700;cursor:pointer;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.12);
+    background:var(--primary);color:white}
+  .gen-tools button:hover{transform:translateY(-1px)}
+  .gen-tools button.gray{background:var(--muted)}
+  .gen-tools button.accent{background:var(--accent)}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:18px;padding-bottom:16px;border-bottom:1px dashed #CFD8DC}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:19px;margin-bottom:12px;color:var(--dark)}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .qrow .opts button{background:white;border:2px solid #CFD8DC;color:var(--dark);
+    padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#E0F7FA}
+  .qrow .opts button.right{background:#C8E6C9;border-color:var(--accent);color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .qrow .ex{font-size:15px;color:var(--muted);margin-top:10px;display:none;background:#F5F7F8;padding:12px;border-radius:8px;line-height:1.8}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:12px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .summary-row h3{font-size:19px}
+  .summary-row p{font-size:15px;color:var(--muted)}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  .next p{font-size:18px}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:14px 28px;border-radius:10px;
+    font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:16px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+
+  /* Print: only the notice */
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,
+    .hero,.divider,.section{display:none !important}
+    .print-area{display:block !important;padding:20px !important}
+  }
+  .print-area{display:none}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第1回</span> <b>文書を作ろう</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#soft">2<span>文書ソフト</span><span class="ic">📝</span></a>
+  <a href="#editor">3<span>文字を飾る練習</span><span class="ic">🎨</span></a>
+  <a href="#shortcut">4<span>ショートカット</span><span class="ic">⌨️</span></a>
+  <a href="#print">5<span>印刷プレビュー</span><span class="ic">🖨️</span></a>
+  <a href="#gen">6<span>町内会案内 作成</span><span class="ic">📋</span></a>
+  <a href="#safety">7<span>安全のひと言</span><span class="ic">⚠️</span></a>
+  <a href="#quiz">8<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 高齢者向けパソコン教室・中級</div>
+    <h1>文書を 作ろう</h1>
+    <p>Wordで <b>町内会の案内</b> を 1枚 作ってみる</p>
+    <div class="em">📝🖨️✨</div>
+  </div>
+  <div class="scroll-hint">下に すすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「保存して、印刷して、配る」 まで</h2>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📝</span><h3>文字を 打つ</h3><p>普段通りに</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🎨</span><h3>文字を 飾る</h3><p>大きく・太字・色</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">💾</span><h3>保存する</h3><p>Ctrl+S</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🖨️</span><h3>印刷する</h3><p>紙に 出す</p></div>
+  </div>
+</section>
+
+<!-- 1. 文書ソフト -->
+<div class="divider" id="soft" data-snav-target>
+  <div class="num">1.</div>
+  <h2>文書ソフトの 選び方</h2>
+</div>
+
+<section class="section">
+  <h2>何を 使えば いいの？</h2>
+  <p class="lead">きょうは <b>Word</b> を 想定しますが、 持っていなくても 大丈夫。<br>
+  カードを 押すと くわしく わかります。</p>
+
+  <div class="grid grid-3">
+    <div class="card" onclick="softInfo('word')" style="cursor:pointer;border-top:5px solid var(--primary)">
+      <h3>📄 Microsoft Word</h3>
+      <p>一番 普及している。<br>有料（買い切り or サブスク）。<br>パソコン購入時に 付いている事も。</p>
+    </div>
+    <div class="card" onclick="softInfo('gdocs')" style="cursor:pointer;border-top:5px solid var(--accent)">
+      <h3>🌐 Google ドキュメント</h3>
+      <p><b>無料</b>。<br>Webブラウザだけ で 動く。<br>自動で 保存される 安心！</p>
+    </div>
+    <div class="card" onclick="softInfo('memo')" style="cursor:pointer;border-top:5px solid var(--secondary)">
+      <h3>📃 メモ帳</h3>
+      <p>Windows に 標準。<br>シンプル＝<b>飾れない</b>。<br>覚書・ちょっとした メモ 向き。</p>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3>💡 おすすめ</h3>
+    <p style="margin-top:6px"><b>家に Word が ない</b> 方は、 まず <b>Google ドキュメント</b> から 始めるのが ラク。<br>
+    Webブラウザ（Chrome や Edge）で <b>docs.google.com</b> に アクセスするだけ！</p>
+  </div>
+</section>
+
+<!-- 2. 文字を飾る練習 -->
+<div class="divider" id="editor" data-snav-target>
+  <div class="num">2.</div>
+  <h2>文字を 飾る 練習</h2>
+</div>
+
+<section class="section">
+  <h2>本物の Word に近い エディタ</h2>
+  <p class="lead">下の <b>白い エリア</b> を クリックして 文字を 打ってみましょう。<br>
+  飾りたい所を <b>マウスで なぞって</b>、 上の ボタンを 押すと 飾れます！</p>
+
+  <div class="editor">
+    <div class="editor-toolbar">
+      <div class="group">
+        <select id="edSize" onchange="edSize(this.value)" title="文字の大きさ">
+          <option value="14">14</option>
+          <option value="16">16</option>
+          <option value="18" selected>18</option>
+          <option value="22">22</option>
+          <option value="28">28</option>
+          <option value="36">36</option>
+          <option value="48">48</option>
+        </select>
+      </div>
+      <div class="group">
+        <button class="bold" onclick="edExec('bold')" title="太字 (Ctrl+B)">B</button>
+        <button class="italic" onclick="edExec('italic')" title="斜体 (Ctrl+I)">I</button>
+        <button class="underline" onclick="edExec('underline')" title="下線 (Ctrl+U)">U</button>
+      </div>
+      <div class="group">
+        <button onclick="edExec('justifyLeft')" title="左寄せ">⫷</button>
+        <button onclick="edExec('justifyCenter')" title="中央寄せ (Ctrl+E)">≡</button>
+        <button onclick="edExec('justifyRight')" title="右寄せ">⫸</button>
+      </div>
+      <div class="group">
+        <button onclick="edColor('#C62828')" style="color:#C62828" title="赤色">●赤</button>
+        <button onclick="edColor('#1565C0')" style="color:#1565C0" title="青色">●青</button>
+        <button onclick="edColor('#00838F')" style="color:#00838F" title="ティール">●ティ</button>
+        <button onclick="edColor('#000000')" title="黒に戻す">●黒</button>
+      </div>
+      <div class="group">
+        <button onclick="edUndo()" title="元に戻す (Ctrl+Z)">↺ 戻す</button>
+      </div>
+    </div>
+    <div class="editor-body" id="editorBody" contenteditable="true" spellcheck="false">町内会からのお知らせ
+
+春の お花見会を 開催します。
+
+日時：4月5日（土）10時〜
+場所：○○公園
+持ち物：お弁当・敷物
+会費：500円
+
+お子様も ぜひ お越しください。</div>
+    <div class="editor-tools">
+      <button onclick="edClear()" class="danger">↺ 内容をリセット</button>
+      <button onclick="edPreview()">👁 印刷プレビュー風 で見る</button>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3>💡 飾る 順番</h3>
+    <p style="margin-top:6px"><b>1. 文字を なぞって 選ぶ</b>（青く反転）<br>
+    <b>2. 上の ボタンを クリック</b><br>
+    <b>3. 失敗したら ↺ボタン</b> または <span class="key">Ctrl</span>+<span class="key">Z</span></p>
+  </div>
+</section>
+
+<!-- 3. ショートカット -->
+<div class="divider" id="shortcut" data-snav-target>
+  <div class="num">3.</div>
+  <h2>キーボード ショートカット</h2>
+</div>
+
+<section class="section">
+  <h2>覚えると ラクになる 6個</h2>
+  <p class="lead">押すたびに 速くなる 魔法のキー。 カードを 押すと くわしい 説明 が 出ます。</p>
+
+  <div class="shortcuts" id="shortcutList"></div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3>💡 Mac の方</h3>
+    <p style="margin-top:6px">Windows の <span class="key">Ctrl</span> は、 Mac では <span class="key">⌘</span>（command）。<br>
+    例：保存は <span class="key">⌘</span>+<span class="key">S</span></p>
+  </div>
+</section>
+
+<!-- 4. 印刷プレビュー -->
+<div class="divider" id="print" data-snav-target>
+  <div class="num">4.</div>
+  <h2>印刷プレビュー</h2>
+</div>
+
+<section class="section">
+  <h2>「紙に 出る前」 を 必ず 見る</h2>
+  <p class="lead">用紙サイズや 向き を 変えると、 紙の見え方が 変わります。<br>
+  本物の Word でも 同じ。 印刷前 に かならず プレビューを 見ましょう。</p>
+
+  <div class="printprev">
+    <div class="printprev-controls">
+      <label>用紙：</label>
+      <select id="paperSize" onchange="updatePrev()">
+        <option value="a4">A4（一般的）</option>
+        <option value="b5">B5（少し小さい）</option>
+        <option value="postcard">はがき</option>
+      </select>
+      <label style="margin-left:14px">向き：</label>
+      <select id="paperOri" onchange="updatePrev()">
+        <option value="portrait">縦</option>
+        <option value="landscape">横</option>
+      </select>
+      <label style="margin-left:14px">余白：</label>
+      <select id="paperMargin" onchange="updatePrev()">
+        <option value="20">標準（20mm）</option>
+        <option value="10">狭い（10mm）</option>
+        <option value="30">広い（30mm）</option>
+      </select>
+    </div>
+
+    <div class="paper-area">
+      <div class="paper a4" id="paperPreview">
+        <div style="text-align:center;font-size:18px;font-weight:bold;color:#00838F">町内会からのお知らせ</div>
+        <div style="text-align:center;font-size:14px;color:#43A047;font-weight:bold;margin-top:4px">＊春のお花見会＊</div>
+        <div style="margin-top:14px;font-size:12px;line-height:1.7">
+          日時：<b>4月5日（土）10時〜</b><br>
+          場所：<b>○○公園</b><br>
+          会費：<b>500円</b><br>
+          持ち物：<span style="color:#C62828;font-weight:bold">お弁当・敷物</span>
+        </div>
+        <div style="margin-top:18px;font-size:11px;text-align:right;color:#666">町内会長　○○ ○○</div>
+      </div>
+    </div>
+    <div class="paper-meta" id="paperMeta">A4 縦 ／ 余白 20mm</div>
+  </div>
+</section>
+
+<!-- 5. 町内会案内 ジェネレータ -->
+<div class="divider" id="gen" data-snav-target>
+  <div class="num">5.</div>
+  <h2>町内会案内 ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>入力するだけで 案内が できる！</h2>
+  <p class="lead">下の項目を 埋めると、 きれいな 案内文が 自動で 完成します。<br>
+  「印刷」ボタンで そのまま 紙に 出せます！</p>
+
+  <div class="gen">
+    <div class="gen-form">
+      <div class="full">
+        <label>タイトル</label>
+        <input type="text" id="gT" value="町内会からのお知らせ" maxlength="30">
+      </div>
+      <div class="full">
+        <label>副題（小見出し）</label>
+        <input type="text" id="gST" value="＊春のお花見会＊" maxlength="30">
+      </div>
+      <div>
+        <label>日時</label>
+        <input type="text" id="gDate" value="4月5日（土）午前10時〜午後2時" maxlength="40">
+      </div>
+      <div>
+        <label>場所</label>
+        <input type="text" id="gPlace" value="○○公園 桜の広場" maxlength="40">
+      </div>
+      <div>
+        <label>会費</label>
+        <input type="text" id="gFee" value="500円" maxlength="20">
+      </div>
+      <div>
+        <label>持ち物（赤で強調されます）</label>
+        <input type="text" id="gItems" value="お弁当・敷物" maxlength="30">
+      </div>
+      <div class="full">
+        <label>本文（お知らせ・お願い など）</label>
+        <textarea id="gBody">お子様連れも 大歓迎です。
+当日は 雨天決行 となります。
+皆さま お誘い合わせの上 ぜひ ご参加ください。</textarea>
+      </div>
+      <div>
+        <label>差出人</label>
+        <input type="text" id="gFrom" value="町内会長　○○ ○○" maxlength="30">
+      </div>
+    </div>
+
+    <div class="print-area" id="printArea">
+      <div class="gen-notice" id="genView">
+        <!-- generated -->
+      </div>
+    </div>
+
+    <div class="gen-notice" id="genViewScreen">
+      <!-- generated, screen-only -->
+    </div>
+
+    <div class="gen-tools">
+      <button class="accent" onclick="window.print()">🖨️ 印刷する</button>
+      <button onclick="downloadGen()">💾 .html で保存</button>
+      <button class="gray" onclick="resetGen()">↺ 初期値に戻す</button>
+    </div>
+  </div>
+</section>
+
+<!-- 6. 安全のひと言 -->
+<div class="divider" id="safety" data-snav-target>
+  <div class="num">6.</div>
+  <h2>安全 の ひと言</h2>
+</div>
+
+<section class="section">
+  <h2>文書を 扱う ときの 注意</h2>
+  <p class="lead">便利な 道具ですが、 ちょっとした 注意が 必要 です。</p>
+
+  <div class="grid grid-2">
+    <div class="card warn">
+      <h3>⚠️ メールの 添付ファイル</h3>
+      <p style="margin-top:6px">知らない 人 から の 添付は <b>絶対に 開かない</b>！<br>
+      「請求書」「重要」など 怪しい 名前 でも 開かない。</p>
+    </div>
+    <div class="card warn">
+      <h3>⚠️ 個人情報 を 入れない</h3>
+      <p style="margin-top:6px">案内 や 名簿 に <b>マイナンバー・口座番号・パスワード</b> は<br>
+      絶対に 書かない。</p>
+    </div>
+    <div class="card tip">
+      <h3>💡 保存先 を 決める</h3>
+      <p style="margin-top:6px">何でも デスクトップ → ぐちゃぐちゃ に。<br>
+      <b>「ドキュメント」</b> フォルダ に <b>「町内会」</b> 等の フォルダ を 作って 分ける。</p>
+    </div>
+    <div class="card tip">
+      <h3>💡 バックアップ</h3>
+      <p style="margin-top:6px">大事な 文書 は USBメモリ や 家族の メール で <b>2つ 以上</b> の場所に 保存。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめ クイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみましょう</h2>
+  <p class="lead">気軽に 試して くださいね。 何回 間違えても 大丈夫です。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="1">
+      <div class="q">Q1. 保存する ショートカット は どれ？</div>
+      <div class="opts">
+        <button data-i="0"><span class="key">Ctrl</span>+<span class="key">P</span></button>
+        <button data-i="1"><span class="key">Ctrl</span>+<span class="key">S</span></button>
+        <button data-i="2"><span class="key">Ctrl</span>+<span class="key">C</span></button>
+        <button data-i="3"><span class="key">Ctrl</span>+<span class="key">Z</span></button>
+      </div>
+      <div class="ex">✅ <b>S</b> は Save（保存）の 頭文字。 ちなみに <span class="key">Ctrl</span>+<span class="key">P</span> は <b>印刷</b>（Print）！</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q2. 間違えて 文字を 消した！ どうする？</div>
+      <div class="opts">
+        <button data-i="0">あきらめる</button>
+        <button data-i="1">パソコンを 再起動</button>
+        <button data-i="2"><span class="key">Ctrl</span>+<span class="key">Z</span> で 元に戻す</button>
+        <button data-i="3">電源を 切る</button>
+      </div>
+      <div class="ex">✅ <span class="key">Ctrl</span>+<span class="key">Z</span> は <b>魔法のキー</b>！ 何回でも 戻れる。 やり直しは <span class="key">Ctrl</span>+<span class="key">Y</span>。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. 印刷の <b>失敗を 防ぐ</b> ために 一番 大事 なのは？</div>
+      <div class="opts">
+        <button data-i="0">印刷プレビュー で 確認</button>
+        <button data-i="1">プリンタを 高い物 に 変える</button>
+        <button data-i="2">紙を 厚くする</button>
+        <button data-i="3">何も しない</button>
+      </div>
+      <div class="ex">✅ プレビュー＝<b>紙に 出る前 の 見本</b>。 はみ出し や 2ページ目 を 事前に 発見できる！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📄 文書ソフトの 使い分け</h3><p>Word / Google ドキュメント / メモ帳</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>🎨 文字を 飾る 4つの 基本</h3><p>大きさ・太字・色・中央寄せ</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>⌨️ ショートカット 6個</h3><p>Ctrl+S, B, I, U, Z, E</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🖨️ 印刷プレビュー を 必ず 確認</h3><p>用紙・向き・余白</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>📋 町内会案内 が 完成！</h3><p>家でも すぐ 使える</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">📊 💴</div>
+  <h2>次回 ｜ 数字の表 を 使ってみる</h2>
+  <p>Excel で <b>家計簿</b> を 1ページ 作ります！</p>
+</div>
+
+<footer>高齢者向けパソコン教室 ／ 中級 第1回｜文書を作ろう</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* 文書ソフト モーダル */
+  const SOFT = {
+    word: { e:'📄', t:'Microsoft Word',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>有料（Microsoft 365 = 月額制、 Office 単体 = 買い切り）<br>
+        <b>機能：</b>豊富 — 表・画像・差し込み印刷・縦書き まで<br><br>
+        <b>こんな人 向け：</b><br>
+        • お仕事の 文書を 作る<br>
+        • 学校・町内会の 文書<br>
+        • 既に パソコンに 入っている<br><br>
+        <b>注意：</b>無料の「Microsoft 365 オンライン」もあります（ブラウザだけ）！</div>`},
+    gdocs: { e:'🌐', t:'Google ドキュメント',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b><b>無料</b>（Google アカウント が あれば）<br>
+        <b>機能：</b>Word と ほぼ同じ。 互換性 もある<br><br>
+        <b>こんな人 向け：</b><br>
+        • Word を 持っていない<br>
+        • <b>自動保存</b> が ほしい（手動 不要）<br>
+        • 家族と <b>共有</b> したい<br><br>
+        <b>使い方：</b>Chrome / Edge で「docs.google.com」 にアクセス。<br>
+        Gメール アカウントで ログイン。</div>`},
+    memo: { e:'📃', t:'メモ帳',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>無料（Windows 標準）<br>
+        <b>機能：</b>シンプル — 文字だけ、 飾り <b>なし</b><br><br>
+        <b>こんな人 向け：</b><br>
+        • ちょっとした 覚え書き<br>
+        • 買い物リスト<br>
+        • 電話メモ<br><br>
+        <b>注意：</b>太字・色・印刷 は <b>できません</b>。<br>
+        ちゃんとした 文書を 作るなら Word か Google ドキュメント！</div>`},
+  };
+  function softInfo(k){
+    const i = SOFT[k];
+    if(i) info(i.e, i.t, i.b);
+  }
+
+  /* エディタ */
+  const ed = $('editorBody');
+  function edExec(cmd){
+    try { document.execCommand(cmd, false, null); ed.focus(); }
+    catch(e){}
+  }
+  function edSize(px){
+    // execCommandのfontSizeは1-7、independent indexで対応
+    try {
+      document.execCommand('fontSize', false, 7);
+      // 7を任意のpx に書き換え
+      const fonts = ed.querySelectorAll('font[size="7"]');
+      fonts.forEach(f => {
+        f.removeAttribute('size');
+        f.style.fontSize = px + 'px';
+      });
+      ed.focus();
+    } catch(e){}
+  }
+  function edColor(color){
+    try { document.execCommand('foreColor', false, color); ed.focus(); }
+    catch(e){}
+  }
+  function edUndo(){
+    try { document.execCommand('undo'); ed.focus(); }
+    catch(e){}
+  }
+  function edClear(){
+    if(!confirm('内容を リセットして OK？')) return;
+    ed.innerHTML = '町内会からのお知らせ\n\nここに 文字を 打ってみましょう。\n\n上の ボタンで 飾れます！';
+  }
+  function edPreview(){
+    info('👁','エディタ の 印刷プレビュー',
+      `<div style="background:white;border:2px solid var(--primary);border-radius:8px;padding:20px;font-family:'Hiragino Mincho ProN','Yu Mincho',serif;font-size:14px;line-height:1.8;max-height:60vh;overflow:auto">${ed.innerHTML}</div>
+      <div style="margin-top:10px;color:var(--muted);font-size:13px;text-align:center">↑ こんな感じで 紙に 出ます</div>`);
+  }
+
+  /* ショートカット */
+  const SHORTCUTS = [
+    { ic:'💾', k:['Ctrl','S'], name:'保存（Save）', desc:'今までの 編集を 上書き保存',
+      body:'<b>一番 大事</b> な ショートカット！<br><b>5分に 1回</b> は 押す くせを つけよう。<br><br>Mac は <span class="key">⌘</span>+<span class="key">S</span>' },
+    { ic:'🅱️', k:['Ctrl','B'], name:'太字（Bold）', desc:'選んだ文字を 太く',
+      body:'文字を <b>なぞって 選ぶ → Ctrl+B</b>。<br>もう一度 押すと 元に戻る（トグル）。' },
+    { ic:'↺', k:['Ctrl','Z'], name:'元に戻す（Undo）', desc:'失敗を 取り消す',
+      body:'<b>魔法のキー</b>。何回 押しても 戻れる。<br>「あ、 消しちゃった！」 と思ったら まず これ！<br><br>逆に やり直し は <span class="key">Ctrl</span>+<span class="key">Y</span>' },
+    { ic:'⊃', k:['Ctrl','C'], name:'コピー', desc:'選んだ部分を 覚える',
+      body:'コピー → <span class="key">Ctrl</span>+<span class="key">V</span> で 貼り付け（ペースト）。<br>同じ文章を 何度も 使う時に 便利！' },
+    { ic:'⊂', k:['Ctrl','V'], name:'貼り付け', desc:'コピーしたものを 出す',
+      body:'<span class="key">Ctrl</span>+<span class="key">C</span> で 覚えたものを ここで 貼り付け。<br>違う 文書 から も コピペ できる！' },
+    { ic:'🖨️', k:['Ctrl','P'], name:'印刷（Print）', desc:'印刷画面を 開く',
+      body:'プリンタが 接続されていれば、 すぐに 印刷画面 が 開く。<br>必ず <b>プレビュー</b> を 見てから OK を 押そう！' },
+  ];
+  const scutList = $('shortcutList');
+  SHORTCUTS.forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'scut';
+    div.innerHTML = `<div class="ic">${s.ic}</div>
+      <div class="info">
+        <h4>${s.name}</h4>
+        <p>${s.desc}</p>
+        <div class="keys"><span class="key">${s.k[0]}</span><span>+</span><span class="key">${s.k[1]}</span></div>
+      </div>`;
+    div.addEventListener('click', ()=>{
+      info(s.ic, s.name + '（' + s.k.join('+') + '）',
+        `<div style="font-size:16px;line-height:1.9">${s.body}</div>`);
+    });
+    scutList.appendChild(div);
+  });
+
+  /* 印刷プレビュー */
+  function updatePrev(){
+    const p = $('paperPreview');
+    const sizeV = $('paperSize').value;
+    const oriV = $('paperOri').value;
+    const mgV = $('paperMargin').value;
+    p.classList.remove('a4','b5','postcard');
+    p.classList.add(sizeV);
+    // landscape: 入れ替え
+    if(oriV === 'landscape'){
+      const w = p.offsetWidth;
+      const h = p.offsetHeight;
+      p.style.width = h + 'px';
+      p.style.minHeight = w * 0.7 + 'px';
+    } else {
+      p.style.width = '';
+      p.style.minHeight = '';
+    }
+    p.style.padding = mgV + 'px';
+    const sizeName = { a4:'A4', b5:'B5', postcard:'はがき' }[sizeV];
+    const oriName = oriV === 'portrait' ? '縦' : '横';
+    $('paperMeta').textContent = sizeName + ' ' + oriName + ' ／ 余白 ' + mgV + 'mm';
+  }
+  updatePrev();
+
+  /* 町内会案内 ジェネレータ */
+  const GEN_FIELDS = ['gT','gST','gDate','gPlace','gFee','gItems','gBody','gFrom'];
+  function renderGen(){
+    const t = $('gT').value.trim() || '（タイトル）';
+    const st = $('gST').value.trim();
+    const dt = $('gDate').value.trim() || '（日時）';
+    const pl = $('gPlace').value.trim() || '（場所）';
+    const fee = $('gFee').value.trim() || '（会費）';
+    const items = $('gItems').value.trim() || '';
+    const body = $('gBody').value.trim();
+    const from = $('gFrom').value.trim() || '';
+
+    const html = `
+      <div class="title">${escapeHTML(t)}</div>
+      ${st ? `<div class="subtitle">${escapeHTML(st)}</div>` : ''}
+      <div class="row"><span class="lbl">日時</span><span class="val">${escapeHTML(dt)}</span></div>
+      <div class="row"><span class="lbl">場所</span><span class="val">${escapeHTML(pl)}</span></div>
+      <div class="row"><span class="lbl">会費</span><span class="val">${escapeHTML(fee)}</span></div>
+      ${items ? `<div class="row highlight"><span class="lbl">持ち物</span><span class="val">${escapeHTML(items)}</span></div>` : ''}
+      ${body ? `<div class="body">${escapeHTML(body).replace(/\n/g,'<br>')}</div>` : ''}
+      ${from ? `<div class="signature">${escapeHTML(from)}</div>` : ''}
+    `;
+    $('genView').innerHTML = html;
+    $('genViewScreen').innerHTML = html;
+  }
+  GEN_FIELDS.forEach(id => $(id).addEventListener('input', renderGen));
+  function resetGen(){
+    if(!confirm('入力を リセットして OK？')) return;
+    $('gT').value = '町内会からのお知らせ';
+    $('gST').value = '＊春のお花見会＊';
+    $('gDate').value = '4月5日（土）午前10時〜午後2時';
+    $('gPlace').value = '○○公園 桜の広場';
+    $('gFee').value = '500円';
+    $('gItems').value = 'お弁当・敷物';
+    $('gBody').value = 'お子様連れも 大歓迎です。\n当日は 雨天決行 となります。\n皆さま お誘い合わせの上 ぜひ ご参加ください。';
+    $('gFrom').value = '町内会長　○○ ○○';
+    renderGen();
+  }
+  function downloadGen(){
+    const t = $('gT').value.trim() || '案内';
+    const content = $('genView').outerHTML;
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHTML(t)}</title>
+<style>
+body{font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;background:#F5F7F8;padding:40px;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.gen-notice{background:white;border:3px solid #00838F;border-radius:10px;padding:40px;max-width:600px;width:100%;box-shadow:0 4px 16px rgba(0,131,143,.15)}
+.gen-notice .title{text-align:center;font-size:34px;font-weight:bold;color:#00838F;margin-bottom:6px}
+.gen-notice .subtitle{text-align:center;font-size:24px;color:#43A047;font-weight:bold;margin-bottom:24px}
+.gen-notice .row{font-size:20px;margin:10px 0;display:flex;gap:12px}
+.gen-notice .row .lbl{flex-shrink:0;min-width:64px;font-weight:bold}
+.gen-notice .row .val{font-weight:bold}
+.gen-notice .row.highlight .val{color:#C62828}
+.gen-notice .body{margin-top:20px;font-size:18px;line-height:2}
+.gen-notice .signature{text-align:right;font-size:18px;margin-top:30px;color:#666}
+@media print { body{background:white;padding:20px}.gen-notice{border-width:3px;box-shadow:none} }
+</style></head><body>${content}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = t.replace(/[\/\\?<>:|"*]/g,'_') + '.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 ' + a.download + ' を 保存しました');
+  }
+  renderGen();
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ / ショートカット */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:16px;line-height:2.2">
+        <div><span class="key">←</span> <span class="key">↑</span> <span class="key">PageUp</span> 前の章へ</div>
+        <div><span class="key">→</span> <span class="key">↓</span> <span class="key">PageDown</span> <span class="key">Space</span> 次の章へ</div>
+        <div><span class="key">1</span>〜<span class="key">${targets.length}</span> 章番号で 直行</div>
+        <div><span class="key">Home</span> / <span class="key">End</span> 最初／最後</div>
+        <div><span class="key">?</span> このヘルプを 開く</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

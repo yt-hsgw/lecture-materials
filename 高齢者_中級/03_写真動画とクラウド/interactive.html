@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高齢者・中級 第3回｜写真・動画とクラウド</title>
+<style>
+  :root{
+    --primary:#00838F; --secondary:#FFA000; --accent:#43A047;
+    --warn:#C62828; --dark:#263238; --light:#F5F7F8;
+    --panel:#FFFFFF; --muted:#546E7A; --shadow:0 3px 10px rgba(38,50,56,.12);
+    --border:rgba(38,50,56,.1);
+    --google:#4285F4; --apple:#A2AAAD; --onedrive:#0078D4; --amazon:#FF9900;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px;}
+  body{font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:15px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.05);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.1)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:6px 16px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:15px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:22px;height:22px;padding:0;border-radius:50%;
+    border:2px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.96);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:42px;height:42px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(38,50,56,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:18px;padding:32px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:70px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.9;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#00838F 0%,#0097A7 50%,#43A047 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:10px 26px;
+    border-radius:999px;font-weight:bold;margin-bottom:22px;backdrop-filter:blur(4px);font-size:16px}
+  .hero h1{font-size:clamp(46px,8vw,90px);line-height:1.2;margin-bottom:22px;
+    text-shadow:0 4px 16px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(20px,2.6vw,28px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,110px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:16px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:8px;font-weight:bold;font-size:15px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(34px,5vw,48px);color:var(--primary);margin-bottom:10px;font-weight:800}
+  .lead{font-size:21px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,58px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:10px;font-weight:700}
+  .card p{font-size:18px;line-height:1.8}
+  .card.warn{border-left:6px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:6px solid var(--accent);background:#E8F5E9}
+  .card.tip{border-left:6px solid var(--secondary);background:#FFF8E1}
+
+  /* Cloud architecture diagram */
+  .arch{background:white;border-radius:14px;padding:30px 24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;text-align:center}
+  .arch .cloud{display:inline-block;font-size:96px;line-height:1;margin:14px 0;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .arch .devices{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:20px}
+  .arch .dev{font-size:60px;line-height:1;text-align:center}
+  .arch .dev span{display:block;font-size:14px;color:var(--muted);margin-top:6px;font-weight:bold}
+  .arch .arrow{font-size:18px;color:var(--primary);margin-top:14px;font-weight:bold}
+
+  /* Service comparison */
+  .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px}
+  .svc{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    border:2px solid var(--border);cursor:pointer;transition:all .15s}
+  .svc:hover{transform:translateY(-4px);border-color:currentColor}
+  .svc.google{color:var(--google)}
+  .svc.apple{color:var(--apple)}
+  .svc.onedrive{color:var(--onedrive)}
+  .svc.amazon{color:var(--amazon)}
+  .svc h3{font-size:20px;margin-bottom:6px}
+  .svc .free{display:inline-block;background:#E8F5E9;color:#1B5E20;padding:4px 12px;
+    border-radius:6px;font-size:14px;font-weight:700;margin:6px 0}
+  .svc .meta{font-size:14px;color:var(--muted);line-height:1.7;margin-top:8px}
+  .svc .meta b{color:var(--dark)}
+  .svc .target{background:#FFF8E1;color:#7C5800;padding:6px 12px;border-radius:6px;
+    font-size:13px;font-weight:700;margin-top:8px;display:inline-block}
+
+  /* Capacity calculator */
+  .calc{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .calc-inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+  .calc-inputs label{display:block;font-weight:700;font-size:15px;color:var(--muted);margin-bottom:6px}
+  .calc-inputs input[type=range]{width:100%;accent-color:var(--primary);height:10px}
+  .calc-inputs .val{display:inline-block;background:var(--primary);color:white;
+    padding:4px 14px;border-radius:6px;font-family:'SF Mono','Menlo',monospace;
+    font-size:18px;font-weight:bold;margin-bottom:6px}
+  .calc-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .calc-presets span{align-self:center;color:var(--muted);font-size:14px;font-weight:bold}
+  .calc-presets button{background:white;border:1.5px solid var(--primary);color:var(--primary);
+    padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:14px}
+  .calc-presets button:hover{background:var(--primary);color:white}
+  .calc-result{background:linear-gradient(135deg,#E0F2F1,#FFF8E1);border-radius:10px;
+    padding:20px;text-align:center;border:2px solid var(--secondary)}
+  .calc-result .big{font-size:42px;font-weight:bold;color:var(--primary);line-height:1.2;margin:6px 0;
+    font-family:'SF Mono','Menlo',monospace}
+  .calc-result .verdict{font-size:18px;font-weight:700;margin-top:10px}
+  .calc-judges{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:14px}
+  .calc-judges .j{background:white;border-radius:8px;padding:10px;text-align:center;
+    border:2px solid var(--border);font-size:13px}
+  .calc-judges .j.ok{border-color:var(--accent);background:#E8F5E9}
+  .calc-judges .j.ng{border-color:var(--warn);background:#FFEBEE}
+  .calc-judges .j .name{font-weight:700;color:var(--dark);font-size:14px}
+  .calc-judges .j .info{color:var(--muted);font-size:12px;margin-top:2px}
+
+  /* Share scope simulator */
+  .scope{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .scope-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
+  .scope-tab{background:white;border:2px solid var(--border);border-radius:10px;
+    padding:14px;cursor:pointer;text-align:center;transition:all .15s}
+  .scope-tab:hover{transform:translateY(-2px)}
+  .scope-tab.active{border-color:currentColor;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+  .scope-tab.private{color:var(--warn)}
+  .scope-tab.family{color:var(--accent)}
+  .scope-tab.link{color:#B8860B}
+  .scope-tab.public{color:#B71C1C}
+  .scope-tab .ic{font-size:36px;display:block;margin-bottom:4px}
+  .scope-tab .name{font-weight:bold;font-size:15px}
+
+  .scope-stage{background:#F5F7F8;border-radius:12px;padding:24px;min-height:240px;
+    border:2px dashed var(--border)}
+  .scope-stage .photo-card{background:white;border-radius:10px;padding:14px;text-align:center;
+    box-shadow:var(--shadow);max-width:160px;margin:0 auto 18px}
+  .scope-stage .photo-card .img{font-size:60px;line-height:1}
+  .scope-stage .photo-card .cap{font-size:13px;color:var(--muted);margin-top:4px}
+  .scope-stage .audience{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .scope-stage .person{background:white;border:2px solid var(--border);border-radius:10px;
+    padding:12px;text-align:center;min-width:90px;transition:all .25s}
+  .scope-stage .person.canSee{border-color:var(--accent);background:#E8F5E9}
+  .scope-stage .person.cantSee{opacity:.35;text-decoration:line-through}
+  .scope-stage .person .face{font-size:38px;line-height:1}
+  .scope-stage .person .name{font-size:13px;font-weight:bold;margin-top:4px}
+  .scope-stage .person .access{font-size:11px;color:var(--muted);margin-top:2px}
+  .scope-explain{margin-top:14px;padding:14px 18px;border-radius:10px;font-size:15px;line-height:1.8}
+  .scope-explain.private{background:#FFEBEE;border-left:6px solid var(--warn)}
+  .scope-explain.family{background:#E8F5E9;border-left:6px solid var(--accent)}
+  .scope-explain.link{background:#FFF8E1;border-left:6px solid var(--secondary)}
+  .scope-explain.public{background:#FFCDD2;border-left:6px solid var(--warn)}
+
+  /* Share link simulator */
+  .linksim{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .linksim-btn{background:var(--primary);color:white;border:none;border-radius:10px;
+    padding:14px 28px;cursor:pointer;font-family:inherit;font-weight:700;font-size:16px;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;display:block;margin:0 auto 14px}
+  .linksim-btn:hover{transform:translateY(-1px)}
+  .linksim-url{background:#F5F7F8;border:2px solid var(--border);border-radius:8px;
+    padding:14px 18px;font-family:'SF Mono','Menlo',monospace;font-size:14px;
+    word-break:break-all;color:var(--primary);font-weight:700;margin-bottom:14px}
+  .linksim-flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px;align-items:center}
+  .linksim-flow .step{background:#F5F7F8;border-radius:10px;padding:14px;text-align:center}
+  .linksim-flow .step .ic{font-size:42px;line-height:1}
+  .linksim-flow .step .lbl{font-size:14px;color:var(--muted);font-weight:700;margin-top:6px}
+  .linksim-phone{background:#263238;border-radius:24px;padding:14px;width:240px;margin:14px auto;
+    border:4px solid var(--dark)}
+  .linksim-phone .screen{background:white;border-radius:14px;padding:16px;min-height:200px}
+  .linksim-phone .screen .header{font-size:13px;color:var(--primary);font-weight:bold;margin-bottom:6px}
+  .linksim-phone .screen .img{font-size:60px;text-align:center;line-height:1.2;margin:14px 0}
+  .linksim-phone .screen .text{font-size:13px;line-height:1.7;color:var(--dark)}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:18px;padding-bottom:16px;border-bottom:1px dashed #CFD8DC}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:19px;margin-bottom:12px;color:var(--dark)}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .qrow .opts button{background:white;border:2px solid #CFD8DC;color:var(--dark);
+    padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#E0F7FA}
+  .qrow .opts button.right{background:#C8E6C9;border-color:var(--accent);color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .qrow .ex{font-size:15px;color:var(--muted);margin-top:10px;display:none;background:#F5F7F8;padding:12px;border-radius:8px;line-height:1.8}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:12px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .summary-row h3{font-size:19px}
+  .summary-row p{font-size:15px;color:var(--muted)}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  .next p{font-size:18px}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:14px 28px;border-radius:10px;
+    font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:16px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第3回</span> <b>写真・動画とクラウド</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#cloud">2<span>クラウドとは</span><span class="ic">☁️</span></a>
+  <a href="#services">3<span>4社サービス比較</span><span class="ic">📱</span></a>
+  <a href="#calc">4<span>容量計算機</span><span class="ic">📊</span></a>
+  <a href="#scope">5<span>共有範囲シミュ</span><span class="ic">🔒</span></a>
+  <a href="#link">6<span>共有リンク体験</span><span class="ic">🔗</span></a>
+  <a href="#safety">7<span>安全のひと言</span><span class="ic">⚠️</span></a>
+  <a href="#quiz">8<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 高齢者向けパソコン教室・中級</div>
+    <h1>写真・動画と<br>クラウド</h1>
+    <p>スマホの 写真を <b>家族と 共有</b> ！ Googleフォト / iCloud</p>
+    <div class="em">📸☁️👨‍👩‍👧</div>
+  </div>
+  <div class="scroll-hint">下に すすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「孫の運動会」 を 家族 みんなで</h2>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">☁️</span><h3>クラウド</h3><p>仕組みを 知る</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📤</span><h3>アップロード</h3><p>写真を 預ける</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📁</span><h3>整理</h3><p>アルバム を作る</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🔗</span><h3>共有</h3><p>家族に 届ける</p></div>
+  </div>
+</section>
+
+<!-- 1. クラウドとは -->
+<div class="divider" id="cloud" data-snav-target>
+  <div class="num">1.</div>
+  <h2>クラウド って 何？</h2>
+</div>
+
+<section class="section">
+  <h2>「ネット上の 大きな 倉庫」</h2>
+  <p class="lead">スマホ・パソコン・家族の スマホ、 ぜんぶが <b>真ん中の ☁️</b> を 通じて つながります。</p>
+
+  <div class="arch">
+    <div class="devices">
+      <div class="dev">📱<span>あなたの<br>スマホ</span></div>
+      <div class="dev">💻<span>あなたの<br>パソコン</span></div>
+    </div>
+    <div class="arrow">↓ アップロード ↑ ダウンロード</div>
+    <div class="cloud">☁️</div>
+    <div class="arrow">↑ アクセス ↓</div>
+    <div class="devices">
+      <div class="dev">👨<span>息子さん</span></div>
+      <div class="dev">👵<span>奥様</span></div>
+      <div class="dev">👶<span>お孫さん</span></div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3>💡 クラウド の メリット</h3>
+    <ul style="margin-left:22px;margin-top:6px;font-size:17px;line-height:1.9">
+      <li>スマホが <b>壊れても 写真は 無事</b>（自動バックアップ）</li>
+      <li>家族に <b>リンク1つ</b> で 共有</li>
+      <li>いつでも、どこからでも、<b>同じ写真</b> が 見られる</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 2. サービス比較 -->
+<div class="divider" id="services" data-snav-target>
+  <div class="num">2.</div>
+  <h2>4社 サービス 比較</h2>
+</div>
+
+<section class="section">
+  <h2>どれを 選べば 良い？</h2>
+  <p class="lead">カードを クリックで くわしい 情報。 <b>スマホの メーカー</b> で 選ぶ のが ラク！</p>
+
+  <div class="services">
+    <div class="svc google" onclick="svcInfo('google')">
+      <h3>🟦 Googleフォト</h3>
+      <span class="free">無料 15 GB</span>
+      <div class="meta"><b>強み：</b>検索が 賢い・Android標準</div>
+      <div class="target">📱 Android の方</div>
+    </div>
+    <div class="svc apple" onclick="svcInfo('apple')">
+      <h3>🍎 iCloud</h3>
+      <span class="free">無料 5 GB</span>
+      <div class="meta"><b>強み：</b>iPhone と 自動同期</div>
+      <div class="target">📱 iPhone の方</div>
+    </div>
+    <div class="svc onedrive" onclick="svcInfo('onedrive')">
+      <h3>🟦 OneDrive</h3>
+      <span class="free">無料 5 GB</span>
+      <div class="meta"><b>強み：</b>Word/Excel と 連携</div>
+      <div class="target">💻 Windows PCの方</div>
+    </div>
+    <div class="svc amazon" onclick="svcInfo('amazon')">
+      <h3>🟧 Amazon Photos</h3>
+      <span class="free">写真 無制限</span>
+      <div class="meta"><b>強み：</b>写真は 容量無制限！</div>
+      <div class="target">📦 Prime 会員 の方</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 容量計算機 -->
+<div class="divider" id="calc" data-snav-target>
+  <div class="num">3.</div>
+  <h2>容量 計算機</h2>
+</div>
+
+<section class="section">
+  <h2>無料枠で 足りる？ 計算してみよう</h2>
+  <p class="lead">写真の枚数・動画の長さ を スライダーで 動かすと、 必要な <b>GB（ギガバイト）</b> が わかります。</p>
+
+  <div class="calc">
+    <div class="calc-presets">
+      <span>例：</span>
+      <button onclick="setCalc(500, 0)">月 500枚</button>
+      <button onclick="setCalc(2000, 5)">月 2000枚 + 動画5分</button>
+      <button onclick="setCalc(100, 0)">月 100枚</button>
+      <button onclick="setCalc(5000, 60)">大量 5000枚 + 動画1時間</button>
+    </div>
+
+    <div class="calc-inputs">
+      <div>
+        <label>写真 の 枚数（1ヶ月）</label>
+        <div class="val" id="cphCount">500</div> 枚
+        <input type="range" id="cph" min="0" max="10000" step="100" value="500">
+      </div>
+      <div>
+        <label>動画 の 長さ（1ヶ月）</label>
+        <div class="val" id="cmvCount">0</div> 分
+        <input type="range" id="cmv" min="0" max="120" step="1" value="0">
+      </div>
+    </div>
+
+    <div class="calc-result">
+      <div style="font-size:16px;color:var(--muted);font-weight:bold">1年間に 必要な 容量</div>
+      <div class="big" id="calcGB">1.2 GB</div>
+      <div class="verdict" id="calcVerdict">余裕で 無料枠 で OK！</div>
+    </div>
+
+    <div class="calc-judges" id="calcJudges">
+      <!-- generated -->
+    </div>
+
+    <div class="card tip" style="margin-top:18px">
+      <h3>💡 計算の 目安</h3>
+      <p style="font-size:15px;line-height:1.8;margin-top:6px">
+        写真 1枚 ≈ 3MB ／ 動画 1分 ≈ 100MB ／ 1GB = 1024MB
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 共有範囲シミュレータ -->
+<div class="divider" id="scope" data-snav-target>
+  <div class="num">4.</div>
+  <h2>共有範囲 シミュレータ</h2>
+</div>
+
+<section class="section">
+  <h2>誰が 見られる？ ボタンで 体感</h2>
+  <p class="lead">下の <b>4つのボタン</b> を 押すと、 同じ写真でも <b>誰に 見えるか</b> が 変わります。</p>
+
+  <div class="scope">
+    <div class="scope-tabs">
+      <div class="scope-tab private active" data-scope="private" onclick="setScope('private')">
+        <span class="ic">🔒</span>
+        <div class="name">自分のみ</div>
+      </div>
+      <div class="scope-tab family" data-scope="family" onclick="setScope('family')">
+        <span class="ic">👨‍👩‍👧</span>
+        <div class="name">家族のみ</div>
+      </div>
+      <div class="scope-tab link" data-scope="link" onclick="setScope('link')">
+        <span class="ic">🔗</span>
+        <div class="name">リンクを 知る人</div>
+      </div>
+      <div class="scope-tab public" data-scope="public" onclick="setScope('public')">
+        <span class="ic">🌍</span>
+        <div class="name">公開（全員）</div>
+      </div>
+    </div>
+
+    <div class="scope-stage">
+      <div class="photo-card">
+        <div class="img">📸</div>
+        <div class="cap">孫の運動会の 写真</div>
+      </div>
+      <div class="audience">
+        <div class="person" data-who="me">
+          <div class="face">😊</div>
+          <div class="name">自分</div>
+          <div class="access" data-access="me">投稿者</div>
+        </div>
+        <div class="person" data-who="son">
+          <div class="face">👨</div>
+          <div class="name">息子</div>
+          <div class="access" data-access="son">家族 指定済</div>
+        </div>
+        <div class="person" data-who="grandma">
+          <div class="face">👵</div>
+          <div class="name">奥様</div>
+          <div class="access" data-access="grandma">家族 指定済</div>
+        </div>
+        <div class="person" data-who="friend">
+          <div class="face">🧑</div>
+          <div class="name">友人</div>
+          <div class="access" data-access="friend">リンクを 知ってる</div>
+        </div>
+        <div class="person" data-who="forward">
+          <div class="face">👨‍💼</div>
+          <div class="name">転送 された人</div>
+          <div class="access" data-access="forward">リンクを 又聞き</div>
+        </div>
+        <div class="person" data-who="stranger">
+          <div class="face">👤</div>
+          <div class="name">知らない人</div>
+          <div class="access" data-access="stranger">検索で 発見</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scope-explain" id="scopeExplain"></div>
+  </div>
+</section>
+
+<!-- 5. 共有リンク体験 -->
+<div class="divider" id="link" data-snav-target>
+  <div class="num">5.</div>
+  <h2>共有 リンク 体験</h2>
+</div>
+
+<section class="section">
+  <h2>リンクを 作って、 家族に 送って みる</h2>
+  <p class="lead">「リンクを 取得」 ボタンを 押すと、 <b>共有用 URL</b> が 出ます。 これを LINEで 送れば、 家族に 写真が 届く！</p>
+
+  <div class="linksim">
+    <button class="linksim-btn" onclick="genLink()">🔗 リンクを 取得</button>
+    <div class="linksim-url" id="linkUrl">↑ ボタンを 押すと ここに URL が 出ます</div>
+
+    <div class="linksim-flow">
+      <div class="step">
+        <div class="ic">📱</div>
+        <div class="lbl">自分の Googleフォト</div>
+      </div>
+      <div class="step" style="background:#FFFBEB;border:2px dashed var(--secondary)">
+        <div class="ic">📨</div>
+        <div class="lbl">LINEで リンクを 送る</div>
+      </div>
+      <div class="step">
+        <div class="ic">📱</div>
+        <div class="lbl">家族の スマホ</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:14px;color:var(--muted);font-size:15px">↓ 家族の スマホで リンクを タップ すると…</div>
+
+    <div class="linksim-phone">
+      <div class="screen" id="phoneScreen">
+        <div class="header">📱 息子さんの スマホ</div>
+        <div class="img">📸</div>
+        <div class="text" style="text-align:center;font-weight:bold;color:var(--primary)">「リンクを 取得」 ボタンを 押すと、ここに 写真が 表示！</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3>💡 リンクの 取り消し も できる</h3>
+    <p style="margin-top:6px">「やっぱり 共有 やめたい」 と 思ったら、 共有設定 → <b>「リンクを 無効化」</b><br>
+    リンクが 死んで、 誰も 見られなく なります。 後悔したら すぐ 無効化！</p>
+  </div>
+</section>
+
+<!-- 6. 安全のひと言 -->
+<div class="divider" id="safety" data-snav-target>
+  <div class="num">6.</div>
+  <h2>安全 の ひと言</h2>
+</div>
+
+<section class="section">
+  <h2>クラウド を 使う ときの 注意</h2>
+  <p class="lead">便利だからこそ、 知っておきたい 注意 が 4つ あります。</p>
+
+  <div class="grid grid-2">
+    <div class="card warn">
+      <h3>🔑 パスワード を 守る</h3>
+      <p style="margin-top:6px;font-size:16px">家族 以外 に 教えない。<br>
+      「乗っ取り メール」 が来ても <b>絶対に 入力しない</b>！</p>
+    </div>
+    <div class="card warn">
+      <h3>🚫 顔写真 を 公開しない</h3>
+      <p style="margin-top:6px;font-size:16px">「公開」 は 絶対 NG。<br>
+      子・孫の <b>顔・名札・住所</b> が 写った写真は<br>
+      <b>「家族のみ」</b> に 限定！</p>
+    </div>
+    <div class="card tip">
+      <h3>🔐 2段階認証 を つける</h3>
+      <p style="margin-top:6px;font-size:16px">ログイン時に スマホに <b>確認コード</b> が来る。<br>
+      1回 設定 で ぐっと 安全に。</p>
+    </div>
+    <div class="card tip">
+      <h3>💸 容量 オーバー に 注意</h3>
+      <p style="margin-top:6px;font-size:16px">無料枠を 超えると <b>自動課金</b> される ことも。<br>
+      設定で <b>「自動課金 OFF」</b> を 確認！</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめ クイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみましょう</h2>
+  <p class="lead">気軽に 試して くださいね。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. iPhoneの方 に いちばん おすすめ の クラウドは？</div>
+      <div class="opts">
+        <button data-i="0">Googleフォト</button>
+        <button data-i="1">OneDrive</button>
+        <button data-i="2">iCloud</button>
+        <button data-i="3">Amazon Photos</button>
+      </div>
+      <div class="ex">✅ iPhone は 最初から <b>iCloud</b> が 入っていて 自動同期 がラク。 Android なら Googleフォト、 Windows PC中心なら OneDrive！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q2. 孫の運動会 の 写真を 家族 にだけ 送りたい。 共有範囲は どれ？</div>
+      <div class="opts">
+        <button data-i="0">家族のみ（指定したメンバー）</button>
+        <button data-i="1">リンクを 知る人</button>
+        <button data-i="2">公開（全員）</button>
+        <button data-i="3">自分のみ</button>
+      </div>
+      <div class="ex">✅ <b>家族のみ</b>＝指定したメンバーだけ。 「リンクを 知る人」 は 転送されると 知らない人 にも 届いて 危険！</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q3. <b>絶対に</b> やってはいけない のは？</div>
+      <div class="opts">
+        <button data-i="0">スマホ から バックアップ</button>
+        <button data-i="1">「乗っ取り メール」 の リンクから ログイン</button>
+        <button data-i="2">家族と アルバム共有</button>
+        <button data-i="3">古い 動画を 削除</button>
+      </div>
+      <div class="ex">✅ <b>偽の メール</b>（フィッシング）から ログインすると、 パスワードが 盗まれて 写真が 全部 盗まれる！ 怪しい メールは <b>すぐ削除</b>。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>☁️ クラウド ＝ ネット上の 倉庫</h3><p>スマホ・PC・家族 が 同じ写真 を 見られる</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>📱 サービスは スマホで 選ぶ</h3><p>iPhone=iCloud / Android=Googleフォト</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>📊 容量は 写真5000枚で 約15GB</h3><p>無料枠で 足りない時は 有料プラン</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🔒 共有範囲 は 4段階</h3><p>顔写真 は 必ず 「家族のみ」</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>🔗 リンクで 一発 共有！</h3><p>後で 取り消し も できる</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">📞 💬</div>
+  <h2>次回 ｜ ビデオ通話 と SNS</h2>
+  <p>ZOOM / LINE で 家族と <b>顔を 見て 話す</b>！</p>
+</div>
+
+<footer>高齢者向けパソコン教室 ／ 中級 第3回｜写真・動画とクラウド</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* サービス比較 */
+  const SVC = {
+    google: { e:'🟦', t:'Google フォト',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>15 GB まで 無料／100GB ＝月 250円<br>
+        <b>強み：</b>検索が 賢い（「桜」「孫」 で 一発）／ AI で 自動アルバム作成<br>
+        <b>使い方：</b>Gメールアカウント で <code>photos.google.com</code> へ<br><br>
+        <b>こんな方 向け：</b><br>
+        ・Android スマホを 使っている<br>
+        ・Gメール を 持っている<br>
+        ・写真を <b>検索で 探したい</b></div>`},
+    apple: { e:'🍎', t:'iCloud',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>5 GB まで 無料／50GB ＝月 130円<br>
+        <b>強み：</b>iPhone との <b>完全自動同期</b>／ Macとも 連携<br>
+        <b>使い方：</b>iPhone：設定 → 写真 → iCloud写真 ON<br><br>
+        <b>こんな方 向け：</b><br>
+        ・iPhone を 使っている<br>
+        ・Mac も 持っている<br>
+        ・<b>とにかく ラク</b> に 自動 保存したい</div>`},
+    onedrive: { e:'🟦', t:'OneDrive',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>5 GB まで 無料／100GB ＝月 260円<br>
+        <b>強み：</b>Word / Excel / PowerPoint と 連携抜群／ Microsoft 365 加入で 1TBに<br>
+        <b>使い方：</b>Windows 標準。 タスクバーの 雲アイコン<br><br>
+        <b>こんな方 向け：</b><br>
+        ・Windows パソコン中心<br>
+        ・Office を よく 使う<br>
+        ・<b>文書 と 写真</b> を 一緒に 管理したい</div>`},
+    amazon: { e:'🟧', t:'Amazon Photos',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>Amazon プライム会員（年間 5,900円）なら<br>
+        <b>写真は 容量無制限</b>（動画は 5GBまで）<br>
+        <b>強み：</b>写真好き なら 最強の コスパ<br><br>
+        <b>こんな方 向け：</b><br>
+        ・既に <b>プライム会員</b><br>
+        ・写真を <b>大量に</b> 撮る<br>
+        ・動画は あまり 撮らない</div>`},
+  };
+  function svcInfo(k){
+    const s = SVC[k];
+    if(s) info(s.e, s.t, s.b);
+  }
+
+  /* 容量計算機 */
+  function setCalc(ph, mv){
+    $('cph').value = ph;
+    $('cmv').value = mv;
+    updateCalc();
+  }
+  function updateCalc(){
+    const photos = parseInt($('cph').value, 10);
+    const minutes = parseInt($('cmv').value, 10);
+    $('cphCount').textContent = photos.toLocaleString();
+    $('cmvCount').textContent = minutes;
+
+    // 1ヶ月 → 1年
+    const monthMB = photos * 3 + minutes * 100; // 写真3MB/枚, 動画100MB/分
+    const yearMB = monthMB * 12;
+    const yearGB = yearMB / 1024;
+
+    $('calcGB').textContent = yearGB.toFixed(1) + ' GB';
+
+    // 判定
+    let v = '';
+    if(yearGB <= 5) v = '✅ ぜんぶの 無料プランで OK！';
+    else if(yearGB <= 15) v = '✅ Googleフォト の 無料 15GB で OK';
+    else if(yearGB <= 100) v = '⚠️ 有料プラン（100GB ／ 月 250円程度）が おすすめ';
+    else if(yearGB <= 200) v = '⚠️ 有料 200GB プランが 必要';
+    else v = '❗ 1〜2TB プラン or Amazon Photos が おすすめ';
+    $('calcVerdict').textContent = v;
+
+    // 各サービスごとの判定
+    const services = [
+      { name:'Google 無料', cap:15, link:'https://photos.google.com' },
+      { name:'iCloud 無料', cap:5 },
+      { name:'OneDrive 無料', cap:5 },
+      { name:'Amazon Prime', cap:Infinity, note:'写真無制限' },
+    ];
+    const jd = $('calcJudges');
+    jd.innerHTML = '';
+    services.forEach(s=>{
+      const ok = yearGB <= s.cap;
+      const div = document.createElement('div');
+      div.className = 'j ' + (ok ? 'ok' : 'ng');
+      const cap = s.cap === Infinity ? '無制限' : s.cap + 'GB';
+      div.innerHTML = `<div class="name">${ok ? '✅' : '❌'} ${escapeHTML(s.name)}</div>
+        <div class="info">${cap} ${s.note ? '（' + s.note + '）' : ''}</div>`;
+      jd.appendChild(div);
+    });
+  }
+  ['cph','cmv'].forEach(id => $(id).addEventListener('input', updateCalc));
+  updateCalc();
+
+  /* 共有範囲 シミュレータ */
+  const SCOPE = {
+    private: {
+      visible: ['me'],
+      explain: '<b>🔒 自分のみ：</b>誰にも 共有していない 状態。 写真は <b>自分の クラウド</b> にだけ 保存され、 他の人は 一切 見られません。 最初は この状態。'
+    },
+    family: {
+      visible: ['me','son','grandma'],
+      explain: '<b>👨‍👩‍👧 家族のみ：</b>あらかじめ「家族」と <b>指定した人</b> だけが 見られます。 リンクが 漏れても 知らない人は 見られません。 <b>一番おすすめ</b>。'
+    },
+    link: {
+      visible: ['me','son','grandma','friend','forward'],
+      explain: '<b>🔗 リンクを 知る人：</b>リンクを 持っている 全員 が 見られます。 LINE で 転送 されると、 <b>転送された人 にも 届きます</b>。 顔写真には 注意！'
+    },
+    public: {
+      visible: ['me','son','grandma','friend','forward','stranger'],
+      explain: '<b>🌍 公開：</b>インターネット <b>誰でも</b> 検索で 発見できる。 知らない人にも 届く。 <b>顔写真は 絶対NG</b>！ 普通は この設定は 使わない。'
+    }
+  };
+  function setScope(s){
+    document.querySelectorAll('.scope-tab').forEach(t => t.classList.toggle('active', t.dataset.scope === s));
+    const cfg = SCOPE[s];
+    document.querySelectorAll('.person').forEach(p => {
+      const w = p.dataset.who;
+      if(cfg.visible.includes(w)){
+        p.classList.add('canSee');
+        p.classList.remove('cantSee');
+      } else {
+        p.classList.add('cantSee');
+        p.classList.remove('canSee');
+      }
+    });
+    const ex = $('scopeExplain');
+    ex.className = 'scope-explain ' + s;
+    ex.innerHTML = cfg.explain;
+  }
+  setScope('private');
+
+  /* 共有リンク 体験 */
+  function genLink(){
+    // ランダムっぽい URL生成
+    const id = Math.random().toString(36).slice(2, 12).toUpperCase();
+    const url = 'https://photos.app.goo.gl/' + id;
+    $('linkUrl').textContent = url;
+
+    // 家族のスマホ画面を更新
+    $('phoneScreen').innerHTML = `<div class="header">📱 息子さんの スマホ</div>
+      <div style="background:#F5F7F8;border-radius:8px;padding:8px;font-size:11px;margin:6px 0">
+        <div style="color:var(--muted);font-size:10px">LINE（お父さん）</div>
+        <div style="color:var(--primary);margin-top:2px">${escapeHTML(url)}</div>
+      </div>
+      <div class="img">👶🎂🌸</div>
+      <div class="text" style="text-align:center;font-weight:bold">孫の運動会 の写真<br>5枚 が 見えました！</div>`;
+    showToast('🔗 共有リンクを 生成しました');
+  }
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ / ショートカット */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:16px;line-height:2.2">
+        <div><b>← ↑ PageUp</b> 前の章へ</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章へ</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプを 開く</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

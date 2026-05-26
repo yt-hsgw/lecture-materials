@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高齢者・中級 第2回｜数字の表を使ってみる（Excel家計簿）</title>
+<style>
+  :root{
+    --primary:#00838F; --secondary:#FFA000; --accent:#43A047;
+    --warn:#C62828; --dark:#263238; --light:#F5F7F8;
+    --panel:#FFFFFF; --muted:#546E7A; --shadow:0 3px 10px rgba(38,50,56,.12);
+    --border:rgba(38,50,56,.1);
+    --excel:#107C41;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px;}
+  body{font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:15px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.05);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.1)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:6px 16px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:15px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:22px;height:22px;padding:0;border-radius:50%;
+    border:2px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.96);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:42px;height:42px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(38,50,56,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:18px;padding:32px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:70px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.9;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#00838F 0%,#0097A7 50%,#43A047 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:10px 26px;
+    border-radius:999px;font-weight:bold;margin-bottom:22px;backdrop-filter:blur(4px);font-size:16px}
+  .hero h1{font-size:clamp(46px,8vw,90px);line-height:1.2;margin-bottom:22px;
+    text-shadow:0 4px 16px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(20px,2.6vw,28px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,110px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:16px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:8px;font-weight:bold;font-size:15px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(34px,5vw,48px);color:var(--primary);margin-bottom:10px;font-weight:800}
+  .lead{font-size:21px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,58px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:10px;font-weight:700}
+  .card p{font-size:18px;line-height:1.8}
+  .card.warn{border-left:6px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:6px solid var(--accent);background:#E8F5E9}
+  .card.tip{border-left:6px solid var(--secondary);background:#FFF8E1}
+
+  .key{display:inline-block;background:white;border:2px solid var(--dark);
+    border-radius:8px;padding:4px 14px;font-family:'SF Mono','Menlo','Consolas',monospace;
+    font-weight:bold;font-size:18px;box-shadow:0 3px 0 rgba(0,0,0,.2);margin:0 3px;color:var(--dark)}
+  .cellref{display:inline-block;background:white;border:2px solid var(--primary);
+    padding:3px 10px;border-radius:5px;font-family:'SF Mono','Menlo',monospace;
+    font-weight:bold;font-size:16px;color:var(--primary)}
+
+  /* === Cell explainer === */
+  .cell-explain{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;text-align:center}
+  .cell-explain .mini-grid{display:inline-block;border-collapse:collapse;margin:0 auto;font-size:18px}
+  .cell-explain .mini-grid th,.cell-explain .mini-grid td{
+    border:2px solid #B0BEC5;padding:14px 22px;background:white;min-width:80px}
+  .cell-explain .mini-grid th{background:#ECEFF1;font-weight:700;color:var(--muted);font-size:16px}
+  .cell-explain .mini-grid td.hl{background:#FFFDE7;font-weight:bold;color:var(--primary)}
+  .cell-explain p{font-size:17px;margin-top:18px;color:var(--muted)}
+
+  /* === Live spreadsheet === */
+  .ss{background:white;border-radius:12px;padding:0;box-shadow:var(--shadow);
+    border:2px solid var(--border);margin-top:14px;overflow:hidden}
+  .ss-head{background:var(--excel);color:white;padding:10px 16px;
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:700;font-size:15px}
+  .ss-head .formula-bar{flex:1;background:white;color:var(--dark);
+    padding:6px 12px;border-radius:6px;font-family:'SF Mono','Menlo',monospace;font-size:14px;min-width:200px;
+    border:1px solid rgba(0,0,0,.2);min-height:32px;display:flex;align-items:center}
+  .ss-head .selected-cell{background:white;color:var(--dark);padding:6px 12px;border-radius:6px;
+    font-family:'SF Mono','Menlo',monospace;font-weight:bold;min-width:50px;text-align:center}
+  .ss-wrap{overflow-x:auto;background:white}
+  .ss-table{border-collapse:collapse;table-layout:fixed;width:100%;min-width:520px}
+  .ss-table th,.ss-table td{border:1px solid #B0BEC5;padding:0;font-family:'SF Mono','Menlo',monospace;font-size:14px}
+  .ss-table th{background:#ECEFF1;color:var(--muted);text-align:center;font-weight:700;
+    padding:6px;font-size:12px;height:28px;font-family:'Hiragino Sans',sans-serif}
+  .ss-table th.row-hd{width:36px}
+  .ss-table th.col-hd{min-width:90px}
+  .ss-table th.col-hd:first-of-type{min-width:120px}
+  .ss-table td{height:36px;background:white;cursor:cell;position:relative;padding:0 8px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ss-table td.text-cell{font-family:'Hiragino Sans',sans-serif;text-align:left}
+  .ss-table td.num-cell{text-align:right;color:var(--dark)}
+  .ss-table td.formula-result{background:#FFFDE7;color:var(--warn);font-weight:bold}
+  .ss-table td.selected{outline:3px solid var(--primary);outline-offset:-2px;background:#E0F7FA;z-index:1}
+  .ss-table td.editing{padding:0}
+  .ss-table td input{width:100%;height:36px;padding:0 8px;border:none;outline:none;
+    background:white;font-family:inherit;font-size:14px;color:var(--dark)}
+  .ss-tools{background:#F5F7F8;border-top:1px solid var(--border);padding:10px 16px;
+    display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .ss-tools button,.ss-tools select{background:white;border:1.5px solid #CFD8DC;
+    color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:14px}
+  .ss-tools button:hover{border-color:var(--primary);background:#E0F7FA}
+  .ss-tools .group{display:flex;gap:4px;padding:0 8px;border-right:1px solid var(--border)}
+  .ss-tools .group:last-child{border-right:none}
+  .ss-tools .label{color:var(--muted);font-size:13px;align-self:center;margin-right:4px}
+
+  /* === Formula dictionary === */
+  .formula-dict{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+  .fcard{background:white;border-radius:12px;padding:20px;box-shadow:var(--shadow);
+    border:1px solid var(--border);cursor:pointer;transition:all .15s;border-top:5px solid var(--primary)}
+  .fcard:hover{transform:translateY(-3px)}
+  .fcard:nth-child(2){border-top-color:var(--secondary)}
+  .fcard:nth-child(3){border-top-color:var(--accent)}
+  .fcard:nth-child(4){border-top-color:#9C27B0}
+  .fcard h3{font-size:20px;color:var(--dark);font-weight:700;margin-bottom:6px}
+  .fcard .syntax{background:#0F172A;color:#FFE6B0;padding:8px 14px;border-radius:6px;
+    font-family:'SF Mono','Menlo',monospace;font-size:15px;margin:8px 0;display:inline-block}
+  .fcard p{font-size:15px;color:var(--muted);line-height:1.7}
+
+  /* === Chart preview === */
+  .chartbox{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .chart-controls{display:flex;gap:10px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+  .chart-controls label{font-size:15px;color:var(--muted);font-weight:bold}
+  .chart-controls button{background:white;border:2px solid var(--primary);color:var(--primary);
+    padding:8px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;font-size:15px}
+  .chart-controls button.active{background:var(--primary);color:white}
+  .chart-area{display:flex;justify-content:center;padding:14px;background:#F5F7F8;border-radius:10px}
+  .chart-area svg{width:100%;max-width:600px;height:auto}
+  .chart-legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:14px;font-size:15px}
+  .chart-legend .item{display:flex;align-items:center;gap:6px}
+  .chart-legend .swatch{width:18px;height:18px;border-radius:4px}
+
+  /* === Household template === */
+  .ht{background:white;border-radius:12px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .ht-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+  .ht-form .full{grid-column:1 / -1}
+  .ht-form label{display:block;font-weight:700;font-size:15px;color:var(--muted);margin-bottom:6px}
+  .ht-form input{width:100%;padding:11px 14px;border:1.5px solid #CFD8DC;border-radius:8px;
+    font-family:inherit;font-size:16px;background:white;color:var(--dark)}
+  .ht-form input[type=number]{text-align:right;font-family:'SF Mono','Menlo',monospace}
+  .ht-form input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,131,143,.15)}
+
+  .ht-sheet{background:white;border:3px solid var(--primary);border-radius:10px;
+    overflow:hidden;margin-top:18px}
+  .ht-title{background:var(--primary);color:white;padding:12px 18px;font-size:20px;font-weight:bold;text-align:center}
+  .ht-table{width:100%;border-collapse:collapse;font-family:'Hiragino Sans',sans-serif;font-size:16px}
+  .ht-table th,.ht-table td{border:1px solid #B0BEC5;padding:10px 14px}
+  .ht-table th{background:#ECEFF1;font-weight:700;text-align:center}
+  .ht-table td.amount{text-align:right;font-family:'SF Mono','Menlo',monospace;font-weight:600}
+  .ht-table tr.total td{background:#FFF8E1;font-weight:bold;font-size:18px}
+  .ht-table tr.total td.amount{color:var(--warn)}
+
+  .ht-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .ht-tools button{font-family:inherit;border:none;border-radius:8px;padding:12px 26px;
+    font-weight:700;cursor:pointer;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.12);
+    background:var(--primary);color:white}
+  .ht-tools button:hover{transform:translateY(-1px)}
+  .ht-tools button.gray{background:var(--muted)}
+  .ht-tools button.accent{background:var(--accent)}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:18px;padding-bottom:16px;border-bottom:1px dashed #CFD8DC}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:19px;margin-bottom:12px;color:var(--dark)}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .qrow .opts button{background:white;border:2px solid #CFD8DC;color:var(--dark);
+    padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#E0F7FA}
+  .qrow .opts button.right{background:#C8E6C9;border-color:var(--accent);color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .qrow .ex{font-size:15px;color:var(--muted);margin-top:10px;display:none;background:#F5F7F8;padding:12px;border-radius:8px;line-height:1.8}
+  .qrow.answered .ex{display:block}
+  .qrow .ex code{background:#0F172A;color:#FFE6B0;padding:2px 8px;border-radius:4px;
+    font-family:'SF Mono','Menlo',monospace;font-size:14px}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:12px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .summary-row h3{font-size:19px}
+  .summary-row p{font-size:15px;color:var(--muted)}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  .next p{font-size:18px}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:14px 28px;border-radius:10px;
+    font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:16px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+
+  /* Print: household sheet only */
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,
+    .hero,.divider,.section{display:none !important}
+    .ht-print{display:block !important;padding:20px !important}
+  }
+  .ht-print{display:none}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第2回</span> <b>Excel 家計簿</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#what">2<span>Excelって何</span><span class="ic">📊</span></a>
+  <a href="#sheet">3<span>ライブ表計算</span><span class="ic">⚡</span></a>
+  <a href="#formula">4<span>数式辞典</span><span class="ic">∑</span></a>
+  <a href="#chart">5<span>グラフ</span><span class="ic">📈</span></a>
+  <a href="#household">6<span>家計簿テンプレ</span><span class="ic">💴</span></a>
+  <a href="#safety">7<span>安全のひと言</span><span class="ic">⚠️</span></a>
+  <a href="#quiz">8<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 高齢者向けパソコン教室・中級</div>
+    <h1>数字の表 を<br>使ってみる</h1>
+    <p>Excel で <b>家計簿</b> を 1ページ 作ります</p>
+    <div class="em">📊💴✨</div>
+  </div>
+  <div class="scroll-hint">下に すすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>電卓 と ノートが、1つの ファイルに</h2>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📊</span><h3>セル</h3><p>マス目の使い方</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">∑</span><h3>SUM 関数</h3><p>合計が一発</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📈</span><h3>グラフ</h3><p>見える化</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">💴</span><h3>家計簿</h3><p>1ページ完成</p></div>
+  </div>
+</section>
+
+<!-- 1. Excelって何 -->
+<div class="divider" id="what" data-snav-target>
+  <div class="num">1.</div>
+  <h2>Excel って 何？</h2>
+</div>
+
+<section class="section">
+  <h2>数字の 方眼紙</h2>
+  <p class="lead">マス目を <b>セル</b> と 呼びます。 1つ1つのセルに 名前（住所）が ついています。<br>
+  <b>列の文字 ＋ 行の数字</b> で セルを 呼ぶ。 例：<span class="cellref">B2</span></p>
+
+  <div class="cell-explain">
+    <table class="mini-grid">
+      <thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead>
+      <tbody>
+        <tr><th>1</th><td class="hl">A1</td><td></td><td></td></tr>
+        <tr><th>2</th><td></td><td class="hl">B2</td><td></td></tr>
+        <tr><th>3</th><td></td><td></td><td class="hl">C3</td></tr>
+      </tbody>
+    </table>
+    <p>「<span class="cellref">A1</span>」 ＝ A列 の 1行目／「<span class="cellref">B2</span>」 ＝ B列 の 2行目／「<span class="cellref">C3</span>」 ＝ C列 の 3行目</p>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3>💡 名前 を 覚える 必要 は ない</h3>
+    <p style="margin-top:6px">クリック すれば 自動で 選ばれます。 名前は 「計算式の中で 場所を 言う」 ときに 使います！</p>
+  </div>
+</section>
+
+<!-- 2. ライブ表計算 -->
+<div class="divider" id="sheet" data-snav-target>
+  <div class="num">2.</div>
+  <h2>ライブ 表計算（本物の Excel風）</h2>
+</div>
+
+<section class="section">
+  <h2>クリックして 数字を 入れて みよう</h2>
+  <p class="lead">セルを クリック → 文字や 数字を 打って <span class="key">Enter</span>。<br>
+  <span class="cellref">=SUM(B2:B6)</span> のような <b>数式</b> も 本物と 同じように 動きます！</p>
+
+  <div class="ss">
+    <div class="ss-head">
+      <span class="selected-cell" id="ssCell">A1</span>
+      <span style="opacity:.85">=</span>
+      <span class="formula-bar" id="ssFormula">クリックで セルを 選ぶ</span>
+    </div>
+    <div class="ss-wrap">
+      <table class="ss-table" id="ssTable">
+        <thead>
+          <tr>
+            <th class="row-hd"></th>
+            <th class="col-hd">A</th>
+            <th class="col-hd">B</th>
+            <th class="col-hd">C</th>
+            <th class="col-hd">D</th>
+          </tr>
+        </thead>
+        <tbody id="ssBody"></tbody>
+      </table>
+    </div>
+    <div class="ss-tools">
+      <span class="label">サンプル：</span>
+      <button onclick="loadSample('home')">💴 家計簿</button>
+      <button onclick="loadSample('attendance')">📋 出席表</button>
+      <button onclick="loadSample('calc')">🧮 計算練習</button>
+      <button onclick="clearSheet()" style="margin-left:auto;border-color:var(--warn);color:var(--warn)">↺ クリア</button>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3>💡 数式の 書き方</h3>
+    <p style="margin-top:6px">セルに <code style="background:#0F172A;color:#FFE6B0;padding:2px 8px;border-radius:4px;font-family:'SF Mono',monospace;font-size:14px">=A1+B1</code> や <code style="background:#0F172A;color:#FFE6B0;padding:2px 8px;border-radius:4px;font-family:'SF Mono',monospace;font-size:14px">=SUM(B2:B6)</code> と 入力すると <b>自動計算</b>！<br>
+    数式は 必ず <span class="key">=</span> から 始める。</p>
+  </div>
+</section>
+
+<!-- 3. 数式辞典 -->
+<div class="divider" id="formula" data-snav-target>
+  <div class="num">3.</div>
+  <h2>数式 辞典</h2>
+</div>
+
+<section class="section">
+  <h2>覚えると ラクな 4つ</h2>
+  <p class="lead">カードを 押すと 詳しい 使い方が 表示されます。 全部 <b>＝</b> から 始める！</p>
+
+  <div class="formula-dict" id="formulaDict"></div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>📐 算術の 記号</h3>
+    <p style="margin-top:8px;font-size:18px;line-height:2">
+      <span class="key">+</span> 足す ／ <span class="key">-</span> 引く ／ <span class="key">*</span> かける（×ではない！）／ <span class="key">/</span> わる（÷ではない！）<br>
+      例：<span class="cellref">=10*5</span> → 50 ／ <span class="cellref">=A1/B1</span> → A1 ÷ B1
+    </p>
+  </div>
+</section>
+
+<!-- 4. グラフ -->
+<div class="divider" id="chart" data-snav-target>
+  <div class="num">4.</div>
+  <h2>グラフ で 見える化</h2>
+</div>
+
+<section class="section">
+  <h2>数字 → グラフ → 一目瞭然</h2>
+  <p class="lead">上の 家計簿の データ（B列の数値）から、 棒グラフ と 円グラフを 自動生成。</p>
+
+  <div class="chartbox">
+    <div class="chart-controls">
+      <label>種類：</label>
+      <button id="chartBar" class="active" onclick="setChart('bar')">📊 棒グラフ</button>
+      <button id="chartPie" onclick="setChart('pie')">🥧 円グラフ</button>
+      <button id="chartLine" onclick="setChart('line')">📈 折れ線</button>
+    </div>
+    <div class="chart-area" id="chartArea"></div>
+    <div class="chart-legend" id="chartLegend"></div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3>💡 グラフ の 選び方</h3>
+    <p style="margin-top:6px">
+    <b>棒グラフ</b>：項目を 比べる（食費 vs 光熱費）<br>
+    <b>円グラフ</b>：割合 を 見る（全体の何％？）<br>
+    <b>折れ線</b>：時間の 変化（1年の体重）</p>
+  </div>
+</section>
+
+<!-- 5. 家計簿テンプレ -->
+<div class="divider" id="household" data-snav-target>
+  <div class="num">5.</div>
+  <h2>家計簿 テンプレート</h2>
+</div>
+
+<section class="section">
+  <h2>入力するだけ — 印刷 OK</h2>
+  <p class="lead">月名と 5項目の 金額を 入れると、 きれいな 家計簿 が 完成！<br>
+  「印刷」 で 紙に 出して、 冷蔵庫に 貼って 使えます。</p>
+
+  <div class="ht">
+    <div class="ht-form">
+      <div>
+        <label>年・月</label>
+        <input type="text" id="htMonth" value="2026年4月" maxlength="20">
+      </div>
+      <div>
+        <label>💴 食費</label>
+        <input type="number" id="ht1" value="45000">
+      </div>
+      <div>
+        <label>💡 光熱費</label>
+        <input type="number" id="ht2" value="18000">
+      </div>
+      <div>
+        <label>📱 通信費</label>
+        <input type="number" id="ht3" value="9000">
+      </div>
+      <div>
+        <label>💊 医療費</label>
+        <input type="number" id="ht4" value="6000">
+      </div>
+      <div>
+        <label>🎁 交際費</label>
+        <input type="number" id="ht5" value="12000">
+      </div>
+    </div>
+
+    <div class="ht-print" id="htPrint">
+      <div class="ht-sheet" id="htSheet">
+        <!-- generated -->
+      </div>
+    </div>
+
+    <div class="ht-sheet" id="htSheetScreen">
+      <!-- generated -->
+    </div>
+
+    <div class="ht-tools">
+      <button class="accent" onclick="window.print()">🖨️ 印刷する</button>
+      <button onclick="downloadHt()">💾 .html で 保存</button>
+      <button class="gray" onclick="resetHt()">↺ 初期値</button>
+    </div>
+  </div>
+</section>
+
+<!-- 6. 安全のひと言 -->
+<div class="divider" id="safety" data-snav-target>
+  <div class="num">6.</div>
+  <h2>安全 の ひと言</h2>
+</div>
+
+<section class="section">
+  <h2>家計簿 に <b>入れない</b> もの</h2>
+  <div class="grid grid-2">
+    <div class="card warn">
+      <h3>⚠️ 危ない 情報</h3>
+      <ul style="margin-left:22px;margin-top:8px;line-height:2;font-size:17px">
+        <li>銀行口座 の 番号</li>
+        <li>クレジットカード 番号</li>
+        <li>暗証番号 ／ パスワード</li>
+        <li>マイナンバー</li>
+      </ul>
+    </div>
+    <div class="card tip">
+      <h3>💡 大事なファイル は パスワード</h3>
+      <p style="margin-top:6px">Excel の <b>ファイル → 情報 → ブックの保護 → パスワードを使用して暗号化</b>。<br>
+      ⚠️ パスワードを 忘れたら 開けない！ メモを 別の場所 に！</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめ クイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみましょう</h2>
+  <p class="lead">気軽に 試して くださいね。 何回 間違えても 大丈夫です。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="0">
+      <div class="q">Q1. B列 の 2行目 の セル の 名前 は？</div>
+      <div class="opts">
+        <button data-i="0">B2</button>
+        <button data-i="1">2B</button>
+        <button data-i="2">b-2</button>
+        <button data-i="3">列B行2</button>
+      </div>
+      <div class="ex">✅ 「<b>列の文字 ＋ 行の数字</b>」の順。 B列の2行目 ＝ <code>B2</code>。 住所みたいに 覚える！</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q2. 5つの セル（B2 〜 B6）の <b>合計</b> を 一発で 出す 数式 は？</div>
+      <div class="opts">
+        <button data-i="0">=B2+B3+B4+B5+B6</button>
+        <button data-i="1">=ADD(B2,B6)</button>
+        <button data-i="2">=SUM(B2:B6)</button>
+        <button data-i="3">=TOTAL(B2-B6)</button>
+      </div>
+      <div class="ex">✅ <code>=SUM(B2:B6)</code> が <b>一番ラク</b>！ <code>:</code> は「〜から〜まで」の意味。 ① も正解だが、 数が多いと 大変。</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q3. Excelで <b>かけ算</b> の 記号 は？</div>
+      <div class="opts">
+        <button data-i="0">×</button>
+        <button data-i="1">*</button>
+        <button data-i="2">x</button>
+        <button data-i="3">＊</button>
+      </div>
+      <div class="ex">✅ <b>半角の アスタリスク</b>（<span class="key">*</span>）。 キーボードの右上、 数字の 8の 上！ ×（バツ）や ＊（全角）は ダメ。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📊 Excel ＝ 数字の 方眼紙</h3><p>セルに 住所（A1, B2...）</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>⚡ ライブで セルを 編集</h3><p>クリック → 入力 → Enter</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>∑ SUM で 合計が 一発</h3><p>=SUM(B2:B6)</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>📈 グラフで 見える化</h3><p>棒・円・折れ線</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>💴 家計簿 が 完成！</h3><p>印刷して 冷蔵庫に</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">📸 ☁️</div>
+  <h2>次回 ｜ 写真・動画 と クラウド</h2>
+  <p>家族と <b>写真の 共有</b> ができるように！</p>
+</div>
+
+<footer>高齢者向けパソコン教室 ／ 中級 第2回｜数字の表を使ってみる</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* =========================================================
+     ライブ Excel風スプレッドシート
+     ========================================================= */
+  const COLS = ['A','B','C','D'];
+  const ROWS = 10;
+  // cells[colIdx][rowIdx] = raw string
+  let cells = {};
+  let selectedCell = 'A1';
+  let editingCell = null;
+
+  function cellId(c, r){ return COLS[c] + (r+1); }
+  function parseRef(ref){
+    const m = String(ref).toUpperCase().match(/^([A-D])(\d+)$/);
+    if(!m) return null;
+    return { c: COLS.indexOf(m[1]), r: parseInt(m[2],10) - 1 };
+  }
+
+  function getRaw(ref){ return cells[ref] || ''; }
+  function setRaw(ref, v){
+    if(v === '' || v === undefined) delete cells[ref];
+    else cells[ref] = String(v);
+  }
+
+  // 数式評価（再帰）
+  const COMPUTING = new Set();
+  function evalCell(ref, depth=0){
+    if(depth > 30) return '#DEPTH!';
+    if(COMPUTING.has(ref)) return '#CYCLE!';
+    const raw = getRaw(ref);
+    if(raw === '') return '';
+    if(!raw.startsWith('=')){
+      // 数字 or 文字列
+      const n = Number(raw.replace(/,/g, ''));
+      if(!isNaN(n) && raw.trim() !== '') return n;
+      return raw;
+    }
+    // 数式
+    COMPUTING.add(ref);
+    try {
+      const result = evalFormula(raw.slice(1), depth);
+      COMPUTING.delete(ref);
+      return result;
+    } catch(e){
+      COMPUTING.delete(ref);
+      return '#ERR!';
+    }
+  }
+  function evalFormula(expr, depth){
+    // 関数を展開 SUM(A1:A5), AVERAGE(...), MAX/MIN
+    expr = expr.toUpperCase().replace(/\s+/g,'');
+    expr = expr.replace(/(SUM|AVERAGE|AVG|MAX|MIN|COUNT)\(([^()]+)\)/g, (m, fn, args) => {
+      const vals = expandArgs(args, depth);
+      const nums = vals.filter(v => typeof v === 'number');
+      if(nums.length === 0) return 0;
+      if(fn === 'SUM') return nums.reduce((a,b)=>a+b,0);
+      if(fn === 'AVERAGE' || fn === 'AVG') return nums.reduce((a,b)=>a+b,0) / nums.length;
+      if(fn === 'MAX') return Math.max(...nums);
+      if(fn === 'MIN') return Math.min(...nums);
+      if(fn === 'COUNT') return nums.length;
+      return 0;
+    });
+    // セル参照 → 数値
+    expr = expr.replace(/([A-D])(\d+)/g, (m, col, row) => {
+      const v = evalCell(col + row, depth + 1);
+      return typeof v === 'number' ? v : 0;
+    });
+    // 安全な算術評価
+    if(!/^[\d+\-*/().,\s]+$/.test(expr)) throw new Error('invalid');
+    // eslint-disable-next-line no-new-func
+    const r = Function('return (' + expr + ')')();
+    return r;
+  }
+  function expandArgs(args, depth){
+    const out = [];
+    args.split(',').forEach(a => {
+      const range = a.match(/^([A-D])(\d+):([A-D])(\d+)$/);
+      if(range){
+        const c1 = COLS.indexOf(range[1]), r1 = parseInt(range[2],10)-1;
+        const c2 = COLS.indexOf(range[3]), r2 = parseInt(range[4],10)-1;
+        for(let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++){
+          for(let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++){
+            out.push(evalCell(cellId(c, r), depth + 1));
+          }
+        }
+      } else {
+        const m = a.match(/^([A-D])(\d+)$/);
+        if(m){
+          out.push(evalCell(a, depth + 1));
+        } else {
+          const n = Number(a);
+          if(!isNaN(n)) out.push(n);
+        }
+      }
+    });
+    return out;
+  }
+
+  function fmtVal(v){
+    if(v === '') return '';
+    if(typeof v === 'number'){
+      if(!isFinite(v)) return '#NUM!';
+      // 整数なら桁区切り、 そうでなければ 小数2位
+      return Number.isInteger(v) ? v.toLocaleString('ja-JP') : v.toLocaleString('ja-JP', {maximumFractionDigits:2});
+    }
+    return String(v);
+  }
+
+  function renderSheet(){
+    const tbody = $('ssBody');
+    tbody.innerHTML = '';
+    for(let r = 0; r < ROWS; r++){
+      const tr = document.createElement('tr');
+      const th = document.createElement('th');
+      th.textContent = r + 1;
+      tr.appendChild(th);
+      for(let c = 0; c < COLS.length; c++){
+        const td = document.createElement('td');
+        const id = cellId(c, r);
+        td.dataset.cell = id;
+        const raw = getRaw(id);
+        if(raw === ''){
+          td.textContent = '';
+        } else if(raw.startsWith('=')){
+          const v = evalCell(id);
+          td.textContent = fmtVal(v);
+          td.classList.add('formula-result');
+          if(typeof v === 'number') td.classList.add('num-cell');
+        } else {
+          const n = Number(raw.replace(/,/g, ''));
+          if(!isNaN(n) && raw.trim() !== ''){
+            td.textContent = fmtVal(n);
+            td.classList.add('num-cell');
+          } else {
+            td.textContent = raw;
+            td.classList.add('text-cell');
+          }
+        }
+        if(id === selectedCell) td.classList.add('selected');
+        td.addEventListener('click', () => selectCell(id));
+        td.addEventListener('dblclick', () => startEdit(id));
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    $('ssCell').textContent = selectedCell;
+    $('ssFormula').textContent = getRaw(selectedCell) || '（空）';
+  }
+
+  function selectCell(id){
+    if(editingCell && editingCell !== id) commitEdit();
+    selectedCell = id;
+    renderSheet();
+  }
+  function startEdit(id){
+    selectedCell = id;
+    editingCell = id;
+    renderSheet();
+    const td = document.querySelector(`td[data-cell="${id}"]`);
+    if(!td) return;
+    td.classList.add('editing');
+    td.textContent = '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = getRaw(id);
+    input.spellcheck = false;
+    td.appendChild(input);
+    input.focus();
+    input.select();
+    input.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        commitEditWithValue(id, input.value);
+        // 下のセル へ
+        const ref = parseRef(id);
+        if(ref && ref.r < ROWS - 1){
+          selectCell(cellId(ref.c, ref.r + 1));
+        } else {
+          selectCell(id);
+        }
+      } else if(e.key === 'Escape'){
+        e.preventDefault();
+        editingCell = null;
+        renderSheet();
+      } else if(e.key === 'Tab'){
+        e.preventDefault();
+        commitEditWithValue(id, input.value);
+        const ref = parseRef(id);
+        if(ref && ref.c < COLS.length - 1){
+          selectCell(cellId(ref.c + 1, ref.r));
+        } else {
+          selectCell(id);
+        }
+      }
+    });
+    input.addEventListener('blur', () => {
+      commitEditWithValue(id, input.value);
+      renderSheet();
+    });
+  }
+  function commitEditWithValue(id, value){
+    setRaw(id, value);
+    editingCell = null;
+    redrawChart();
+  }
+  function commitEdit(){ editingCell = null; }
+
+  // クリックして 1文字打つと 編集モード
+  document.addEventListener('keydown', e => {
+    if(mb.classList.contains('show')) return;
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(editingCell) return;
+    if(!selectedCell) return;
+    // 矢印キーで移動
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+      const ref = parseRef(selectedCell);
+      if(!ref) return;
+      // sheet が画面内にある時のみ
+      const ssEl = $('ssTable');
+      const rect = ssEl.getBoundingClientRect();
+      if(rect.bottom < 0 || rect.top > window.innerHeight) return;
+      e.preventDefault();
+      let nc = ref.c, nr = ref.r;
+      if(e.key === 'ArrowUp') nr--;
+      if(e.key === 'ArrowDown') nr++;
+      if(e.key === 'ArrowLeft') nc--;
+      if(e.key === 'ArrowRight') nc++;
+      nc = Math.max(0, Math.min(COLS.length-1, nc));
+      nr = Math.max(0, Math.min(ROWS-1, nr));
+      selectCell(cellId(nc, nr));
+      return;
+    }
+    if(e.key === 'Enter' || e.key === 'F2'){
+      const ssEl = $('ssTable');
+      const rect = ssEl.getBoundingClientRect();
+      if(rect.bottom < 0 || rect.top > window.innerHeight) return;
+      e.preventDefault();
+      startEdit(selectedCell);
+      return;
+    }
+    if(e.key === 'Delete' || e.key === 'Backspace'){
+      const ssEl = $('ssTable');
+      const rect = ssEl.getBoundingClientRect();
+      if(rect.bottom < 0 || rect.top > window.innerHeight) return;
+      e.preventDefault();
+      setRaw(selectedCell, '');
+      renderSheet();
+      redrawChart();
+      return;
+    }
+    // 文字入力で 即編集モード
+    if(e.key.length === 1 && !e.ctrlKey && !e.metaKey){
+      const ssEl = $('ssTable');
+      const rect = ssEl.getBoundingClientRect();
+      if(rect.bottom < 0 || rect.top > window.innerHeight) return;
+      startEdit(selectedCell);
+      const td = document.querySelector(`td[data-cell="${selectedCell}"]`);
+      if(td){
+        const input = td.querySelector('input');
+        if(input){ input.value = e.key; }
+      }
+      e.preventDefault();
+    }
+  });
+
+  // サンプル
+  const SAMPLES = {
+    home: {
+      A1:'2026年4月 家計簿', A3:'項目', B3:'金額',
+      A4:'食費', B4:'45000',
+      A5:'光熱費', B5:'18000',
+      A6:'通信費', B6:'9000',
+      A7:'医療費', B7:'6000',
+      A8:'交際費', B8:'12000',
+      A9:'合計', B9:'=SUM(B4:B8)',
+      A10:'平均', B10:'=AVERAGE(B4:B8)'
+    },
+    attendance: {
+      A1:'町内会 出席表', A3:'氏名', B3:'出席',
+      A4:'田中', B4:'1', A5:'佐藤', B5:'1',
+      A6:'鈴木', B6:'0', A7:'高橋', B7:'1',
+      A8:'伊藤', B8:'1',
+      A9:'参加合計', B9:'=SUM(B4:B8)',
+      A10:'最大', C10:'=MAX(B4:B8)',
+    },
+    calc: {
+      A1:'10', B1:'20', C1:'=A1+B1',
+      A2:'5', B2:'3', C2:'=A2*B2',
+      A3:'100', B3:'4', C3:'=A3/B3',
+      A4:'値1', B4:'値2', C4:'結果',
+      A5:'合計', B5:'', C5:'=SUM(A1:A3)',
+    }
+  };
+  function loadSample(key){
+    if(!confirm('現在の 入力 を リセットして OK？')) return;
+    cells = {};
+    Object.assign(cells, SAMPLES[key]);
+    selectedCell = 'A1';
+    renderSheet();
+    redrawChart();
+    showToast('📚 サンプルを 読み込みました');
+  }
+  function clearSheet(){
+    if(!confirm('全部 消して OK？')) return;
+    cells = {};
+    selectedCell = 'A1';
+    renderSheet();
+    redrawChart();
+  }
+  // 初期表示で家計簿
+  Object.assign(cells, SAMPLES.home);
+  renderSheet();
+
+  /* =========================================================
+     数式辞典
+     ========================================================= */
+  const FORMULAS = [
+    { name:'SUM（合計）', syntax:'=SUM(B2:B6)',
+      desc:'指定範囲の 数を 全部 足す',
+      body:`<b>使い方：</b><br><code>=SUM(B2:B6)</code> → B2〜B6 の合計<br><code>=SUM(A1,B1,C1)</code> → 3つ だけ 足す<br><br>
+      <b>家計簿で：</b>1か月分の支出を 一発で 合計！` },
+    { name:'AVERAGE（平均）', syntax:'=AVERAGE(B2:B6)',
+      desc:'指定範囲の 数の 平均',
+      body:`<b>使い方：</b><br><code>=AVERAGE(B2:B13)</code> → 12か月の平均食費<br><br>
+      <b>豆知識：</b><code>AVG</code> という 略しても 動きます！` },
+    { name:'MAX（最大）', syntax:'=MAX(B2:B6)',
+      desc:'一番 大きい数',
+      body:`<b>使い方：</b><br><code>=MAX(B2:B13)</code> → 一番 高かった月<br><br>
+      <b>家計簿で：</b>「今年 一番 使った月」が わかる！` },
+    { name:'MIN（最小）', syntax:'=MIN(B2:B6)',
+      desc:'一番 小さい数',
+      body:`<b>使い方：</b><br><code>=MIN(B2:B13)</code> → 一番 少なかった月<br><br>
+      <b>家計簿で：</b>「節約 成功した月」が わかる！` },
+  ];
+  const fdict = $('formulaDict');
+  FORMULAS.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'fcard';
+    div.innerHTML = `<h3>${escapeHTML(f.name)}</h3>
+      <span class="syntax">${escapeHTML(f.syntax)}</span>
+      <p>${escapeHTML(f.desc)}</p>`;
+    div.addEventListener('click', () => {
+      info('∑', f.name,
+        `<div style="font-size:16px;line-height:1.9">${f.body}</div>`);
+    });
+    fdict.appendChild(div);
+  });
+
+  /* =========================================================
+     グラフ描画（SVG）
+     ========================================================= */
+  let chartType = 'bar';
+  function setChart(type){
+    chartType = type;
+    document.querySelectorAll('#chartBar,#chartPie,#chartLine').forEach(b => b.classList.remove('active'));
+    if(type==='bar') $('chartBar').classList.add('active');
+    if(type==='pie') $('chartPie').classList.add('active');
+    if(type==='line') $('chartLine').classList.add('active');
+    redrawChart();
+  }
+  function getChartData(){
+    // A列＝ラベル、B列＝値（A4〜A8 の様な、文字＋数字の対）
+    const data = [];
+    for(let r = 0; r < ROWS; r++){
+      const labelId = cellId(0, r);
+      const valueId = cellId(1, r);
+      const label = evalCell(labelId);
+      const value = evalCell(valueId);
+      if(typeof value === 'number' && typeof label === 'string' && label.trim() !== ''){
+        // 合計／平均行 は 除外
+        if(/合計|平均|sum|average/i.test(label)) continue;
+        data.push({ label, value });
+      }
+    }
+    return data;
+  }
+  const CHART_COLORS = ['#00838F','#FFA000','#43A047','#9C27B0','#1565C0','#C62828','#F4511E'];
+  function redrawChart(){
+    const data = getChartData();
+    const area = $('chartArea');
+    const legend = $('chartLegend');
+    if(data.length === 0){
+      area.innerHTML = '<div style="padding:30px;color:var(--muted);text-align:center">↑ 上のシートに <b>A列=項目／B列=数値</b> を 入れると ここに グラフ が 出ます</div>';
+      legend.innerHTML = '';
+      return;
+    }
+    if(chartType === 'bar') drawBar(area, data);
+    else if(chartType === 'pie') drawPie(area, data);
+    else drawLine(area, data);
+
+    legend.innerHTML = data.map((d,i) =>
+      `<div class="item"><div class="swatch" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></div><span>${escapeHTML(d.label)}：<b>${d.value.toLocaleString('ja-JP')}</b></span></div>`
+    ).join('');
+  }
+  function drawBar(el, data){
+    const W = 600, H = 320, pad = 40;
+    const max = Math.max(...data.map(d => d.value));
+    const bw = (W - pad*2) / data.length * 0.7;
+    const gap = (W - pad*2) / data.length;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+    // 軸
+    svg += `<line x1="${pad}" y1="${H-pad}" x2="${W-pad/2}" y2="${H-pad}" stroke="#90A4AE" stroke-width="2"/>`;
+    svg += `<line x1="${pad}" y1="${pad/2}" x2="${pad}" y2="${H-pad}" stroke="#90A4AE" stroke-width="2"/>`;
+    // バー
+    data.forEach((d, i) => {
+      const h = (d.value / max) * (H - pad*2);
+      const x = pad + gap*i + (gap - bw)/2;
+      const y = H - pad - h;
+      const color = CHART_COLORS[i % CHART_COLORS.length];
+      svg += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" fill="${color}" rx="4"/>`;
+      svg += `<text x="${x + bw/2}" y="${y - 6}" text-anchor="middle" font-size="12" fill="#263238" font-weight="bold">${d.value.toLocaleString('ja-JP')}</text>`;
+      svg += `<text x="${x + bw/2}" y="${H - pad + 18}" text-anchor="middle" font-size="13" fill="#546E7A">${escapeHTML(d.label)}</text>`;
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+  function drawPie(el, data){
+    const total = data.reduce((a,b) => a + b.value, 0);
+    const cx = 200, cy = 160, r = 130;
+    let svg = `<svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">`;
+    let start = -Math.PI / 2;
+    data.forEach((d, i) => {
+      const angle = (d.value / total) * Math.PI * 2;
+      const end = start + angle;
+      const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
+      const x2 = cx + r * Math.cos(end), y2 = cy + r * Math.sin(end);
+      const large = angle > Math.PI ? 1 : 0;
+      const color = CHART_COLORS[i % CHART_COLORS.length];
+      svg += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z" fill="${color}" stroke="white" stroke-width="2"/>`;
+      // ラベル位置
+      const mid = (start + end) / 2;
+      const lx = cx + (r + 24) * Math.cos(mid), ly = cy + (r + 24) * Math.sin(mid);
+      const pct = (d.value / total * 100).toFixed(0);
+      if(angle > 0.25){
+        svg += `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="13" fill="#263238" font-weight="bold">${pct}%</text>`;
+      }
+      start = end;
+    });
+    // 凡例（右）
+    const lx0 = 420, ly0 = 50;
+    data.forEach((d, i) => {
+      const color = CHART_COLORS[i % CHART_COLORS.length];
+      svg += `<rect x="${lx0}" y="${ly0 + i*22}" width="16" height="16" fill="${color}" rx="3"/>`;
+      svg += `<text x="${lx0 + 22}" y="${ly0 + i*22 + 13}" font-size="13" fill="#263238">${escapeHTML(d.label)}</text>`;
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+  function drawLine(el, data){
+    const W = 600, H = 320, pad = 40;
+    const max = Math.max(...data.map(d => d.value));
+    let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<line x1="${pad}" y1="${H-pad}" x2="${W-pad/2}" y2="${H-pad}" stroke="#90A4AE" stroke-width="2"/>`;
+    svg += `<line x1="${pad}" y1="${pad/2}" x2="${pad}" y2="${H-pad}" stroke="#90A4AE" stroke-width="2"/>`;
+    const step = (W - pad*2) / Math.max(1, data.length - 1);
+    let pts = data.map((d, i) => {
+      const x = pad + step * i;
+      const y = H - pad - (d.value / max) * (H - pad*2);
+      return { x, y, d };
+    });
+    // 線
+    svg += `<polyline points="${pts.map(p => p.x + ',' + p.y).join(' ')}" fill="none" stroke="${CHART_COLORS[0]}" stroke-width="3"/>`;
+    // 点とラベル
+    pts.forEach((p, i) => {
+      svg += `<circle cx="${p.x}" cy="${p.y}" r="6" fill="${CHART_COLORS[0]}"/>`;
+      svg += `<text x="${p.x}" y="${p.y - 12}" text-anchor="middle" font-size="12" fill="#263238" font-weight="bold">${p.d.value.toLocaleString('ja-JP')}</text>`;
+      svg += `<text x="${p.x}" y="${H - pad + 18}" text-anchor="middle" font-size="13" fill="#546E7A">${escapeHTML(p.d.label)}</text>`;
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+  redrawChart();
+
+  /* =========================================================
+     家計簿テンプレ
+     ========================================================= */
+  const HT_FIELDS = ['htMonth','ht1','ht2','ht3','ht4','ht5'];
+  function renderHt(){
+    const m = $('htMonth').value || '（月）';
+    const items = [
+      { e:'💴', n:'食費', v:Number($('ht1').value || 0) },
+      { e:'💡', n:'光熱費', v:Number($('ht2').value || 0) },
+      { e:'📱', n:'通信費', v:Number($('ht3').value || 0) },
+      { e:'💊', n:'医療費', v:Number($('ht4').value || 0) },
+      { e:'🎁', n:'交際費', v:Number($('ht5').value || 0) },
+    ];
+    const total = items.reduce((a,b)=>a+b.v, 0);
+    const avg = Math.round(total / items.length);
+    let html = `<div class="ht-title">${escapeHTML(m)} 家計簿</div>
+      <table class="ht-table">
+        <thead><tr><th style="width:80px"></th><th>項目</th><th style="width:140px">金額</th></tr></thead>
+        <tbody>`;
+    items.forEach(it => {
+      html += `<tr><td style="text-align:center;font-size:24px">${it.e}</td><td>${it.n}</td><td class="amount">¥${it.v.toLocaleString('ja-JP')}</td></tr>`;
+    });
+    html += `<tr class="total"><td colspan="2">合計（=SUM）</td><td class="amount">¥${total.toLocaleString('ja-JP')}</td></tr>`;
+    html += `<tr><td colspan="2" style="background:#F5F7F8;color:var(--muted);font-size:14px">1項目平均（=AVERAGE）</td><td class="amount" style="background:#F5F7F8;color:var(--muted);font-size:14px">¥${avg.toLocaleString('ja-JP')}</td></tr>`;
+    html += `</tbody></table>`;
+    $('htSheet').innerHTML = html;
+    $('htSheetScreen').innerHTML = html;
+  }
+  HT_FIELDS.forEach(id => $(id).addEventListener('input', renderHt));
+  function resetHt(){
+    if(!confirm('入力を リセットして OK？')) return;
+    $('htMonth').value = '2026年4月';
+    $('ht1').value = 45000;
+    $('ht2').value = 18000;
+    $('ht3').value = 9000;
+    $('ht4').value = 6000;
+    $('ht5').value = 12000;
+    renderHt();
+  }
+  function downloadHt(){
+    const m = $('htMonth').value || '家計簿';
+    const content = $('htSheetScreen').outerHTML;
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHTML(m)} 家計簿</title>
+<style>
+body{font-family:'Hiragino Sans','Yu Gothic',sans-serif;background:#F5F7F8;padding:40px;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.ht-sheet{background:white;border:3px solid #00838F;border-radius:10px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 4px 16px rgba(0,131,143,.15)}
+.ht-title{background:#00838F;color:white;padding:14px 22px;font-size:22px;font-weight:bold;text-align:center}
+.ht-table{width:100%;border-collapse:collapse;font-size:16px}
+.ht-table th,.ht-table td{border:1px solid #B0BEC5;padding:12px 16px}
+.ht-table th{background:#ECEFF1;font-weight:700;text-align:center}
+.ht-table td.amount{text-align:right;font-family:'SF Mono','Menlo',monospace;font-weight:600}
+.ht-table tr.total td{background:#FFF8E1;font-weight:bold;font-size:18px}
+.ht-table tr.total td.amount{color:#C62828}
+@media print { body{background:white;padding:20px}.ht-sheet{box-shadow:none} }
+</style></head><body>${content}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = m.replace(/[\/\\?<>:|"*]/g,'_') + '_家計簿.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 ' + a.download + ' を 保存しました');
+  }
+  renderHt();
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ ショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:16px;line-height:2.2">
+        <div><span class="key">←</span> <span class="key">↑</span> <span class="key">PageUp</span> 前の章へ</div>
+        <div><span class="key">→</span> <span class="key">↓</span> <span class="key">PageDown</span> <span class="key">Space</span> 次の章へ</div>
+        <div><span class="key">1</span>〜<span class="key">${targets.length}</span> 章番号で 直行</div>
+        <div><span class="key">Home</span> / <span class="key">End</span> 最初／最後</div>
+        <div><span class="key">?</span> このヘルプを 開く</div>
+        <hr style="margin:10px 0;border-color:#CFD8DC">
+        <div style="font-size:14px;color:var(--muted)"><b>表計算で：</b> 矢印キーで セル移動・<span class="key">Enter</span> または <span class="key">F2</span> で 編集・<span class="key">Delete</span> で 消す</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    // 表計算が画面内ならarrowキーは表計算が消費
+    const ssEl = $('ssTable');
+    if(ssEl){
+      const rect = ssEl.getBoundingClientRect();
+      if(rect.bottom > 0 && rect.top < window.innerHeight &&
+         ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','F2','Delete','Backspace'].includes(e.key)){
+        return;
+      }
+    }
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

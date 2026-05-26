@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高齢者・中級 第4回｜ビデオ通話とSNSの基本</title>
+<style>
+  :root{
+    --primary:#00838F; --secondary:#FFA000; --accent:#43A047;
+    --warn:#C62828; --dark:#263238; --light:#F5F7F8;
+    --panel:#FFFFFF; --muted:#546E7A; --shadow:0 3px 10px rgba(38,50,56,.12);
+    --border:rgba(38,50,56,.1);
+    --line:#06C755; --zoom:#2D8CFF; --meet:#00897B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px;}
+  body{font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:15px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.05);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.1)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:6px 16px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:15px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:22px;height:22px;padding:0;border-radius:50%;
+    border:2px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.96);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:42px;height:42px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(38,50,56,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:18px;padding:32px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:70px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.9;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#00838F 0%,#0097A7 50%,#43A047 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:10px 26px;
+    border-radius:999px;font-weight:bold;margin-bottom:22px;backdrop-filter:blur(4px);font-size:16px}
+  .hero h1{font-size:clamp(46px,8vw,90px);line-height:1.2;margin-bottom:22px;
+    text-shadow:0 4px 16px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(20px,2.6vw,28px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,110px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:16px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:8px;font-weight:bold;font-size:15px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(34px,5vw,48px);color:var(--primary);margin-bottom:10px;font-weight:800}
+  .lead{font-size:21px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,58px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:10px;font-weight:700}
+  .card p{font-size:18px;line-height:1.8}
+  .card.warn{border-left:6px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:6px solid var(--accent);background:#E8F5E9}
+  .card.tip{border-left:6px solid var(--secondary);background:#FFF8E1}
+
+  /* Service comparison */
+  .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}
+  .svc{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);
+    border:2px solid var(--border);cursor:pointer;transition:all .15s}
+  .svc:hover{transform:translateY(-4px);border-color:currentColor}
+  .svc.line{color:var(--line)}
+  .svc.zoom{color:var(--zoom)}
+  .svc.meet{color:var(--meet)}
+  .svc h3{font-size:22px;margin-bottom:8px}
+  .svc .badge{display:inline-block;background:#E8F5E9;color:#1B5E20;padding:4px 12px;
+    border-radius:6px;font-size:14px;font-weight:700;margin:6px 0}
+  .svc .meta{font-size:15px;color:var(--muted);line-height:1.8;margin-top:8px}
+  .svc .meta b{color:var(--dark)}
+
+  /* Check preparation */
+  .prep{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .prep-items{display:grid;gap:10px;margin-bottom:14px}
+  .prep-item{display:flex;align-items:center;gap:14px;background:#F5F7F8;border-radius:10px;
+    padding:14px 18px;cursor:pointer;border-left:5px solid var(--border);transition:all .15s}
+  .prep-item:hover{transform:translateX(3px)}
+  .prep-item.on{background:#E8F5E9;border-left-color:var(--accent)}
+  .prep-item .box{width:28px;height:28px;border:2px solid var(--muted);border-radius:6px;
+    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;
+    background:white;font-weight:bold;font-size:18px}
+  .prep-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .prep-item.on .box::before{content:'✓'}
+  .prep-item .ic{font-size:30px;flex-shrink:0}
+  .prep-item .txt{flex:1}
+  .prep-item .txt b{display:block;font-size:17px;margin-bottom:2px}
+  .prep-item .txt span{color:var(--muted);font-size:14px}
+  .prep-progress{text-align:center;margin-top:14px;font-weight:700;color:var(--primary);font-size:17px}
+  .prep-result{margin-top:14px;padding:16px 20px;border-radius:10px;
+    background:#E0F2F1;border-left:6px solid var(--primary);font-size:16px;line-height:1.8;display:none}
+  .prep-result.show{display:block}
+
+  /* Scam dictionary */
+  .scams{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px}
+  .scam{background:white;border-radius:12px;padding:18px;box-shadow:var(--shadow);
+    border:1px solid var(--border);border-left:6px solid var(--warn);cursor:pointer;
+    transition:all .15s}
+  .scam:hover{transform:translateY(-3px);border-color:var(--warn);border-left-color:var(--warn)}
+  .scam.new{border-left-color:#FF6F00;background:#FFF8E1}
+  .scam .ic{font-size:36px}
+  .scam h3{font-size:17px;color:var(--warn);margin:6px 0 4px}
+  .scam.new h3{color:#E65100}
+  .scam p{font-size:14px;color:var(--muted);line-height:1.6}
+  .scam .tag{display:inline-block;background:#FFEBEE;color:var(--warn);padding:2px 10px;
+    border-radius:6px;font-size:12px;font-weight:700;margin-top:6px}
+  .scam.new .tag{background:#FFF3E0;color:#E65100}
+
+  /* Scam quiz */
+  .squiz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .squiz-row{margin-bottom:20px;padding-bottom:18px;border-bottom:2px dashed #CFD8DC}
+  .squiz-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .squiz-msg{background:#F5F7F8;border-radius:10px;padding:14px 18px;margin-bottom:12px;
+    border-left:5px solid var(--muted)}
+  .squiz-msg .header{font-size:13px;color:var(--muted);font-weight:bold;margin-bottom:4px}
+  .squiz-msg .body{font-size:16px;line-height:1.8;color:var(--dark)}
+  .squiz-msg .body code{background:white;color:#2D8CFF;padding:2px 8px;border-radius:4px;
+    font-family:monospace;font-size:14px}
+  .squiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:680px){.squiz-opts{grid-template-columns:1fr}}
+  .squiz-opts button{background:white;border:2px solid #CFD8DC;color:var(--dark);
+    padding:14px 18px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:700;transition:all .15s}
+  .squiz-opts button:hover{border-color:var(--primary);background:#E0F7FA}
+  .squiz-opts button.right{background:#C8E6C9;border-color:var(--accent);color:#1B5E20}
+  .squiz-opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .squiz-row.answered .ex{display:block}
+  .squiz-row .ex{display:none;margin-top:12px;padding:14px;background:#FFF8E1;
+    border-radius:8px;font-size:14px;line-height:1.8;border-left:5px solid var(--secondary)}
+
+  /* Course checklist */
+  .checklist{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .check-item{background:white;border-radius:10px;padding:14px 18px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);
+    border:1px solid var(--border);border-left:5px solid #CFD8DC;
+    transition:all .15s}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#E8F5E9;border-left-color:var(--accent)}
+  .check-item .box{width:26px;height:26px;border:2px solid var(--muted);border-radius:5px;
+    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;
+    background:white;font-weight:bold}
+  .check-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .check-item.on .box::before{content:'✓'}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;font-size:15px;margin-bottom:2px}
+  .check-item .txt span{color:var(--muted);font-size:13px}
+  .check-progress{text-align:center;margin-top:14px;font-weight:700;color:var(--primary);font-size:16px}
+
+  /* Certificate */
+  .certbox{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .certform{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+  .certform label{display:block;font-weight:700;font-size:15px;color:var(--muted);margin-bottom:6px}
+  .certform input{width:100%;padding:11px 14px;
+    border:1.5px solid #CFD8DC;border-radius:8px;font-family:inherit;font-size:16px;background:#F5F7F8;color:var(--dark)}
+  .certform input:focus{outline:none;border-color:var(--primary);background:white;box-shadow:0 0 0 3px rgba(0,131,143,.15)}
+
+  .cert{background:linear-gradient(135deg,#FFFBEB,#E0F2F1);
+    border:6px double var(--primary);border-radius:18px;padding:40px 30px;text-align:center;
+    position:relative;overflow:hidden}
+  .cert::before,.cert::after{content:'🌸';position:absolute;font-size:80px;opacity:.1;color:var(--primary)}
+  .cert::before{top:10px;left:20px} .cert::after{bottom:10px;right:20px}
+  .cert .badge{font-size:60px}
+  .cert h2{color:var(--primary);font-size:34px;margin:6px 0 14px;letter-spacing:8px;font-weight:800}
+  .cert .body{font-size:18px;line-height:2;color:var(--dark)}
+  .cert .name{font-size:30px;font-weight:bold;color:var(--accent);margin:18px 0;
+    padding:10px 0;border-top:2px solid var(--primary);border-bottom:2px solid var(--primary);
+    display:inline-block;min-width:280px}
+  .cert .footer{margin-top:18px;font-size:14px;color:var(--muted)}
+  .cert-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .cert-tools button{font-family:inherit;border:none;border-radius:10px;padding:12px 26px;
+    font-weight:700;cursor:pointer;font-size:16px;background:var(--primary);color:white;
+    box-shadow:0 3px 0 rgba(0,0,0,.12)}
+  .cert-tools button:hover{transform:translateY(-1px)}
+  .cert-tools button.accent{background:var(--accent)}
+  .cert-tools button.celebrate{background:var(--secondary);color:var(--dark)}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:12px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .summary-row h3{font-size:19px}
+  .summary-row p{font-size:15px;color:var(--muted)}
+  .finale{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 50%,var(--secondary) 100%);
+    color:white;text-align:center;padding:60px 24px;border-radius:14px;margin:32px 24px;}
+  .finale .em{font-size:84px;line-height:1}
+  .finale h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  .finale p{font-size:18px}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:14px 28px;border-radius:10px;
+    font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:16px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Confetti */
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:10px;height:14px;top:-20px;border-radius:2px;
+    animation:fall linear forwards}
+  @keyframes fall{ to { transform: translateY(110vh) rotate(720deg); } }
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+
+  /* print: cert only */
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,.confetti,
+    .hero,.divider,.section{display:none !important}
+    .cert-print{display:block !important;padding:30px !important}
+  }
+  .cert-print{display:none}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第4回</span> <b>ビデオ通話とSNS ／ 修了</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#services">2<span>3サービス比較</span><span class="ic">📞</span></a>
+  <a href="#prep">3<span>通話準備チェック</span><span class="ic">✅</span></a>
+  <a href="#scams">4<span>詐欺パターン</span><span class="ic">⚠️</span></a>
+  <a href="#squiz">5<span>詐欺見破りクイズ</span><span class="ic">🕵️</span></a>
+  <a href="#course">6<span>コースふり返り</span><span class="ic">📚</span></a>
+  <a href="#cert">7<span>修了証</span><span class="ic">🎓</span></a>
+  <a href="#wrap">8<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 高齢者向けパソコン教室・中級 ／ 最終回</div>
+    <h1>ビデオ通話と<br>SNS</h1>
+    <p>離れた 家族と <b>顔を見て 話す</b>！ コース 修了 🎓</p>
+    <div class="em">📞💬🎓</div>
+  </div>
+  <div class="scroll-hint">下に すすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4つの ステップで コース 完結</h2>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📞</span><h3>通話</h3><p>家族と 顔を 見て</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">⚙️</span><h3>準備</h3><p>カメラ・マイク</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">⚠️</span><h3>詐欺対策</h3><p>新手口 まで</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🎓</span><h3>修了</h3><p>おめでとう！</p></div>
+  </div>
+</section>
+
+<!-- 1. 3サービス比較 -->
+<div class="divider" id="services" data-snav-target>
+  <div class="num">1.</div>
+  <h2>主要 3 サービス 比較</h2>
+</div>
+
+<section class="section">
+  <h2>家族と <b>同じ もの</b> を 使う</h2>
+  <p class="lead">どれが 良い 悪い ではなく、 <b>家族と 同じサービス</b> が ベスト。<br>
+  クリックで くわしい 情報。</p>
+
+  <div class="services">
+    <div class="svc line" onclick="svcInfo('line')">
+      <h3>💚 LINE</h3>
+      <span class="badge">無料・無制限</span>
+      <div class="meta"><b>強み：</b>日本で 一番 普及／スマホで 一番 簡単<br>
+      <b>こんな方：</b>家族 全員 すでに LINE 使ってる</div>
+    </div>
+    <div class="svc zoom" onclick="svcInfo('zoom')">
+      <h3>🔵 ZOOM</h3>
+      <span class="badge">無料 40分まで</span>
+      <div class="meta"><b>強み：</b>会議・教室で 有名／3人以上 でも 安定<br>
+      <b>こんな方：</b>友人グループや 教室 でも 使う</div>
+    </div>
+    <div class="svc meet" onclick="svcInfo('meet')">
+      <h3>🟦 Google Meet</h3>
+      <span class="badge">無料 1時間まで</span>
+      <div class="meta"><b>強み：</b>ブラウザだけ／Gメール アドレスで OK<br>
+      <b>こんな方：</b>Android スマホ・Gメール 中心</div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3>💡 まず始めるなら…</h3>
+    <p style="margin-top:6px"><b>LINE</b> が おすすめ。 家族全員が 普段から 使っている 確率が 高い。<br>
+    すでに LINE で メッセージのやり取り ある なら、 そのまま 📞 マークで ビデオ通話！</p>
+  </div>
+</section>
+
+<!-- 2. 通話準備チェッカー -->
+<div class="divider" id="prep" data-snav-target>
+  <div class="num">2.</div>
+  <h2>通話 準備 チェック</h2>
+</div>
+
+<section class="section">
+  <h2>本番 前に 8項目 確認</h2>
+  <p class="lead">クリックで チェック ✓。 ぜんぶ ✓ で 本番 OK！</p>
+
+  <div class="prep">
+    <div class="prep-items" id="prepItems">
+      <div class="prep-item"><div class="box"></div><div class="ic">📷</div><div class="txt"><b>カメラが 動く</b><span>テスト通話で 顔が 映る</span></div></div>
+      <div class="prep-item"><div class="box"></div><div class="ic">🎤</div><div class="txt"><b>マイクが 拾う</b><span>声が 相手に 届く</span></div></div>
+      <div class="prep-item"><div class="box"></div><div class="ic">🔊</div><div class="txt"><b>スピーカーから 音が出る</b><span>相手の声が 聞こえる</span></div></div>
+      <div class="prep-item"><div class="box"></div><div class="ic">📶</div><div class="txt"><b>Wi-Fi が 強い</b><span>4本中 3本以上が 目安</span></div></div>
+      <div class="prep-item"><div class="box"></div><div class="ic">💡</div><div class="txt"><b>顔が 明るく 映る</b><span>窓を 背に しない</span></div></div>
+      <div class="prep-item"><div class="box"></div><div class="ic">🤫</div><div class="txt"><b>静かな 場所</b><span>テレビ・ラジオは OFF</span></div></div>
+      <div class="prep-item"><div class="box"></div><div class="ic">🧱</div><div class="txt"><b>背景に 個人情報 なし</b><span>表札・カレンダーが 映らない</span></div></div>
+      <div class="prep-item"><div class="box"></div><div class="ic">👓</div><div class="txt"><b>老眼鏡 OK・体勢 OK</b><span>30分は 座れる 場所</span></div></div>
+    </div>
+    <div class="prep-progress" id="prepProg">0 / 8 達成</div>
+    <div class="prep-result" id="prepResult"></div>
+  </div>
+</section>
+
+<!-- 3. 詐欺パターン辞典 -->
+<div class="divider" id="scams" data-snav-target>
+  <div class="num">3.</div>
+  <h2>詐欺パターン 辞典</h2>
+</div>
+
+<section class="section">
+  <h2>知っておけば 防げる！</h2>
+  <p class="lead">基本の 4 ＋ 新手口 3 ＝ <b>7パターン</b>。 各カードを 押すと 詳細＋対処法。</p>
+
+  <div class="scams" id="scamList">
+    <!-- generated -->
+  </div>
+
+  <div class="card warn" style="margin-top:20px">
+    <h3>🆘 詐欺かも！ と 思ったら</h3>
+    <p style="margin-top:6px;font-size:16px"><b>1.</b> すぐ 家族 に 相談<br>
+    <b>2.</b> お金は 絶対 振り込まない<br>
+    <b>3.</b> 警察 ＋ 銀行 に 連絡<br>
+    <b>4.</b> 消費者ホットライン <span style="background:white;color:var(--warn);padding:4px 12px;border-radius:6px;font-weight:bold;font-size:18px">📞 188（いやや！）</span></p>
+  </div>
+</section>
+
+<!-- 4. 詐欺見破りクイズ -->
+<div class="divider" id="squiz" data-snav-target>
+  <div class="num">4.</div>
+  <h2>詐欺 見破り クイズ</h2>
+</div>
+
+<section class="section">
+  <h2>5問 やってみましょう</h2>
+  <p class="lead">本物 / 詐欺 を 見破れますか？ 実際の メッセージ例 で 練習！</p>
+
+  <div class="squiz" id="squizBox"></div>
+</section>
+
+<!-- 5. コースふり返り -->
+<div class="divider" id="course" data-snav-target>
+  <div class="num">5.</div>
+  <h2>コース ふり返り</h2>
+</div>
+
+<section class="section">
+  <h2>中級 4回で 身についた 10項目</h2>
+  <p class="lead">クリックで チェック！ 7つ以上 で 修了 レベル。</p>
+
+  <div class="checklist" id="courseCheck">
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📝 Word で 文書（町内会案内 など）が 作れる</b><span>第1回 文書</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🎨 文字を 大きく・太く・色で 飾れる</b><span>第1回 文書</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🖨️ 印刷プレビュー を 確認して 印刷できる</b><span>第1回 文書</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📊 Excel で 家計簿が 作れる</b><span>第2回 表計算</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>➕ SUM 関数 で 自動 合計できる</b><span>第2回 表計算</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>☁️ Googleフォト / iCloud に 写真を 保存</b><span>第3回 クラウド</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🔗 リンクで 家族と 写真を 共有</b><span>第3回 クラウド</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>🔒 共有範囲（家族のみ など）を 設定できる</b><span>第3回 クラウド</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>📞 LINE / ZOOM で 家族と ビデオ通話</b><span>第4回 通話</span></div></div>
+    <div class="check-item"><div class="box"></div><div class="txt"><b>⚠️ 詐欺の 新手口（SMS・なりすまし）を 知っている</b><span>第4回 詐欺対策</span></div></div>
+  </div>
+  <div class="check-progress" id="courseProg">0 / 10 達成</div>
+</section>
+
+<!-- 6. 修了証 -->
+<div class="divider" id="cert" data-snav-target>
+  <div class="num">6.</div>
+  <h2>修了証 ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>ご自身 の お名前 入りの 修了証</h2>
+  <p class="lead">お名前・教室名・日付を 入力 → 印刷で A4 1枚に！</p>
+
+  <div class="certbox">
+    <div class="certform">
+      <div>
+        <label>お名前</label>
+        <input type="text" id="certName" value="○○ ○○" maxlength="30">
+      </div>
+      <div>
+        <label>教室名</label>
+        <input type="text" id="certSchool" value="○○ パソコン教室" maxlength="40">
+      </div>
+      <div>
+        <label>修了日</label>
+        <input type="text" id="certDate" value="" placeholder="例：2026年5月">
+      </div>
+    </div>
+
+    <div class="cert-print" id="certPrint">
+      <div class="cert" id="certView">
+        <div class="badge">🏆</div>
+        <h2>修　了　証</h2>
+        <div class="body">
+          上記の方は<br>
+          <b>高齢者向け パソコン教室・中級コース</b> を<br>
+          全 4回 修了されました
+          <div class="name" id="certNameView">○○ ○○ 様</div>
+          「実生活で パソコンが 役立つ」 を<br>
+          身に つけられました
+        </div>
+        <div class="footer">
+          <div id="certDateView"></div>
+          <div id="certSchoolView">○○ パソコン教室</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cert" id="certScreen" style="margin-top:18px">
+      <div class="badge">🏆</div>
+      <h2>修　了　証</h2>
+      <div class="body">
+        上記の方は<br>
+        <b>高齢者向け パソコン教室・中級コース</b> を<br>
+        全 4回 修了されました
+        <div class="name" id="certNameView2">○○ ○○ 様</div>
+        「実生活で パソコンが 役立つ」 を<br>
+        身に つけられました
+      </div>
+      <div class="footer">
+        <div id="certDateView2"></div>
+        <div id="certSchoolView2">○○ パソコン教室</div>
+      </div>
+    </div>
+
+    <div class="cert-tools">
+      <button class="accent" onclick="window.print()">🖨️ A4で 印刷</button>
+      <button onclick="downloadCert()">💾 .html で 保存</button>
+      <button class="celebrate" onclick="celebrate()">🎊 お祝い ボタン</button>
+    </div>
+  </div>
+</section>
+
+<!-- 7. 修了 -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>修了！</h2>
+</div>
+
+<section class="section">
+  <h2>中級コース 4回 ふり返り</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📝 第1回：文書を作ろう</h3><p>Word で 町内会案内 を 1枚 完成</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>📊 第2回：数字の表</h3><p>Excel で 家計簿・SUM・グラフ</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>📸 第3回：写真・クラウド</h3><p>Googleフォト で 家族と 写真共有</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>📞 第4回：通話・SNS</h3><p>LINE で ビデオ通話、詐欺対策 まで</p></div></div>
+  </div>
+</section>
+
+<div class="finale">
+  <div class="em">🎓🌸🎉</div>
+  <h2>中級コース 修了 おめでとうございます</h2>
+  <p style="font-size:18px;margin-top:8px">家族と もっと つながり、 日々の 用事も ご自身で。<br>
+  <b>新しい 楽しみ</b> が ひとつ、 できました 🌷</p>
+  <button onclick="celebrate()" style="margin-top:20px;background:white;color:var(--primary);
+    border:none;padding:16px 36px;border-radius:10px;font-family:inherit;font-size:18px;
+    font-weight:700;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18)">🎊 おめでとう ボタン</button>
+</div>
+
+<footer>高齢者向けパソコン教室 ／ 中級 第4回｜ビデオ通話とSNSの基本 ／ コース修了</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* サービス比較 */
+  const SVC = {
+    line: { e:'💚', t:'LINE',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>無料（時間 無制限）<br>
+        <b>強み：</b>日本で 一番 普及／既に スマホに 入っている事 多い<br><br>
+        <b>通話 手順：</b><br>
+        1. LINE を 開く<br>
+        2. 家族の トーク を タップ<br>
+        3. 右上の 📞 マーク<br>
+        4. 「ビデオ通話」 を 選ぶ<br><br>
+        <b>こんな方 向け：</b>家族と すでに LINEメッセージで やり取り ある</div>`},
+    zoom: { e:'🔵', t:'ZOOM',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>無料 40分まで（3人以上）／2人なら 無制限<br>
+        <b>強み：</b>会議・教室で 有名／ホストが リンクを 送る<br><br>
+        <b>使い方：</b><br>
+        1. 家族から 招待リンク（LINEなどで）<br>
+        2. リンクを タップ<br>
+        3. ZOOM起動 → 「参加」<br>
+        4. カメラ・マイク 許可<br><br>
+        <b>こんな方 向け：</b>友人グループや 教室・サークル でも 使う予定</div>`},
+    meet: { e:'🟦', t:'Google Meet',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>無料 1時間まで（3人以上）／2人なら 24時間<br>
+        <b>強み：</b>Gメール アドレスで OK／ブラウザだけ で 動く<br><br>
+        <b>使い方：</b><br>
+        1. Gmail を 開く<br>
+        2. 左の「Meet」 → 「新しい会議」<br>
+        3. リンクを コピーして 家族に 送る<br>
+        4. 相手も リンクで 参加<br><br>
+        <b>こんな方 向け：</b>Android スマホ・Gメール 中心の方</div>`},
+  };
+  function svcInfo(k){
+    const s = SVC[k];
+    if(s) info(s.e, s.t, s.b);
+  }
+
+  /* 通話準備チェッカー */
+  (function(){
+    const root = $('prepItems'), out = $('prepProg'), result = $('prepResult');
+    const items = [...root.querySelectorAll('.prep-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      out.textContent = done + ' / 8 達成';
+      if(done === 8){
+        out.style.color = '#4CAF50';
+        out.textContent = '🎉 8 / 8 完璧！ いつでも 本番 OK！';
+        result.classList.add('show');
+        result.innerHTML = '<b>準備 完了！</b><br>講師と テスト通話 → 家族と 本番通話 へ 進みましょう。<br>緊張しても 大丈夫、 顔が 見えるだけで 家族は 喜びます！';
+      } else if(done >= 5){
+        out.style.color = 'var(--accent)';
+        out.textContent = done + ' / 8 達成 — あと 一歩！';
+        result.classList.remove('show');
+      } else {
+        out.style.color = '';
+        result.classList.remove('show');
+      }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{
+      it.classList.toggle('on'); update();
+    }));
+    update();
+  })();
+
+  /* 詐欺パターン辞典 */
+  const SCAMS = [
+    { ic:'📞', name:'オレオレ詐欺', tag:'基本',
+      desc:'「お母さん、 オレだけど…」',
+      detail:'息子・孫を 名乗って お金を 要求。<br>「事故」「示談金」「会社のお金」 などの 言葉。',
+      action:'<b>すぐ 切って 本人に 電話</b> し直す。<br>家族の <b>合言葉</b> を 決めておくと 安心。' },
+    { ic:'💻', name:'偽 警告', tag:'基本',
+      desc:'「ウイルス 検出！」 と 大きな音',
+      detail:'パソコン使用中に 突然 警告画面。<br>「サポートセンターに 電話を」 と 偽番号 表示。',
+      action:'<b>絶対に 電話 / クリック しない</b>。<br>ブラウザを 強制終了（Alt+F4 / ⌘+Q）。' },
+    { ic:'📧', name:'当選 メール', tag:'基本',
+      desc:'「100万円 当選！」「Amazon 当選！」',
+      detail:'応募していないのに 当選通知。<br>「手数料」「税金」を 名目に お金を 要求。',
+      action:'<b>削除</b>。 リンクは クリックしない。<br>応募してない なら 当選も しない。' },
+    { ic:'💳', name:'銀行・カード 偽メール', tag:'基本',
+      desc:'「口座が 凍結されました」',
+      detail:'銀行・クレカ会社を 装う 偽メール。<br>偽サイトに 誘導 → パスワード盗難。',
+      action:'<b>銀行に 直接 電話</b>（メールの番号 NG）。<br>偽サイトに ID/パスワードを 入れない。' },
+    { ic:'📱', name:'SMS 配達 詐欺', tag:'NEW', cls:'new',
+      desc:'「荷物が お届けできませんでした」',
+      detail:'宅配業者（ヤマト・佐川・郵便）を 装う SMS。<br>偽サイトで 個人情報・カード情報を 盗む。',
+      action:'<b>リンクは タップしない</b>。<br>宅配の 公式アプリ で 配送状況 確認。' },
+    { ic:'💬', name:'LINE 乗っ取り', tag:'NEW', cls:'new',
+      desc:'「コンビニで カードを 買って」',
+      detail:'友人/家族の LINE が 乗っ取られ、 お金を 要求。<br>本人ではなく <b>犯人</b> から メッセージ。',
+      action:'<b>必ず 電話で 本人に 確認</b>。<br>LINE 自体は 信用しない （アカウント 乗っ取りの 可能性）。' },
+    { ic:'🤖', name:'AI なりすまし', tag:'NEW', cls:'new',
+      desc:'AI で 息子の 声・動画 を 偽造',
+      detail:'AI で 家族の 声や 動画を 作って 電話 / ビデオ通話。<br>「助けて」「お金 振り込んで」 と 緊急性を 演出。',
+      action:'<b>家族の 合言葉</b>（家族 だけが 知る 言葉）を 決める。<br>少しでも 怪しいと 思ったら 切って 別の 連絡先で 確認。' },
+  ];
+  const scamList = $('scamList');
+  SCAMS.forEach(s=>{
+    const div = document.createElement('div');
+    div.className = 'scam' + (s.cls === 'new' ? ' new' : '');
+    div.innerHTML = `<div class="ic">${s.ic}</div>
+      <h3>${escapeHTML(s.name)}</h3>
+      <span class="tag">${s.tag}</span>
+      <p style="margin-top:6px">${escapeHTML(s.desc)}</p>`;
+    div.addEventListener('click', ()=>{
+      info(s.ic, s.name, `
+        <div style="font-size:16px;line-height:1.9">
+          <b>📋 手口：</b><br>${s.detail}<br><br>
+          <div style="background:#FFEBEE;border-left:5px solid var(--warn);padding:14px;border-radius:8px">
+            <b>🛡️ 対処：</b><br>${s.action}
+          </div>
+        </div>`);
+    });
+    scamList.appendChild(div);
+  });
+
+  /* 詐欺見破りクイズ */
+  const SQUIZ = [
+    {
+      ic:'📱', source:'SMS（ショートメッセージ）',
+      body:'【ヤマト運輸】お客様の お荷物が お届け できませんでした。 ご確認ください: <code>http://yamato-jp.shop/track/1234</code>',
+      ans:'fake',
+      ex:'<b>詐欺です！</b> 本物の ヤマトは SMS で <b>リンクを 送りません</b>。 URLも 「.shop」 「.xyz」 など 怪しい ドメイン。<br>本物の 配送状況は <b>公式アプリ「クロネコメンバーズ」</b> から 確認！'
+    },
+    {
+      ic:'📞', source:'電話',
+      body:'「お母さん？ オレ、 風邪 ひいて 声が おかしいんだ。 今 会社のお金を 落として しまって…。 100万円 すぐ 振り込んで！」',
+      ans:'fake',
+      ex:'<b>詐欺です！</b> 典型的な <b>オレオレ詐欺</b>。 「声が おかしい」 で 違和感を ごまかす 手口。<br>すぐ 電話を 切って、 <b>息子の 本物の電話番号</b> から かけ直す。 合言葉（家族の 思い出 など）を 聞いて 確認！'
+    },
+    {
+      ic:'💬', source:'LINE（家族の トーク）',
+      body:'息子から：「今 海外出張中で 急ぎ コンビニで Amazon ギフトカード 5万円分 買ってきて。 後で お金返すから！」',
+      ans:'fake',
+      ex:'<b>詐欺です！</b> 息子の <b>LINE アカウントが 乗っ取られた</b> 可能性。 ギフトカード要求は 100%詐欺。<br>必ず <b>電話 で 本人に 確認</b>。 LINE は信用しない！'
+    },
+    {
+      ic:'📧', source:'メール',
+      body:'差出人：amazon-support@amaz0n-jp.com<br>件名：【重要】アカウントが ロックされました<br>本文：24時間以内 に <a href="#" style="color:#2D8CFF">こちら</a> から ログイン 確認を お願いします。',
+      ans:'fake',
+      ex:'<b>詐欺です！</b> ドメインが <b>「amaz0n」</b>（オーが ゼロ！）。 偽サイトの 典型例。<br>「24時間 以内」 と 急かす のも 怪しい サイン。 Amazon 公式アプリ から 直接 確認！'
+    },
+    {
+      ic:'📞', source:'電話（孫から）',
+      body:'孫：「おばあちゃん、 今日 17時に 駅まで 迎えに 来てくれる？ 部活で 帰る時間 が 早くなって！」',
+      ans:'real',
+      ex:'<b>本物です。</b> 具体的な <b>用件・時間・場所</b> が はっきりして いる。<br>ただし、 不安なら 「お母さん（孫の親）にも 確認するね」 と 一言 入れるのが ベスト！'
+    },
+  ];
+  const sqBox = $('squizBox');
+  SQUIZ.forEach((q, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'squiz-row';
+    row.innerHTML = `<div class="squiz-msg">
+      <div class="header">${q.ic} ${escapeHTML(q.source)}</div>
+      <div class="body">${q.body}</div>
+    </div>
+    <div class="squiz-opts">
+      <button data-v="fake">⚠️ 詐欺だと思う</button>
+      <button data-v="real">✅ 本物だと思う</button>
+    </div>
+    <div class="ex">${q.ex}</div>`;
+    row.querySelectorAll('.squiz-opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const v = b.dataset.v;
+        row.classList.add('answered');
+        if(v === q.ans){
+          b.classList.add('right');
+        } else {
+          b.classList.add('wrong');
+          row.querySelector(`.squiz-opts button[data-v="${q.ans}"]`).classList.add('right');
+        }
+      });
+    });
+    sqBox.appendChild(row);
+  });
+
+  /* コースチェック */
+  (function(){
+    const root = $('courseCheck'), out = $('courseProg');
+    const items = [...root.querySelectorAll('.check-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      out.textContent = done + ' / 10 達成';
+      if(done >= 10){
+        out.style.color = '#4CAF50';
+        out.textContent = '🎉 10 / 10 完全制覇！';
+      } else if(done >= 7){
+        out.style.color = 'var(--accent)';
+        out.textContent = done + ' / 10 達成 — 修了レベル ✨';
+      } else {
+        out.style.color = '';
+      }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{
+      it.classList.toggle('on'); update();
+    }));
+    update();
+  })();
+
+  /* 修了証 */
+  function refreshCert(){
+    const n = ($('certName').value.trim() || '○○ ○○') + ' 様';
+    const s = $('certSchool').value.trim() || '○○ パソコン教室';
+    let d = $('certDate').value.trim();
+    if(!d) d = new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long'});
+    $('certNameView').textContent = n;
+    $('certNameView2').textContent = n;
+    $('certSchoolView').textContent = s;
+    $('certSchoolView2').textContent = s;
+    $('certDateView').textContent = d;
+    $('certDateView2').textContent = d;
+  }
+  ['certName','certSchool','certDate'].forEach(id => $(id).addEventListener('input', refreshCert));
+  refreshCert();
+
+  function downloadCert(){
+    const n = $('certName').value.trim() || 'me';
+    const cert = $('certScreen').outerHTML;
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>${escapeHTML(n)} 修了証</title>
+<style>
+body{font-family:'Hiragino Sans','Yu Gothic',sans-serif;padding:40px;background:#F5F7F8;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.cert{background:linear-gradient(135deg,#FFFBEB,#E0F2F1);border:6px double #00838F;border-radius:18px;padding:50px 40px;text-align:center;max-width:640px;box-shadow:0 8px 20px rgba(0,131,143,.18)}
+.cert .badge{font-size:60px}
+.cert h2{color:#00838F;font-size:36px;margin:6px 0 14px;letter-spacing:8px;font-weight:800}
+.cert .body{font-size:18px;line-height:2;color:#263238}
+.cert .name{font-size:32px;font-weight:bold;color:#43A047;margin:18px 0;padding:10px 0;border-top:2px solid #00838F;border-bottom:2px solid #00838F;display:inline-block;min-width:280px}
+.cert .footer{margin-top:18px;font-size:14px;color:#546E7A}
+@media print{body{background:white;padding:20px}.cert{box-shadow:none}}
+</style></head><body>${cert}</body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '修了証_' + n.replace(/[\/\\?<>:|"*]/g,'_') + '.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 修了証を 保存しました');
+  }
+
+  /* 紙吹雪 */
+  const confetti = $('confetti');
+  function celebrate(){
+    confetti.innerHTML = '';
+    confetti.classList.add('on');
+    const colors = ['#00838F','#FFA000','#43A047','#C62828','#F8BBD0','#FFCC80'];
+    for(let i = 0; i < 100; i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+      s.style.animationDelay = (Math.random() * 1.2) + 's';
+      s.style.transform = `rotate(${Math.random()*360}deg)`;
+      confetti.appendChild(s);
+    }
+    setTimeout(()=>confetti.classList.remove('on'), 5000);
+    info('🎓','修了 おめでとう ございます！',`<div style="text-align:center;line-height:2;font-size:17px">
+      高齢者向け パソコン教室・中級コース<br>
+      全 4回 完全 制覇！<br><br>
+      <b>家族と もっと つながり</b><br>
+      <b>日々の用事も ご自身で</b><br><br>
+      これからも ゆっくり 続けて<br>
+      いきましょう 🌸</div>`);
+  }
+
+  /* ヘルプ / ショートカット */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:16px;line-height:2.2">
+        <div><b>← ↑ PageUp</b> 前の章へ</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章へ</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプを 開く</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>
