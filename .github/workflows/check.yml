@@ -92,7 +92,23 @@ jobs:
         run: node scripts/check-id-duplicates.mjs
 
   # ────────────────────────────────────────────────
-  # 5. リンク切れ検出
+  # 5. カリキュラム概要 セクション 欠落 検出
+  # ────────────────────────────────────────────────
+  curriculum-sections:
+    name: Curriculum sections check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check curriculum required sections
+        run: node scripts/check-curriculum-sections.mjs
+
+  # ────────────────────────────────────────────────
+  # 6. リンク切れ検出
   # ────────────────────────────────────────────────
   link-check:
     name: Link check (lychee)
@@ -122,7 +138,7 @@ jobs:
           path: lychee-report.md
 
   # ────────────────────────────────────────────────
-  # 6. アクセシビリティ簡易チェック
+  # 7. アクセシビリティ簡易チェック
   # ────────────────────────────────────────────────
   a11y-static:
     name: A11y static check
