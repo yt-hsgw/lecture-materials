@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小学生・中級 第4回｜AIといっしょに作品紹介</title>
+<style>
+  :root{
+    --primary:#FF8C1A; --secondary:#FCBD19; --accent:#4C97FF;
+    --warn:#FF4D6D; --dark:#2D3436; --light:#FFF8EE;
+    --ai:#8338EC; --ai-bg:#EEE3FF;
+    --panel:#FFFFFF; --muted:#636E72; --shadow:0 4px 0 rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,select,textarea{font:inherit}
+
+  /* === Top progress + status === */
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--ai));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* === Side nav === */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* === Modal === */
+  .modal-bg{position:fixed;inset:0;background:rgba(45,52,54,.6);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  /* === Hero === */
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#FF8C1A 0%,#FCBD19 50%,#8338EC 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.25);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(18px,2.4vw,24px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,108px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px;font-weight:bold}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:8px}
+  .card.warn{border-left:8px solid var(--warn)}
+  .card.ok{border-left:8px solid #4CAF50;background:#F1F8E9}
+  .card.bad{border-left:8px solid var(--warn);background:#FFEBEE}
+  .card.tip{border-left:8px solid var(--secondary);background:#FFFCEE}
+  .card.ai{border-left:8px solid var(--ai);background:var(--ai-bg)}
+
+  /* === Chat bubble === */
+  .chat{background:white;border-radius:14px;padding:14px 18px;margin:8px 0;
+    box-shadow:0 3px 0 rgba(0,0,0,.08);font-size:15px;line-height:1.7;}
+  .chat.me{background:#FFF3D6;border-left:6px solid var(--primary);}
+  .chat.ai{background:var(--ai-bg);border-left:6px solid var(--ai);}
+  .chat .who{font-weight:bold;font-size:13px;margin-bottom:4px;color:var(--primary)}
+  .chat.ai .who{color:var(--ai)}
+
+  /* === Prompt maker === */
+  .pmaker{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .pmform{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .pmform label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .pmform input,.pmform select,.pmform textarea{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA}
+  .pmform input:focus,.pmform select:focus,.pmform textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .pmform textarea{min-height:60px;resize:vertical}
+  .pmform .badge-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .pmform .badge{background:#FFF3D6;border:2px dashed var(--secondary);
+    padding:4px 12px;border-radius:999px;font-size:13px;cursor:pointer;font-weight:bold}
+  .pmform .badge:hover{background:var(--secondary)}
+
+  .promptbox{margin-top:18px;background:var(--dark);color:#FFE6B0;padding:18px 22px;border-radius:12px;
+    font-family:'SF Mono','Menlo','Consolas',monospace;font-size:14px;line-height:1.8;
+    white-space:pre-wrap;box-shadow:var(--shadow);min-height:120px;position:relative;}
+  .promptbox .corner{position:absolute;top:8px;right:12px;font-size:12px;color:#999}
+  .pmtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:center}
+  .pmtools button{font-family:inherit;border:none;border-radius:10px;padding:10px 22px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white;transition:transform .12s}
+  .pmtools button:hover{transform:translateY(-2px)}
+  .pmtools button.ai{background:var(--ai)}
+  .pmtools button.gray{background:var(--muted)}
+
+  .quality{margin-top:14px;text-align:center;font-size:14px;color:var(--muted)}
+  .quality .stars{font-size:24px;letter-spacing:6px;color:var(--secondary)}
+  .quality .hints{margin-top:6px;font-size:13px}
+
+  /* === AI response simulator === */
+  .airesp{margin-top:14px;background:white;border-radius:14px;padding:0;
+    box-shadow:var(--shadow);overflow:hidden;border:2px solid var(--ai)}
+  .airesp .head{background:var(--ai);color:white;padding:10px 16px;display:flex;align-items:center;gap:8px;font-weight:bold;font-size:14px}
+  .airesp .head .dot{width:10px;height:10px;border-radius:50%;background:#A0F;animation:blink 1.5s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .airesp .body{padding:18px 22px;font-size:15px;line-height:1.8;min-height:80px;white-space:pre-wrap}
+  .airesp .body .caret{display:inline-block;width:8px;height:1.2em;background:var(--ai);
+    vertical-align:middle;margin-left:1px;animation:caret 1s steps(1) infinite}
+  @keyframes caret{50%{opacity:0}}
+  .airesp .meta{padding:10px 16px;background:#F7F1FF;font-size:13px;color:var(--muted)}
+
+  /* === Checklist === */
+  .checklist{margin-top:14px}
+  .check-item{background:white;border-radius:12px;padding:14px 18px;margin-bottom:10px;
+    display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);
+    transition:transform .12s,background .15s;border-left:6px solid #DDD}
+  .check-item:hover{transform:translateX(3px)}
+  .check-item.on{background:#E8F5E9;border-left-color:#4CAF50}
+  .check-item .box{width:30px;height:30px;border:3px solid var(--muted);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;font-size:18px;color:white;flex-shrink:0;background:white}
+  .check-item.on .box{background:#4CAF50;border-color:#4CAF50}
+  .check-item .box::before{content:'✓';opacity:0}
+  .check-item.on .box::before{opacity:1}
+  .check-item .txt{flex:1}
+  .check-item .txt b{display:block;margin-bottom:2px}
+  .check-item .txt span{color:var(--muted);font-size:13px}
+  .check-progress{text-align:center;margin-top:14px;font-weight:bold;color:var(--primary)}
+
+  /* === Timer === */
+  .timer-box{background:white;border-radius:18px;padding:30px;box-shadow:var(--shadow);
+    margin-top:14px;text-align:center}
+  .timer-display{font-size:clamp(60px,12vw,120px);font-weight:bold;
+    font-family:'SF Mono','Menlo',monospace;color:var(--primary);line-height:1;margin:14px 0}
+  .timer-display.warn{color:var(--warn);animation:pulse .5s ease infinite}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+  .timer-phase{font-size:18px;color:var(--muted);font-weight:bold;margin-bottom:6px}
+  .timer-phase b{color:var(--accent)}
+  .timer-bar{height:14px;border-radius:999px;background:#EEE;overflow:hidden;margin:18px auto;max-width:600px}
+  .timer-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));
+    width:0;transition:width .5s linear}
+  .timer-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .timer-controls button{font-family:inherit;border:none;border-radius:12px;padding:12px 26px;
+    font-weight:bold;cursor:pointer;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white}
+  .timer-controls button:hover{transform:translateY(-2px)}
+  .timer-controls button.gray{background:var(--muted)}
+  .timer-controls button.accent{background:var(--accent)}
+  .phaselist{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:14px}
+  .phaselist .ph{background:#F5F5F5;border-radius:10px;padding:8px 10px;font-size:13px;text-align:center;
+    border:2px solid transparent;transition:all .2s}
+  .phaselist .ph.now{background:var(--primary);color:white;border-color:var(--secondary);transform:scale(1.05)}
+  .phaselist .ph.done{background:#E8F5E9;color:#388E3C;border-color:#4CAF50}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .qrow{margin-bottom:16px}
+  .qrow .q{font-weight:bold;font-size:17px;margin-bottom:8px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:2px solid var(--accent);color:var(--dark);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;
+    font-weight:bold;transition:all .15s}
+  .qrow .opts button:hover{background:#EAF4FF}
+  .qrow .opts button.right{background:#A5D6A7;border-color:#388E3C;color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:6px;display:none}
+  .qrow.answered .ex{display:block}
+
+  /* === Summary / next === */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .finale{background:linear-gradient(135deg,var(--ai) 0%,var(--accent) 50%,var(--primary) 100%);
+    color:white;text-align:center;padding:60px 24px;border-radius:20px;margin:32px 24px;}
+  .finale .em{font-size:84px;line-height:1}
+  .finale h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* === Toast === */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:12px 24px;border-radius:999px;
+    font-weight:bold;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* === Confetti === */
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:10px;height:14px;top:-20px;border-radius:2px;
+    animation:fall linear forwards}
+  @keyframes fall{
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>中級 第4回</span> <b>AIといっしょに作品紹介</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#ai-can">2<span>AIにできること</span><span class="ic">🤖</span></a>
+  <a href="#prompt">3<span>プロンプトの型</span><span class="ic">💬</span></a>
+  <a href="#maker">4<span>プロンプトメーカー</span><span class="ic">✏️</span></a>
+  <a href="#check">5<span>3つのチェック</span><span class="ic">🔎</span></a>
+  <a href="#stage">6<span>発表会タイマー</span><span class="ic">🎤</span></a>
+  <a href="#course">7<span>コース総まとめ</span><span class="ic">🏁</span></a>
+  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">コピーしました！</div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 小学生プログラミング教室・中級</div>
+    <h1>AIといっしょに<br>作品紹介</h1>
+    <p>プロンプト・たしかめ・発表で <b>コース完結</b> ！</p>
+    <div class="em">🤖✨🎤</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4ステップで AIを 味方にする</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:60px;display:block">🤖</span><h3>AIを知る</h3><p style="color:var(--muted)">できること／苦手</p></div>
+    <div class="card"><span style="font-size:60px;display:block">💬</span><h3>プロンプト</h3><p style="color:var(--muted)">上手に たのむ</p></div>
+    <div class="card"><span style="font-size:60px;display:block">🔎</span><h3>たしかめる</h3><p style="color:var(--muted)">3つのチェック</p></div>
+    <div class="card"><span style="font-size:60px;display:block">🎤</span><h3>発表する</h3><p style="color:var(--muted)">作品を紹介</p></div>
+  </div>
+</section>
+
+<!-- 1. AIにできること -->
+<div class="divider" id="ai-can" data-snav-target>
+  <div class="num">1.</div>
+  <h2>AIに できること ／ 苦手なこと</h2>
+</div>
+
+<section class="section">
+  <h2>得意なことと、苦手なこと</h2>
+  <p class="lead">AIは すごい けど、なんでもできる わけじゃない。 <b>苦手</b> も 知ってから 使うのが ポイント！</p>
+
+  <div class="grid grid-2">
+    <div class="card ok">
+      <h3>😊 得意</h3>
+      <ul style="margin-left:20px;margin-top:6px">
+        <li>文章を 書く（紹介・お礼・お知らせ）</li>
+        <li>言いかえる（やさしく／みじかく）</li>
+        <li>アイデアを たくさん 出す</li>
+        <li>まちがいを 見つける</li>
+      </ul>
+    </div>
+    <div class="card bad">
+      <h3>😣 苦手</h3>
+      <ul style="margin-left:20px;margin-top:6px">
+        <li>事実を <b>知らない</b> こと（うそを言うことも）</li>
+        <li>あなたの <b>気持ち</b> を ちゃんと察する</li>
+        <li>今日の ニュース・新しいこと</li>
+        <li>こころを 持つ（友だちには ならない）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card warn" style="margin-top:18px">
+    <h3>⚠️ ぜったいに 守る ルール</h3>
+    <ol style="margin-left:22px;margin-top:6px">
+      <li><b>本名・住所・学校名・電話番号</b> は 入れない</li>
+      <li><b>家族のこと</b> も くわしく 入れない</li>
+      <li>AIの答えを <b>そのまま信じない</b></li>
+      <li><b>保護者・先生</b> に 「AIに 聞いていい？」と聞いてから</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 2. プロンプトの型 -->
+<div class="divider" id="prompt" data-snav-target>
+  <div class="num">2.</div>
+  <h2>プロンプトの 3つの型</h2>
+</div>
+
+<section class="section">
+  <h2>「だれに・なにを・どのくらい」</h2>
+  <p class="lead">プロンプトに この3つを 入れるだけで AIの答えが グッと よくなる。</p>
+
+  <div class="grid grid-3">
+    <div class="card" style="text-align:center;border-top:6px solid var(--primary)">
+      <div style="font-size:60px">👥</div>
+      <h3>だれ 向け</h3>
+      <p style="color:var(--muted);font-size:14px;margin-top:6px">家族／友だち／先生／<br>はじめて見る人</p>
+    </div>
+    <div class="card" style="text-align:center;border-top:6px solid var(--secondary)">
+      <div style="font-size:60px">📝</div>
+      <h3>なに を</h3>
+      <p style="color:var(--muted);font-size:14px;margin-top:6px">紹介／お礼／<br>感想／お知らせ</p>
+    </div>
+    <div class="card" style="text-align:center;border-top:6px solid var(--accent)">
+      <div style="font-size:60px">📏</div>
+      <h3>どのくらい</h3>
+      <p style="color:var(--muted);font-size:14px;margin-top:6px">3行／100文字／<br>5つの箇条書き</p>
+    </div>
+  </div>
+
+  <h3 style="color:var(--accent);margin:30px 0 10px">😣 ふんわり プロンプト</h3>
+  <div class="chat me">
+    <div class="who">👤 わたし</div>
+    ゲームの紹介 書いて
+  </div>
+  <div class="chat ai">
+    <div class="who">🤖 AI</div>
+    面白いゲームです！ぜひ 遊んでみてください。
+  </div>
+  <p style="color:var(--muted);font-size:14px;margin-top:4px">→ 短すぎ・ぼんやり・使えない…</p>
+
+  <h3 style="color:var(--accent);margin:30px 0 10px">🤩 くわしい プロンプト</h3>
+  <div class="chat me">
+    <div class="who">👤 わたし</div>
+    わたしは 小4。<b>Scratchで もぐらたたきゲーム</b>を作りました。スコアと タイマー、効果音 入りです。<br>
+    このゲームを <b>家族に紹介する 文章</b> を、<b>やさしい言葉で 3行</b> で書いて。
+  </div>
+  <div class="chat ai">
+    <div class="who">🤖 AI</div>
+    30秒で 何匹 たたけるか 挑戦！<br>
+    叩くと スコアが ふえて、音も 鳴ります。<br>
+    家族みんなで 楽しめます。ぜひ 遊んでね！
+  </div>
+  <p style="color:var(--muted);font-size:14px;margin-top:4px">→ ちょうどよくて、そのまま 使える！</p>
+</section>
+
+<!-- 3. プロンプトメーカー -->
+<div class="divider" id="maker" data-snav-target>
+  <div class="num">3.</div>
+  <h2>プロンプト メーカー</h2>
+</div>
+
+<section class="section">
+  <h2>うめれば できる ＝ プロンプトの 練習</h2>
+  <p class="lead">下の項目を うめると、AIに 入れる文 が 自動で できる。<br>
+  ボタンで AIの 答えも シミュレーション できるよ！（教室の AI接続は 先生に確認）</p>
+
+  <div class="pmaker">
+    <div class="pmform">
+      <div>
+        <label>① 作品の しゅるい</label>
+        <select id="pmKind">
+          <option value="scratch">Scratchで作った ゲーム</option>
+          <option value="html">HTMLで作った Webページ</option>
+          <option value="other">その他（自由）</option>
+        </select>
+      </div>
+      <div>
+        <label>② 作品の 名前</label>
+        <input type="text" id="pmName" value="もぐらたたきゲーム" maxlength="30">
+      </div>
+      <div>
+        <label>③ どんな中身？（カンマで区切る）</label>
+        <input type="text" id="pmContent" value="スコア、タイマー、効果音" maxlength="60">
+      </div>
+      <div>
+        <label>④ だれ 向け</label>
+        <select id="pmAudience">
+          <option value="家族">家族</option>
+          <option value="友だち">友だち</option>
+          <option value="先生">先生</option>
+          <option value="はじめて見る人">はじめて見る人</option>
+        </select>
+      </div>
+      <div>
+        <label>⑤ なに する？</label>
+        <select id="pmAction">
+          <option value="紹介する">紹介する</option>
+          <option value="お知らせする">お知らせする</option>
+          <option value="お礼を伝える">お礼を伝える</option>
+          <option value="感想を聞く">感想を聞く</option>
+        </select>
+      </div>
+      <div>
+        <label>⑥ 長さ</label>
+        <select id="pmLength">
+          <option value="2行で短く">2行で短く</option>
+          <option value="3行で" selected>3行で</option>
+          <option value="5つの箇条書きで">5つの箇条書きで</option>
+          <option value="100文字くらいで">100文字くらいで</option>
+        </select>
+      </div>
+      <div>
+        <label>⑦ どんな感じで？</label>
+        <select id="pmTone">
+          <option value="やさしい言葉で">やさしい言葉で</option>
+          <option value="元気な感じで">元気な感じで</option>
+          <option value="まじめな感じで">まじめな感じで</option>
+          <option value="楽しい感じで">楽しい感じで</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="quality">
+      <div class="stars" id="qStars">⭐⭐⭐⭐⭐</div>
+      <div class="hints" id="qHints">完璧！ AIに 入れる準備バッチリ</div>
+    </div>
+
+    <div class="promptbox" id="promptBox">
+      <span class="corner">📝 プロンプト</span>
+    </div>
+
+    <div class="pmtools">
+      <button onclick="copyPrompt()">📋 コピー</button>
+      <button class="ai" onclick="askAI()">🤖 AIに 聞いてみる（デモ）</button>
+      <button class="gray" onclick="resetPM()">↺ 初期値</button>
+    </div>
+
+    <div class="airesp" id="airesp" style="display:none">
+      <div class="head"><span class="dot"></span> 🤖 AI（シミュレーション） からの 答え</div>
+      <div class="body" id="aiBody"></div>
+      <div class="meta">⚠️ これは デモです。 本物のAIは もっといろんな答えを 返します。 必ず 自分で たしかめよう！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 3つのチェック -->
+<div class="divider" id="check" data-snav-target>
+  <div class="num">4.</div>
+  <h2>AIの 答えを たしかめる</h2>
+</div>
+
+<section class="section">
+  <h2>3つの チェックポイント</h2>
+  <p class="lead">AIの 答えは そのまま 使わない！ クリックして チェックしながら 読もう。</p>
+
+  <div class="checklist" id="checklist">
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>① うそ じゃない？</b><span>作品にない 機能・場所・人 を 書いてないか？</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>② 自分らしい？</b><span>むずかしすぎる 言葉・大げさな 言葉は ないか？</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>③ ちゃんと 読める？</b><span>家族・友だちが 読んで わかる 文に なっているか？</span></div>
+    </div>
+  </div>
+  <div class="check-progress" id="checkProg">0 / 3 チェック完了</div>
+
+  <h3 style="color:var(--accent);margin:30px 0 10px">なおして もらう＝追加プロンプト の 書き方</h3>
+  <div class="chat me">
+    <div class="who">👤 わたし</div>
+    3Dじゃないです。難易度は1つだけ。世界大会も無いです。<br>
+    <b>事実だけで</b> もう一度 書きなおしてください。
+  </div>
+  <div class="chat ai">
+    <div class="who">🤖 AI（やり直し）</div>
+    30秒で 何匹 たたけるか 挑戦！<br>
+    スコアが 表示されて、音も 出ます。<br>
+    家族で 楽しめます。
+  </div>
+  <div class="card tip" style="margin-top:14px">
+    <h3 style="color:var(--secondary)">💡 「ちがう所」を 教えると AIは どんどん 良くなる</h3>
+    <p style="margin-top:6px">最初の答えで 完成 と思わないこと。 <b>なおして もらう</b> のが プロのコツ！</p>
+  </div>
+</section>
+
+<!-- 5. 発表会タイマー -->
+<div class="divider" id="stage" data-snav-target>
+  <div class="num">5.</div>
+  <h2>発表会 タイマー</h2>
+</div>
+
+<section class="section">
+  <h2>1人 2分（4フェーズ）で 発表する</h2>
+  <p class="lead">スタートを押すと 自動で 次のフェーズに 進むよ。終わりは ベルが 鳴ります。</p>
+
+  <div class="timer-box">
+    <div class="timer-phase">いまは：<b id="phaseName">準備OK</b></div>
+    <div class="timer-display" id="timerDisp">02:00</div>
+    <div class="timer-bar"><div class="timer-bar-fill" id="timerFill"></div></div>
+    <div class="timer-controls">
+      <button id="tStart">▶ スタート</button>
+      <button id="tPause" class="gray">⏸ 一時停止</button>
+      <button id="tReset" class="accent">↺ リセット</button>
+    </div>
+    <div class="phaselist" id="phaseList">
+      <div class="ph" data-i="0">① 作品名 10秒</div>
+      <div class="ph" data-i="1">② 動かして見せる 60秒</div>
+      <div class="ph" data-i="2">③ 紹介文 30秒</div>
+      <div class="ph" data-i="3">④ がんばった所 20秒</div>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-top:10px">⏰ 合計2分。ベル音は 音量に注意！</p>
+  </div>
+</section>
+
+<!-- 6. コース総まとめ -->
+<div class="divider" id="course" data-snav-target>
+  <div class="num">6.</div>
+  <h2>中級コース 4回 ふり返り</h2>
+</div>
+
+<section class="section">
+  <h2>身についた チカラ チェック</h2>
+  <p class="lead">クリックで チェック！ ⭐ がたまっていくよ。</p>
+
+  <div class="checklist" id="courseCheck">
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>🐹 Scratchで ゲームを 完成させた</b><span>第1〜2回：もぐらたたきが 動いた</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>🏆 変数・タイマー・効果音 が 使えた</b><span>第2回：スコアと 30秒タイマー</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>🌐 HTMLで 自己紹介ページ を 作った</b><span>第3回：家族に 見せられる1ページ</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>🎨 色・画像・レイアウト が できた</b><span>第3回：style／div で デザイン</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>🤖 AIに 上手に たのめた</b><span>第4回：プロンプトの 3つの型</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>🔎 AIの答えを たしかめた</b><span>第4回：3つの チェック</span></div>
+    </div>
+    <div class="check-item">
+      <div class="box"></div>
+      <div class="txt"><b>🎤 みんなの前で 発表 できた</b><span>第4回：2分の 発表</span></div>
+    </div>
+  </div>
+  <div class="check-progress" id="courseProg">0 / 7 達成！</div>
+</section>
+
+<!-- 7. たしかめクイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう！</h2>
+  <p class="lead">何回 まちがえてもOK。答えがわかったら 説明が出るよ。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. AIに <b>「上手に」</b> たのむために 入れると 良いのは？</div>
+      <div class="opts">
+        <button data-i="0">自分の 本名と 住所</button>
+        <button data-i="1">むずかしい 言葉</button>
+        <button data-i="2">「だれに・なにを・どのくらい」</button>
+        <button data-i="3">気持ちだけ</button>
+      </div>
+      <div class="ex">✅ 「だれ向け／なにを する／どのくらい の長さ」を 伝えると 答えが ぴったりに！<br>本名・住所は <b>ぜったい NG</b>。</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q2. AIの 答えに、作品に <b>無い 機能</b> が 書かれていた。どうする？</div>
+      <div class="opts">
+        <button data-i="0">そのまま 発表する</button>
+        <button data-i="1">事実を 伝えて 書き直してもらう</button>
+        <button data-i="2">AIの 言うとおりに 作品を なおす</button>
+        <button data-i="3">AIを 信じない</button>
+      </div>
+      <div class="ex">✅ 「○○じゃないです。書き直して」と <b>追加プロンプト</b> で 伝えるのが プロのコツ！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. AIに <b>入れちゃダメ</b> なのは どれ？</div>
+      <div class="opts">
+        <button data-i="0">本名・住所・学校名</button>
+        <button data-i="1">作品の 紹介</button>
+        <button data-i="2">作品で 工夫したところ</button>
+        <button data-i="3">ゲームの ルール</button>
+      </div>
+      <div class="ex">✅ <b>個人情報</b>（本名・住所・学校名・電話番号）は ぜったいに 入れない！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. 修了 -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>修了！</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>AI ＝ 文章の おてつだいロボット</h3><p style="color:var(--muted)">得意・苦手・ルール を知った</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>プロンプトは「だれに・なにを・どのくらい」</h3><p style="color:var(--muted)">3つ入れると 答えが ぴったり</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>AIの 答えは 必ず たしかめる</h3><p style="color:var(--muted)">うそ／自分らしさ／読みやすさ</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>追加プロンプトで どんどん 良くなる</h3><p style="color:var(--muted)">最初の答えで 完成 と思わない</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>みんなの前で 自分の作品を 発表！</h3><p style="color:var(--muted)">中級コース 修了 🎉</p></div></div>
+  </div>
+</section>
+
+<div class="finale">
+  <div class="em">🎓✨🎉</div>
+  <h2>中級コース 修了 おめでとう！</h2>
+  <p style="font-size:18px;margin-top:8px">「作る → なおす → 見せる」 が 自分で できるように なりました。<br>
+  これからも 作りつづけよう！</p>
+  <button onclick="celebrate()" style="margin-top:20px;background:white;color:var(--primary);
+    border:none;padding:14px 32px;border-radius:14px;font-family:inherit;font-size:18px;
+    font-weight:bold;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18)">🎊 おめでとう ボタン</button>
+</div>
+
+<footer>小学生プログラミング教室 ／ 中級 第4回｜AIといっしょに作品紹介</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／トースト
+     ========================================================= */
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+
+  /* =========================================================
+     プロンプトメーカー
+     ========================================================= */
+  const pmFields = ['pmKind','pmName','pmContent','pmAudience','pmAction','pmLength','pmTone'];
+  function $(id){ return document.getElementById(id); }
+  function buildPrompt(){
+    const kind = $('pmKind').value;
+    const name = ($('pmName').value || '').trim();
+    const content = ($('pmContent').value || '').trim();
+    const audience = $('pmAudience').value;
+    const action = $('pmAction').value;
+    const length = $('pmLength').value;
+    const tone = $('pmTone').value;
+
+    const kindText = { scratch:'Scratchで', html:'HTMLで', other:'自分で' }[kind] || '';
+    const contentText = content ? `中身は： ${content} です。` : '中身は： （ここに 機能を書く）です。';
+    const nameText = name || '（作品の名前）';
+
+    return `わたしは 小学生です。
+${kindText} 「${nameText}」 を 作りました。
+${contentText}
+
+これを ${audience} に ${action} 文章を、
+${length} ${tone} 書いてください。`;
+  }
+
+  function quality(){
+    const name = ($('pmName').value || '').trim();
+    const content = ($('pmContent').value || '').trim();
+    let stars = 5;
+    const hints = [];
+    if(!name){ stars--; hints.push('作品の 名前 を入れよう'); }
+    if(!content){ stars--; hints.push('中身（機能）を 書こう'); }
+    if(content && content.length < 4){ stars--; hints.push('中身を もう少し くわしく'); }
+    if(name && name.length > 25){ stars--; hints.push('作品の名前が 長すぎ'); }
+    stars = Math.max(1, Math.min(5, stars));
+    return { stars, hints };
+  }
+
+  function refreshPrompt(){
+    $('promptBox').innerHTML = '<span class="corner">📝 プロンプト</span>' + escapeHTML(buildPrompt());
+    const q = quality();
+    $('qStars').textContent = '⭐'.repeat(q.stars) + '☆'.repeat(5 - q.stars);
+    $('qHints').textContent = q.hints.length === 0
+      ? '完璧！ AIに 入れる準備バッチリ'
+      : 'ヒント： ' + q.hints.join('／');
+  }
+  function escapeHTML(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  pmFields.forEach(id => $(id).addEventListener('input', refreshPrompt));
+  pmFields.forEach(id => $(id).addEventListener('change', refreshPrompt));
+
+  function copyPrompt(){
+    navigator.clipboard.writeText(buildPrompt())
+      .then(()=>showToast('📋 プロンプトを コピーしました'))
+      .catch(()=>showToast('コピー できませんでした'));
+  }
+  function resetPM(){
+    $('pmKind').value = 'scratch';
+    $('pmName').value = 'もぐらたたきゲーム';
+    $('pmContent').value = 'スコア、タイマー、効果音';
+    $('pmAudience').value = '家族';
+    $('pmAction').value = '紹介する';
+    $('pmLength').value = '3行で';
+    $('pmTone').value = 'やさしい言葉で';
+    refreshPrompt();
+    $('airesp').style.display = 'none';
+  }
+
+  /* AI回答シミュレータ：完成度で 答えの種類を 変える */
+  const RESPS = {
+    scratch: {
+      good: (n,c,a,l,t)=>`「${n}」 で 遊んでみてね！
+${c.split(/[、,，]/)[0]||'スコア'}が 表示されて、楽しいよ。
+${a==='家族'?'家族みんなで':'友だちと一緒に'} 遊んだら ぜったい 盛り上がる！`,
+      mid: (n,c,a)=>`「${n}」 が 完成しました。
+${c.replace(/、/g,'と')} が 入っています。
+ぜひ 遊んでみてください。`,
+      bad: ()=>`面白いゲームができました。ぜひ遊んでみてください。`
+    },
+    html: {
+      good: (n,c,a,l,t)=>`「${n}」 ができました！
+${c.split(/[、,，]/)[0]||'自分の紹介'}や 好きなもの が のっています。
+${a==='家族'?'家族に':'友だちに'} 見せたら きっと 喜んでくれる！`,
+      mid: (n,c)=>`「${n}」 という Webページを 作りました。
+${c.replace(/、/g,'や')} を 入れています。
+よかったら 見てください。`,
+      bad: ()=>`ホームページを作りました。見てください。`
+    },
+    other: {
+      good: (n,c,a)=>`「${n}」 を 作りました！
+${c} が ポイントです。
+${a} に ぜひ 見て ほしいです。`,
+      mid: (n)=>`「${n}」 が できました。ぜひ ご覧ください。`,
+      bad: ()=>`作品ができました。`
+    }
+  };
+
+  let typingT = null;
+  function askAI(){
+    const q = quality();
+    const kind = $('pmKind').value;
+    const name = ($('pmName').value || '作品').trim();
+    const content = ($('pmContent').value || '').trim();
+    const aud = $('pmAudience').value;
+    const len = $('pmLength').value;
+    const tone = $('pmTone').value;
+
+    let level = 'bad';
+    if(q.stars >= 5) level = 'good';
+    else if(q.stars >= 3) level = 'mid';
+
+    const fn = (RESPS[kind] || RESPS.other)[level];
+    const text = fn(name, content, aud, len, tone);
+
+    $('airesp').style.display = 'block';
+    const body = $('aiBody');
+    body.innerHTML = '';
+    body.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+    // タイピング風アニメーション
+    clearInterval(typingT);
+    let i = 0;
+    body.textContent = '';
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    body.appendChild(caret);
+    typingT = setInterval(()=>{
+      if(i >= text.length){ clearInterval(typingT); caret.remove(); return; }
+      caret.before(text[i]);
+      i++;
+    }, 30);
+  }
+  refreshPrompt();
+
+  /* =========================================================
+     チェックリスト（共通関数）
+     ========================================================= */
+  function setupChecklist(rootId, progId, total, label){
+    const root = document.getElementById(rootId);
+    const prog = document.getElementById(progId);
+    const items = [...root.querySelectorAll('.check-item')];
+    function update(){
+      const done = items.filter(x => x.classList.contains('on')).length;
+      prog.textContent = `${done} / ${total} ${label}`;
+      if(done === total){
+        prog.style.color = '#4CAF50';
+        prog.textContent = '🎉 ' + prog.textContent + ' すばらしい！';
+      } else {
+        prog.style.color = '';
+      }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{
+      it.classList.toggle('on');
+      update();
+    }));
+    update();
+  }
+  setupChecklist('checklist','checkProg', 3, 'チェック完了');
+  setupChecklist('courseCheck','courseProg', 7, '達成！');
+
+  /* =========================================================
+     発表会タイマー（4フェーズ）
+     ========================================================= */
+  const PHASES = [
+    { name:'① 作品名 を 言う', sec:10 },
+    { name:'② 動かして 見せる', sec:60 },
+    { name:'③ 紹介文 を 読む', sec:30 },
+    { name:'④ がんばった所 1つ', sec:20 },
+  ];
+  let tIdx = 0, tLeft = PHASES[0].sec, tRunning = false, tIntv = null;
+  const tDisp = $('timerDisp'), tFill = $('timerFill'), tName = $('phaseName');
+  const phNodes = [...document.querySelectorAll('#phaseList .ph')];
+
+  function fmt(s){
+    const m = Math.floor(s/60), ss = s%60;
+    return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+  }
+  function tTotalRemaining(){
+    let r = tLeft;
+    for(let i = tIdx+1; i < PHASES.length; i++) r += PHASES[i].sec;
+    return r;
+  }
+  function tTotal(){
+    return PHASES.reduce((a,p)=>a+p.sec, 0);
+  }
+  function tUpdate(){
+    tDisp.textContent = fmt(tLeft);
+    tName.textContent = PHASES[tIdx].name;
+    const totalGone = tTotal() - tTotalRemaining();
+    tFill.style.width = (totalGone / tTotal() * 100) + '%';
+    tDisp.classList.toggle('warn', tLeft <= 5 && tRunning);
+    phNodes.forEach((el, i)=>{
+      el.classList.toggle('now', i === tIdx && tRunning);
+      el.classList.toggle('done', i < tIdx);
+    });
+  }
+  function tBell(freq, dur){
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ac.createOscillator(), g = ac.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      g.gain.value = .25;
+      g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(); osc.stop(ac.currentTime + dur);
+    } catch(e){}
+  }
+  function tStart(){
+    if(tRunning) return;
+    tRunning = true;
+    tUpdate();
+    tIntv = setInterval(()=>{
+      tLeft--;
+      if(tLeft < 0){
+        tIdx++;
+        if(tIdx >= PHASES.length){
+          tRunning = false;
+          clearInterval(tIntv);
+          tIdx = PHASES.length - 1;
+          tLeft = 0;
+          tName.textContent = '🎉 発表 おわり！ おつかれさま';
+          tDisp.textContent = '00:00';
+          tDisp.classList.remove('warn');
+          phNodes.forEach((el,i)=>{el.classList.remove('now');el.classList.add('done')});
+          tBell(880, .3); setTimeout(()=>tBell(660, .5), 200); setTimeout(()=>tBell(880, .8), 500);
+          return;
+        }
+        tLeft = PHASES[tIdx].sec;
+        tBell(660, .2);
+      }
+      tUpdate();
+    }, 1000);
+  }
+  function tPause(){
+    tRunning = false;
+    clearInterval(tIntv);
+    tUpdate();
+  }
+  function tReset(){
+    tRunning = false;
+    clearInterval(tIntv);
+    tIdx = 0; tLeft = PHASES[0].sec;
+    tName.textContent = '準備OK';
+    tDisp.classList.remove('warn');
+    tUpdate();
+  }
+  $('tStart').addEventListener('click', tStart);
+  $('tPause').addEventListener('click', tPause);
+  $('tReset').addEventListener('click', tReset);
+  tReset();
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('.qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     紙吹雪
+     ========================================================= */
+  const confetti = $('confetti');
+  function celebrate(){
+    confetti.innerHTML = '';
+    confetti.classList.add('on');
+    const colors = ['#FF8C1A','#FCBD19','#4C97FF','#FF4D6D','#8338EC','#4CAF50'];
+    for(let i = 0; i < 80; i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (2 + Math.random() * 2) + 's';
+      s.style.animationDelay = (Math.random() * .8) + 's';
+      s.style.transform = `rotate(${Math.random()*360}deg)`;
+      confetti.appendChild(s);
+    }
+    setTimeout(()=>confetti.classList.remove('on'), 4500);
+    info('🎓','修了 おめでとう！','<div style="text-align:center;line-height:2">中級コース 4回 ぜんぶ クリア！<br><b>作る → なおす → 見せる</b><br>が 自分の チカラ に なりました。<br><br>これからも 作りつづけよう！</div>');
+  }
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

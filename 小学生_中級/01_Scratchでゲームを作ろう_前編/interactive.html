@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小学生・中級 第1回｜Scratchでゲームを作ろう（前編）</title>
+<style>
+  :root{
+    --primary:#FF8C1A; --secondary:#FCBD19; --accent:#4C97FF;
+    --warn:#FF4D6D; --dark:#2D3436; --light:#FFF8EE;
+    --panel:#FFFFFF; --muted:#636E72; --shadow:0 4px 0 rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input{font:inherit}
+
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(45,52,54,.6);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:520px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;}
+  .modal-btn:hover{transform:translateY(-2px)}
+
+  .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#FF8C1A 0%,#FCBD19 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.25);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(18px,2.4vw,24px);opacity:.96}
+  .hero .em{font-size:clamp(72px,11vw,120px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px;font-weight:bold}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:8px}
+  .card.warn{border-left:8px solid var(--warn)}
+  .card.ok{border-left:8px solid var(--accent)}
+  .card.tip{border-left:8px solid var(--secondary);background:#FFFCEE}
+  .card .em{font-size:60px;line-height:1;margin-bottom:8px;display:block}
+
+  /* Scratch block visual */
+  .block-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:18px 0}
+  .blk-card{background:white;border-radius:14px;padding:18px;box-shadow:var(--shadow);
+    cursor:pointer;text-align:center;transition:transform .15s;}
+  .blk-card:hover{transform:translateY(-3px)}
+  .blk{display:inline-block;padding:8px 16px;border-radius:10px;color:white;
+    font-weight:bold;font-size:14px;box-shadow:0 2px 0 rgba(0,0,0,.15);margin:4px 0;}
+  .blk-event   { background: #FFD500; color: #6B5300; }
+  .blk-motion  { background: #4C97FF; }
+  .blk-look    { background: #9966FF; }
+  .blk-control { background: #FFAB19; }
+  .blk-sense   { background: #5CB1D6; }
+  .blk-op      { background: #59C059; }
+  .blk-var     { background: #FF8C1A; }
+  .blk-card h3{margin-top:10px;font-size:18px}
+  .blk-card p{color:var(--muted);font-size:13px;margin-top:4px}
+
+  /* Code stack visual */
+  .stack{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
+  .stack .blk{margin:0}
+  .stack .nest{margin-left:24px;display:flex;flex-direction:column;gap:4px;border-left:3px dashed #CCC;padding-left:12px}
+
+  /* Whack-a-mole game */
+  .game{background:white;border-radius:20px;padding:24px;box-shadow:var(--shadow);margin:20px 0}
+  .game-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  .game-head h3{color:var(--primary);font-size:22px}
+  .game-info{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .info-pill{background:var(--secondary);color:var(--dark);padding:8px 18px;border-radius:999px;
+    font-weight:bold;font-size:18px;}
+  .info-pill.time{background:var(--accent);color:white}
+  .stage{
+    background:linear-gradient(180deg,#87CEEB 0%,#87CEEB 50%,#8B4513 50%,#A0522D 100%);
+    border-radius:16px;padding:20px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+    min-height:340px;position:relative;
+  }
+  .hole{
+    aspect-ratio:1;background:#5D4037;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;cursor:pointer;overflow:hidden;
+    box-shadow:inset 0 8px 16px rgba(0,0,0,.4);
+  }
+  .mole{
+    font-size:60px;line-height:1;transform:translateY(100%);
+    transition:transform .15s;
+    user-select:none;
+  }
+  .hole.up .mole{transform:translateY(0)}
+  .hole.hit .mole{transform:translateY(100%) scale(.7);opacity:.3}
+  .hole.up:hover{box-shadow:inset 0 8px 16px rgba(0,0,0,.4),0 0 0 4px rgba(255,140,26,.5)}
+  .controls{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .btn{background:var(--primary);color:white;border:none;padding:12px 24px;
+    border-radius:12px;font-family:inherit;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:transform .12s;}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.gray{background:var(--muted)}
+  .btn.accent{background:var(--accent)}
+  .game-msg{margin-top:14px;text-align:center;font-weight:bold;font-size:18px;min-height:32px;}
+  .game-msg.win{color:var(--primary)}
+  .game-msg.lose{color:var(--warn)}
+
+  /* Summary */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+
+  .next{background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>中級 第1回</span> <b>Scratchでゲーム（前編）</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#scratch">2<span>Scratchおさらい</span><span class="ic">🐱</span></a>
+  <a href="#blocks">3<span>ブロックの種類</span><span class="ic">🧱</span></a>
+  <a href="#molemap">4<span>もぐらたたき分解</span><span class="ic">🐹</span></a>
+  <a href="#recipe">5<span>ブロックレシピ</span><span class="ic">📋</span></a>
+  <a href="#play">6<span>遊んでみよう</span><span class="ic">🎮</span></a>
+  <a href="#wrap">7<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 小学生プログラミング教室・中級</div>
+    <h1>Scratchで<br>ゲームを作ろう（前編）</h1>
+    <p>中級コース スタート！ きょうから<b>もぐらたたき</b>を作ります。</p>
+    <div class="em">🐹⚒️🎮</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4つのことができるようになる</h2>
+  <div class="grid grid-4">
+    <div class="card"><span class="em">🐱</span><h3>スプライト</h3><p style="color:var(--muted)">キャラクターを動かす</p></div>
+    <div class="card"><span class="em">🧱</span><h3>ブロックの色</h3><p style="color:var(--muted)">仕事の見分け方</p></div>
+    <div class="card"><span class="em">🐹</span><h3>モグラ出現</h3><p style="color:var(--muted)">ランダム位置に</p></div>
+    <div class="card"><span class="em">💡</span><h3>次やりたい</h3><p style="color:var(--muted)">自分で1つ言える</p></div>
+  </div>
+</section>
+
+<!-- Scratchおさらい -->
+<div class="divider" id="scratch" data-snav-target>
+  <div class="num">1.</div>
+  <h2>Scratchを おさらい</h2>
+</div>
+
+<section class="section">
+  <h2>Scratch 3つの主役</h2>
+  <p class="lead">タップすると詳しい説明が出るよ。</p>
+  <div class="grid grid-3">
+    <div class="card" onclick="info('🐱','スプライト','動くキャラクター。ねこ・ボール・ロケット・モグラ… 何でもスプライトになります。')" style="cursor:pointer;text-align:center">
+      <span class="em">🐱</span><h3>スプライト</h3><p style="color:var(--muted)">動くキャラクター</p>
+    </div>
+    <div class="card" onclick="info('🖼️','ステージ','ゲームの画面。背景を変えると場所が変わります（公園・宇宙・学校…）。')" style="cursor:pointer;text-align:center">
+      <span class="em">🖼️</span><h3>ステージ</h3><p style="color:var(--muted)">画面（背景）</p>
+    </div>
+    <div class="card" onclick="info('🧱','ブロック','命令のカード。色ごとに仕事が分かれていて、つなげるとプログラムになります。')" style="cursor:pointer;text-align:center">
+      <span class="em">🧱</span><h3>ブロック</h3><p style="color:var(--muted)">命令のカード</p>
+    </div>
+  </div>
+</section>
+
+<!-- ブロックの色 -->
+<div class="divider" id="blocks" data-snav-target>
+  <div class="num">2.</div>
+  <h2>ブロックの 色＝なかま分け</h2>
+</div>
+
+<section class="section">
+  <h2>同じ色のブロックは 似た仕事</h2>
+  <p class="lead">タップすると 仕事の内容が見えるよ。</p>
+  <div class="block-grid">
+    <div class="blk-card" onclick="info('🟡','イベント','「いつ始めるか」を決めるブロック。例：旗が押されたとき／スペースキーが押されたとき／このスプライトがクリックされたとき。')">
+      <span class="blk blk-event">🟡 イベント</span>
+      <h3>いつ？</h3>
+      <p>旗が押されたら</p>
+    </div>
+    <div class="blk-card" onclick="info('🔵','動き','スプライトの位置や向きを変えるブロック。例：x=0 y=0へ移動／10歩動かす／90度回す／ランダムな位置へ。')">
+      <span class="blk blk-motion">🔵 動き</span>
+      <h3>どこに？</h3>
+      <p>x=0 y=0 へ</p>
+    </div>
+    <div class="blk-card" onclick="info('🟣','見た目','スプライトの見せ方を変えるブロック。例：表示する／隠す／コスチュームを変える／こんにちは と言う。')">
+      <span class="blk blk-look">🟣 見た目</span>
+      <h3>どう見える？</h3>
+      <p>表示する／隠す</p>
+    </div>
+    <div class="blk-card" onclick="info('🟠','制御','流れをつくるブロック。例：ずっと（くりかえし）／〜回くりかえす／もし〜なら／1秒待つ。')">
+      <span class="blk blk-control">🟠 制御</span>
+      <h3>くりかえし・もし</h3>
+      <p>1秒待つ</p>
+    </div>
+    <div class="blk-card" onclick="info('🔷','調べる','まわりや入力を調べるブロック。例：マウスポインターに触れた／緑の旗 がクリックされた／スペースキーが押された。')">
+      <span class="blk blk-sense">🔷 調べる</span>
+      <h3>触ってる？</h3>
+      <p>マウスに触れた</p>
+    </div>
+    <div class="blk-card" onclick="info('🟢','演算','計算と比べるブロック。例：足し算／〜より大きい／ランダムな数／〜と〜（文字をつなぐ）。')">
+      <span class="blk blk-op">🟢 演算</span>
+      <h3>計算する</h3>
+      <p>1〜10 ランダム</p>
+    </div>
+    <div class="blk-card" onclick="info('🟧','変数','数や言葉を覚えておくハコ。例：スコア／タイマー／プレイヤー名。次回いっぱい使うよ。')">
+      <span class="blk blk-var">🟧 変数</span>
+      <h3>覚える</h3>
+      <p>スコア</p>
+    </div>
+  </div>
+</section>
+
+<!-- もぐらたたき分解 -->
+<div class="divider" id="molemap" data-snav-target>
+  <div class="num">3.</div>
+  <h2>もぐらたたきを 分解</h2>
+</div>
+
+<section class="section">
+  <h2>「大きなゲーム」も 小さな動きの組み合わせ</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>🐹 モグラ（スプライト）</h3>
+      <ul style="margin-left:24px;margin-top:8px">
+        <li>最初は <b>隠れている</b></li>
+        <li>ランダムな位置に <b>移動</b> する</li>
+        <li><b>見える</b> → 1秒後 <b>消える</b></li>
+        <li>クリックされたら <b>すぐ消える</b>（ヒット！）</li>
+        <li>これを <b>ずっとくりかえす</b></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🟫 ステージ（背景）</h3>
+      <ul style="margin-left:24px;margin-top:8px">
+        <li>動かない</li>
+        <li>穴がいくつか描いてある</li>
+        <li>空 or 草っぽい絵に</li>
+      </ul>
+      <p style="color:var(--muted);margin-top:10px">背景は「画像をアップロード」か「Scratch標準」から選べる！</p>
+    </div>
+  </div>
+</section>
+
+<!-- ブロックレシピ -->
+<div class="divider" id="recipe" data-snav-target>
+  <div class="num">4.</div>
+  <h2>モグラの ブロックレシピ</h2>
+</div>
+
+<section class="section">
+  <h2>このとおりに 並べれば、動きます</h2>
+  <p class="lead">あくまで一例。慣れたら、自分でアレンジしてみよう。</p>
+
+  <h3 style="color:var(--accent);margin-top:18px">🐹 モグラ スプライト の スクリプト ①（ずっと出たり消えたり）</h3>
+  <div class="stack">
+    <span class="blk blk-event">🟡 旗が押されたとき</span>
+    <span class="blk blk-look">🟣 隠す</span>
+    <span class="blk blk-control">🟠 ずっと ↓</span>
+    <div class="nest">
+      <span class="blk blk-motion">🔵 ランダムな位置 へ移動する</span>
+      <span class="blk blk-look">🟣 表示する</span>
+      <span class="blk blk-control">🟠 1秒 待つ</span>
+      <span class="blk blk-look">🟣 隠す</span>
+      <span class="blk blk-control">🟠 0.5秒 待つ</span>
+    </div>
+  </div>
+
+  <h3 style="color:var(--accent);margin-top:24px">🐹 モグラ スプライト の スクリプト ②（クリックされたら消える）</h3>
+  <div class="stack">
+    <span class="blk blk-event">🟡 このスプライトが クリックされたとき</span>
+    <span class="blk blk-look">🟣 隠す</span>
+  </div>
+
+  <div class="card tip" style="margin-top:24px">
+    <h3>💡 コツ</h3>
+    <p style="margin-top:6px">2つのスクリプトは、<b>別々のかたまり</b> として 同じスプライトに置けます。<br>Scratchは「ぜんぶ同時に走る」のが得意なのです。</p>
+  </div>
+</section>
+
+<!-- 遊んでみる -->
+<div class="divider" id="play" data-snav-target>
+  <div class="num">5.</div>
+  <h2>完成すると、こんな感じ！</h2>
+</div>
+
+<section class="section">
+  <h2>HTML 版で 先に 遊んでみよう</h2>
+  <p class="lead">本物の Scratch ではないですが、これから作るゲームの「完成イメージ」です。<br>30秒で 何匹 たたけるか やってみよう！</p>
+
+  <div class="game">
+    <div class="game-head">
+      <h3>🐹 もぐらたたき デモ</h3>
+      <div class="game-info">
+        <div class="info-pill">スコア <span id="score">0</span></div>
+        <div class="info-pill time">のこり <span id="timer">30</span>秒</div>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="hole" data-i="0"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="1"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="2"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="3"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="4"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="5"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="6"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="7"><div class="mole">🐹</div></div>
+      <div class="hole" data-i="8"><div class="mole">🐹</div></div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="startBtn">▶ スタート</button>
+      <button class="btn gray" id="resetBtn">↺ リセット</button>
+    </div>
+    <div class="game-msg" id="gameMsg">スタートを押して 30秒 で 何匹 たたけるか！</div>
+  </div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3>💡 これと同じことを Scratch でやります</h3>
+    <p style="margin-top:6px">違うのは <b>「自分で作る」</b> こと。完成すれば、もっと <b>「友だちに自慢できる」</b> 喜びがあります 🎉</p>
+  </div>
+</section>
+
+<!-- まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>スプライト・ステージ・ブロック</h3><p style="color:var(--muted)">Scratch 3つの主役</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>ブロックの色＝なかま分け</h3><p style="color:var(--muted)">イベント・動き・見た目・制御 を見分けられる</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>もぐらたたきの骨組み</h3><p style="color:var(--muted)">ずっとくりかえす＋ランダム位置＋クリックで消える</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>「次やりたいこと」</h3><p style="color:var(--muted)">スコア・タイマー・効果音 → 第2回で！</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🏆⏱️🔊</div>
+  <h2>次回 ｜ 後編 — 完成へ！</h2>
+  <p>スコア・タイマー・効果音 を入れて、ゲームとして完成させよう。</p>
+</div>
+
+<footer>小学生プログラミング教室 ／ 中級 第1回｜Scratchでゲームを作ろう（前編）</footer>
+
+<script>
+  // progress + nav
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  // modal
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = '<p>' + body + '</p>';
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  // whack-a-mole
+  const holes = [...document.querySelectorAll('.hole')];
+  const scoreEl = document.getElementById('score');
+  const timerEl = document.getElementById('timer');
+  const msgEl = document.getElementById('gameMsg');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  let score = 0, time = 30, running = false, intv = null, timer = null;
+
+  function reset(){
+    score = 0; time = 30; scoreEl.textContent = 0; timerEl.textContent = 30;
+    holes.forEach(h => h.classList.remove('up','hit'));
+    msgEl.textContent = 'スタートを押して 30秒 で 何匹 たたけるか！';
+    msgEl.className = 'game-msg';
+    running = false;
+    clearInterval(intv); clearInterval(timer);
+    startBtn.textContent = '▶ スタート';
+    startBtn.disabled = false;
+  }
+  function popRandom(){
+    const free = holes.filter(h => !h.classList.contains('up') && !h.classList.contains('hit'));
+    if(free.length === 0) return;
+    const h = free[Math.floor(Math.random()*free.length)];
+    h.classList.remove('hit');
+    h.classList.add('up');
+    setTimeout(()=>{
+      if(running && h.classList.contains('up')) h.classList.remove('up');
+    }, 800 + Math.random()*600);
+  }
+  holes.forEach(h=>{
+    h.addEventListener('click', ()=>{
+      if(!running) return;
+      if(h.classList.contains('up') && !h.classList.contains('hit')){
+        h.classList.add('hit');
+        h.classList.remove('up');
+        score++;
+        scoreEl.textContent = score;
+        setTimeout(()=>h.classList.remove('hit'), 300);
+      }
+    });
+  });
+  startBtn.addEventListener('click', ()=>{
+    if(running) return;
+    reset();
+    running = true;
+    startBtn.textContent = '▶ プレイ中...';
+    startBtn.disabled = true;
+    msgEl.textContent = 'がんばって！';
+    msgEl.className = 'game-msg';
+    intv = setInterval(popRandom, 600);
+    timer = setInterval(()=>{
+      time--;
+      timerEl.textContent = time;
+      if(time <= 0){
+        running = false;
+        clearInterval(intv); clearInterval(timer);
+        holes.forEach(h => h.classList.remove('up'));
+        msgEl.innerHTML = `🎉 終了！ <b>${score}匹</b> たたきました！`;
+        msgEl.className = 'game-msg win';
+        startBtn.textContent = '▶ もう一度';
+        startBtn.disabled = false;
+      }
+    }, 1000);
+  });
+  resetBtn.addEventListener('click', reset);
+
+  // help & keyboard
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

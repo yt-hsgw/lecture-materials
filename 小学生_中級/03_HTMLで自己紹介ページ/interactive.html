@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小学生・中級 第3回｜HTMLで自己紹介ページ</title>
+<style>
+  :root{
+    --primary:#FF8C1A; --secondary:#FCBD19; --accent:#4C97FF;
+    --warn:#FF4D6D; --dark:#2D3436; --light:#FFF8EE;
+    --panel:#FFFFFF; --muted:#636E72; --shadow:0 4px 0 rgba(0,0,0,.1);
+    --code-bg:#2D3436; --code-tag:#79B8FF; --code-at:#FFD33D;
+    --code-str:#FF8C42; --code-com:#8A8A8A; --code-text:#FFE6B0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Hiragino Maru Gothic ProN','M PLUS Rounded 1c','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;}
+  button,input,textarea,select{font:inherit}
+
+  /* === Top progress + status === */
+  .progress{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:8px 16px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:13px;}
+  .top-status b{color:var(--primary)}
+
+  /* === Side nav === */
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:8px;}
+  .snav a{width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.08);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.15)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:5px 12px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:20px;height:20px;padding:0;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:11px;line-height:1;opacity:1;pointer-events:none;transform:none;color:var(--dark);}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.94);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* === Modal === */
+  .modal-bg{position:fixed;inset:0;background:rgba(45,52,54,.6);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;max-width:560px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:72px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:26px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:16px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:12px 28px;
+    border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  /* === Hero === */
+  .hero{min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#FF8C1A 0%,#FCBD19 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.25);padding:8px 22px;
+    border-radius:999px;font-weight:bold;margin-bottom:20px;backdrop-filter:blur(4px);}
+  .hero h1{font-size:clamp(44px,8vw,96px);line-height:1.15;margin-bottom:20px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);}
+  .hero p{font-size:clamp(18px,2.4vw,24px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,108px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:14px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:999px;font-weight:bold;font-size:14px;margin-bottom:14px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);margin-bottom:8px;font-weight:bold}
+  .lead{font-size:18px;color:var(--muted);margin-bottom:34px}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--accent);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,64px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+  .card h3{color:var(--dark);font-size:22px;margin-bottom:8px}
+  .card.warn{border-left:8px solid var(--warn)}
+  .card.ok{border-left:8px solid var(--accent)}
+  .card.tip{border-left:8px solid var(--secondary);background:#FFFCEE}
+
+  /* === Code blocks === */
+  .code{background:var(--code-bg);color:var(--code-text);border-radius:12px;
+    padding:16px 20px;font-family:'SF Mono','Menlo','Consolas',monospace;font-size:15px;
+    line-height:1.7;box-shadow:var(--shadow);overflow-x:auto;white-space:pre;}
+  .code .tag{color:var(--code-tag)}
+  .code .at{color:var(--code-at)}
+  .code .str{color:var(--code-str)}
+  .code .com{color:var(--code-com);font-style:italic}
+
+  .preview-box{background:white;border:3px dashed #FFB74D;border-radius:12px;
+    padding:18px 22px;box-shadow:var(--shadow);min-height:60px;}
+
+  /* === Tag dictionary === */
+  .tagdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:10px}
+  .tagbtn{background:white;border:3px solid var(--accent);border-radius:14px;
+    padding:14px;text-align:left;cursor:pointer;transition:all .15s;
+    box-shadow:0 3px 0 rgba(0,0,0,.1);font-family:inherit;}
+  .tagbtn:hover,.tagbtn:focus{transform:translateY(-3px);box-shadow:0 6px 0 rgba(0,0,0,.12);outline:none}
+  .tagbtn .tname{font-family:'SF Mono','Menlo',monospace;color:var(--accent);
+    font-weight:bold;font-size:18px;display:block;margin-bottom:4px}
+  .tagbtn .tdesc{font-size:14px;color:var(--muted)}
+
+  /* === Live editor === */
+  .editor{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
+  @media (max-width:760px){ .editor{grid-template-columns:1fr} }
+  .editor-pane{background:white;border-radius:16px;padding:0;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;min-height:380px;overflow:hidden;}
+  .editor-head{background:var(--dark);color:white;padding:10px 14px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .editor-head .label-sm{font-weight:bold;font-size:14px;}
+  .editor-head .dots{display:flex;gap:5px}
+  .editor-head .dots span{width:11px;height:11px;border-radius:50%;background:#FF5F56}
+  .editor-head .dots span:nth-child(2){background:#FFBD2E}
+  .editor-head .dots span:nth-child(3){background:#27C93F}
+  .editor-textarea{flex:1;border:none;padding:14px;background:var(--code-bg);color:#FFE6B0;
+    font-family:'SF Mono','Menlo','Consolas',monospace;font-size:14px;line-height:1.6;
+    resize:none;outline:none;tab-size:2;min-height:300px;}
+  .editor-iframe{flex:1;border:none;width:100%;background:white;min-height:300px;}
+  .editor-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:center;}
+  .editor-tools button{font-family:inherit;border:none;border-radius:10px;padding:10px 18px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:white;border:2px solid var(--primary);color:var(--primary);transition:transform .12s;}
+  .editor-tools button:hover{transform:translateY(-2px)}
+  .editor-tools button.primary{background:var(--primary);color:white;border-color:var(--primary)}
+  .editor-tools button.gray{border-color:var(--muted);color:var(--muted)}
+  .editor-tools button.accent{background:var(--accent);color:white;border-color:var(--accent)}
+  .preset-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-size:13px;color:var(--muted)}
+  .preset-row button{background:#FFF3D6;border:2px dashed var(--secondary);color:var(--dark);
+    padding:6px 14px;border-radius:999px;cursor:pointer;font-weight:bold;font-size:13px;}
+  .preset-row button:hover{background:var(--secondary)}
+
+  /* === Color picker === */
+  .colorlab{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .colorlab .colorprev{padding:30px 20px;border-radius:12px;text-align:center;
+    font-weight:bold;font-size:24px;margin-bottom:18px;transition:all .2s;}
+  .colorlab .ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+  .colorlab label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px;}
+  .colorlab input[type=color]{width:100%;height:42px;border:none;border-radius:10px;cursor:pointer;background:none}
+  .colorlab input[type=range]{width:100%;accent-color:var(--primary)}
+  .colorlab .colorout{margin-top:18px;background:var(--code-bg);color:var(--code-text);
+    padding:14px 18px;border-radius:10px;font-family:'SF Mono','Menlo',monospace;
+    font-size:14px;line-height:1.7;}
+  .colorlab .swatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .colorlab .swatch{width:30px;height:30px;border-radius:8px;cursor:pointer;border:2px solid white;
+    box-shadow:0 0 0 1px rgba(0,0,0,.15);transition:transform .12s;}
+  .colorlab .swatch:hover{transform:scale(1.15)}
+
+  /* === Layout demo === */
+  .layoutlab{background:white;border-radius:16px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .layoutlab .ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+  .layoutlab label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px;}
+  .layoutlab input[type=range]{width:100%;accent-color:var(--primary)}
+  .layoutlab .ladisplay{border:3px dashed #FFB74D;border-radius:12px;padding:14px;background:#FFFCEE;}
+  .layoutlab .labox{background:linear-gradient(135deg,#FCBD19,#FF8C1A);color:white;
+    border-radius:8px;font-weight:bold;transition:all .2s;}
+  .layoutlab .lacode{margin-top:14px;background:var(--code-bg);color:var(--code-text);
+    padding:14px 18px;border-radius:10px;font-family:'SF Mono','Menlo',monospace;
+    font-size:14px;line-height:1.7;}
+
+  /* === Profile maker === */
+  .profmaker{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .pmform{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .pmform label{display:block;font-weight:bold;font-size:14px;color:var(--muted);margin-bottom:4px}
+  .pmform input,.pmform select,.pmform textarea{width:100%;padding:10px 12px;
+    border:2px solid #DDD;border-radius:10px;font-family:inherit;font-size:15px;background:#FAFAFA}
+  .pmform input:focus,.pmform select:focus,.pmform textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .pmform textarea{min-height:70px;resize:vertical}
+  .pmform .pmcolor{display:flex;align-items:center;gap:10px}
+  .pmform .pmcolor input[type=color]{width:50px;height:42px;padding:0;border:2px solid #DDD;border-radius:8px;cursor:pointer}
+  .pmemoji{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-height:88px;overflow-y:auto;padding:4px;
+    background:#FAFAFA;border-radius:8px}
+  .pmemoji button{font-size:22px;background:white;border:1.5px solid #EEE;border-radius:8px;
+    width:38px;height:38px;cursor:pointer;line-height:1;padding:0}
+  .pmemoji button:hover{background:var(--secondary);border-color:var(--primary)}
+  .pmemoji button.on{background:var(--primary);color:white;border-color:var(--primary)}
+  .pmpreview{margin-top:18px;border:3px solid var(--primary);border-radius:14px;overflow:hidden;
+    min-height:280px;background:white}
+  .pmpreview iframe{width:100%;border:none;min-height:380px;display:block}
+  .pmtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:center}
+  .pmtools button{font-family:inherit;border:none;border-radius:10px;padding:10px 18px;
+    font-weight:bold;cursor:pointer;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.13);
+    background:var(--primary);color:white;transition:transform .12s;}
+  .pmtools button:hover{transform:translateY(-2px)}
+  .pmtools button.gray{background:var(--muted)}
+  .pmtools button.accent{background:var(--accent)}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:14px}
+  .qrow{margin-bottom:16px}
+  .qrow .q{font-weight:bold;font-size:17px;margin-bottom:8px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:2px solid var(--accent);color:var(--dark);
+    padding:8px 16px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:14px;
+    font-weight:bold;transition:all .15s}
+  .qrow .opts button:hover{background:#EAF4FF}
+  .qrow .opts button.right{background:#A5D6A7;border-color:#388E3C;color:#1B5E20}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:#C62828;color:#B71C1C}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:6px;display:none}
+  .qrow.answered .ex{display:block}
+
+  /* === Summary / next === */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{background:white;border-radius:16px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .next{background:linear-gradient(135deg,var(--accent) 0%,var(--primary) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:20px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  /* === Toast === */
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:12px 24px;border-radius:999px;
+    font-weight:bold;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+    .editor{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>中級 第3回</span> <b>HTMLで自己紹介ページ</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#tags">2<span>タグの基本</span><span class="ic">🏷️</span></a>
+  <a href="#dict">3<span>タグ図鑑</span><span class="ic">📖</span></a>
+  <a href="#editor">4<span>ライブエディタ</span><span class="ic">💻</span></a>
+  <a href="#color">5<span>色ラボ</span><span class="ic">🎨</span></a>
+  <a href="#layout">6<span>レイアウト</span><span class="ic">📐</span></a>
+  <a href="#maker">7<span>自己紹介メーカー</span><span class="ic">🪪</span></a>
+  <a href="#quiz">8<span>たしかめクイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった！</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">コピーしました！</div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 小学生プログラミング教室・中級</div>
+    <h1>HTMLで<br>自己紹介ページ</h1>
+    <p>タグ・文字・画像・色・レイアウトで <b>自分の1ページ</b> を 作ろう！</p>
+    <div class="em">🌐✏️🎨</div>
+  </div>
+  <div class="scroll-hint">下へすすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4つの ステップで 自己紹介ページ 完成！</h2>
+  <div class="grid grid-4">
+    <div class="card"><span style="font-size:60px;display:block">🏷️</span><h3>タグ</h3><p style="color:var(--muted)">文字を かこむ</p></div>
+    <div class="card"><span style="font-size:60px;display:block">🖼️</span><h3>画像</h3><p style="color:var(--muted)">img で のせる</p></div>
+    <div class="card"><span style="font-size:60px;display:block">🎨</span><h3>色</h3><p style="color:var(--muted)">style で つける</p></div>
+    <div class="card"><span style="font-size:60px;display:block">📐</span><h3>レイアウト</h3><p style="color:var(--muted)">div で まとめる</p></div>
+  </div>
+</section>
+
+<!-- 1. タグの基本 -->
+<div class="divider" id="tags" data-snav-target>
+  <div class="num">1.</div>
+  <h2>タグの基本</h2>
+</div>
+
+<section class="section">
+  <h2>タグ ＝ 文字を「かこむ」記号</h2>
+  <p class="lead">開始タグ <code>&lt;h1&gt;</code> と 閉じタグ <code>&lt;/h1&gt;</code> で 文字を サンドイッチする。</p>
+
+  <div class="grid grid-2">
+    <div>
+      <div style="margin-bottom:6px;font-weight:bold;color:var(--muted)">📝 書きかた</div>
+<div class="code"><span class="tag">&lt;h1&gt;</span>こんにちは！<span class="tag">&lt;/h1&gt;</span>
+<span class="tag">&lt;p&gt;</span>わたしは ゆうたです。<span class="tag">&lt;/p&gt;</span></div>
+    </div>
+    <div>
+      <div style="margin-bottom:6px;font-weight:bold;color:var(--muted)">👀 ブラウザの 見え方</div>
+      <div class="preview-box">
+        <h1 style="font-size:28px;color:var(--dark);margin-bottom:4px">こんにちは！</h1>
+        <p>わたしは ゆうたです。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:24px">
+    <h3 style="color:var(--secondary)">💡 おにぎりの のり と 同じ</h3>
+    <p style="margin-top:6px">タグは 必ず <b>ペアで かこむ</b>。閉じ忘れると コンピュータが まよう！<br>
+    例外：<code>&lt;br&gt;</code>（改行）と <code>&lt;img&gt;</code>（画像）は 閉じタグ なし。</p>
+  </div>
+</section>
+
+<!-- 2. タグ図鑑 -->
+<div class="divider" id="dict" data-snav-target>
+  <div class="num">2.</div>
+  <h2>タグ 図鑑</h2>
+</div>
+
+<section class="section">
+  <h2>クリックで くわしく見る</h2>
+  <p class="lead">今日 使う 9つのタグ。気になるカードを 押すと サンプルが見られるよ。</p>
+
+  <div class="tagdict" id="tagdict">
+    <!-- generated by JS -->
+  </div>
+</section>
+
+<!-- 3. ライブエディタ -->
+<div class="divider" id="editor" data-snav-target>
+  <div class="num">3.</div>
+  <h2>ライブHTMLエディタ</h2>
+</div>
+
+<section class="section">
+  <h2>左で 書く ／ 右で すぐ見える</h2>
+  <p class="lead">左の文字を 変えると、右が <b>リアルタイムで かわる</b>！ いろいろ いじってみよう。</p>
+
+  <div class="editor">
+    <div class="editor-pane">
+      <div class="editor-head">
+        <span class="label-sm">📝 HTML（ここを編集）</span>
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+      <textarea class="editor-textarea" id="liveEditor" spellcheck="false"></textarea>
+    </div>
+    <div class="editor-pane">
+      <div class="editor-head">
+        <span class="label-sm">👀 ブラウザ（じどう更新）</span>
+        <span style="font-size:12px;opacity:.8">~ 0.4秒で 反映 ~</span>
+      </div>
+      <iframe class="editor-iframe" id="livePreview" sandbox="allow-same-origin" title="プレビュー"></iframe>
+    </div>
+  </div>
+
+  <div class="editor-tools">
+    <button class="primary" onclick="copyEditor()">📋 コードをコピー</button>
+    <button class="accent" onclick="downloadEditor()">💾 ダウンロード (.html)</button>
+    <button class="gray" onclick="resetEditor()">↺ 最初に戻す</button>
+  </div>
+
+  <div class="preset-row">
+    <span style="align-self:center">サンプル：</span>
+    <button onclick="loadPreset('hello')">こんにちは</button>
+    <button onclick="loadPreset('profile')">自己紹介</button>
+    <button onclick="loadPreset('hobby')">好きなもの3つ</button>
+    <button onclick="loadPreset('colorful')">カラフル</button>
+  </div>
+</section>
+
+<!-- 4. 色ラボ -->
+<div class="divider" id="color" data-snav-target>
+  <div class="num">4.</div>
+  <h2>色ラボ</h2>
+</div>
+
+<section class="section">
+  <h2>色を いろいろ ためそう</h2>
+  <p class="lead">スライダーや 色見本を 変えると、すぐ プレビューに反映！ <br>使いたい色のコードを コピーして 使おう。</p>
+
+  <div class="colorlab">
+    <div class="colorprev" id="colorPrev">こんにちは！</div>
+    <div class="ctrls">
+      <div>
+        <label>文字の色 (color)</label>
+        <input type="color" id="ctxt" value="#2D3436">
+      </div>
+      <div>
+        <label>背景の色 (background)</label>
+        <input type="color" id="cbg" value="#FCBD19">
+      </div>
+      <div>
+        <label>文字の大きさ <span id="cszLbl">28</span>px</label>
+        <input type="range" id="csz" min="14" max="60" value="28">
+      </div>
+      <div>
+        <label>丸み <span id="crdLbl">12</span>px</label>
+        <input type="range" id="crd" min="0" max="40" value="12">
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <label style="display:block;font-weight:bold;font-size:13px;color:var(--muted);margin-bottom:6px">人気の色見本（クリックで 背景に）</label>
+      <div class="swatches" id="swatches"></div>
+    </div>
+
+    <div class="colorout" id="colorOut"></div>
+  </div>
+</section>
+
+<!-- 5. レイアウト -->
+<div class="divider" id="layout" data-snav-target>
+  <div class="num">5.</div>
+  <h2>レイアウト ラボ</h2>
+</div>
+
+<section class="section">
+  <h2>div ・ padding ・ 中央寄せ</h2>
+  <p class="lead">スライダーで 数字を変えると レイアウトが どう変わるか 見てみよう！</p>
+
+  <div class="layoutlab">
+    <div class="ctrls">
+      <div>
+        <label>すきま (padding) <span id="lpLbl">20</span>px</label>
+        <input type="range" id="lp" min="0" max="80" value="20">
+      </div>
+      <div>
+        <label>横はば (width) <span id="lwLbl">80</span>%</label>
+        <input type="range" id="lw" min="30" max="100" value="80">
+      </div>
+      <div>
+        <label>文字ぞろえ (text-align)</label>
+        <select id="lalign">
+          <option value="left">左 (left)</option>
+          <option value="center" selected>中央 (center)</option>
+          <option value="right">右 (right)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ladisplay">
+      <div class="labox" id="lbox" style="padding:20px;width:80%;margin:0 auto;text-align:center">
+        ここは &lt;div&gt; の中
+      </div>
+    </div>
+
+    <div class="lacode" id="lcode"></div>
+  </div>
+</section>
+
+<!-- 6. 自己紹介ページ メーカー -->
+<div class="divider" id="maker" data-snav-target>
+  <div class="num">6.</div>
+  <h2>自己紹介ページ メーカー</h2>
+</div>
+
+<section class="section">
+  <h2>入力するだけで HTMLが できる！</h2>
+  <p class="lead">下の項目を うめると、自分だけの 自己紹介ページが できあがる。<br>
+  気に入ったら <b>ダウンロード</b> して、おうちの ブラウザで 開こう！</p>
+
+  <div class="profmaker">
+    <div class="pmform">
+      <div>
+        <label>ニックネーム（本名はNG）</label>
+        <input type="text" id="pmName" maxlength="20" value="ゆうた" placeholder="ゆうた">
+      </div>
+      <div>
+        <label>あいさつ・ひとこと</label>
+        <input type="text" id="pmHello" maxlength="40" value="こんにちは！カレーがすきです" placeholder="こんにちは！">
+      </div>
+      <div>
+        <label>好きなもの①</label>
+        <input type="text" id="pm1" maxlength="20" value="マインクラフト">
+      </div>
+      <div>
+        <label>好きなもの②</label>
+        <input type="text" id="pm2" maxlength="20" value="ねこ">
+      </div>
+      <div>
+        <label>好きなもの③</label>
+        <input type="text" id="pm3" maxlength="20" value="カレーライス">
+      </div>
+      <div>
+        <label>しょうらいの ゆめ（任意）</label>
+        <input type="text" id="pmDream" maxlength="40" value="ゲームクリエイター">
+      </div>
+      <div>
+        <label>テーマカラー</label>
+        <div class="pmcolor">
+          <input type="color" id="pmColor" value="#FF8C1A">
+          <span style="font-size:13px;color:var(--muted)">↑ クリックで 変えられる</span>
+        </div>
+      </div>
+      <div>
+        <label>顔（絵文字）</label>
+        <div class="pmemoji" id="pmEmoji">
+          <!-- generated -->
+        </div>
+      </div>
+    </div>
+
+    <div class="pmpreview">
+      <iframe id="pmFrame" sandbox="allow-same-origin" title="自己紹介プレビュー"></iframe>
+    </div>
+
+    <div class="pmtools">
+      <button onclick="copyMakerHTML()">📋 HTMLをコピー</button>
+      <button class="accent" onclick="downloadMakerHTML()">💾 ダウンロード (.html)</button>
+      <button class="gray" onclick="sendToEditor()">✏️ エディタで さらに編集</button>
+    </div>
+  </div>
+</section>
+
+<!-- 7. たしかめクイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめクイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみよう！</h2>
+  <p class="lead">何回 まちがえてもOK。答えがわかったら 説明が出るよ。</p>
+  <div class="quiz" id="quiz">
+    <div class="qrow" data-a="1">
+      <div class="q">Q1. つぎのうち <b>「大きな見出し」</b> を 出すタグは どれ？</div>
+      <div class="opts">
+        <button data-i="0">&lt;p&gt;</button>
+        <button data-i="1">&lt;h1&gt;</button>
+        <button data-i="2">&lt;li&gt;</button>
+        <button data-i="3">&lt;br&gt;</button>
+      </div>
+      <div class="ex">✅ <b>&lt;h1&gt;</b> は いちばん大きな見出し。 h2、h3 と 数が大きくなるほど 小さくなる。</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q2. 画像を 出すための タグは？</div>
+      <div class="opts">
+        <button data-i="0">&lt;pic&gt;</button>
+        <button data-i="1">&lt;photo&gt;</button>
+        <button data-i="2">&lt;img&gt;</button>
+        <button data-i="3">&lt;image&gt;</button>
+      </div>
+      <div class="ex">✅ <b>&lt;img src="..."&gt;</b> が 正解。 「src」 ＝ 画像の ばしょ（ファイル名）。</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. 文字を <b>赤色</b> にしたい！ 正しい書き方は？</div>
+      <div class="opts">
+        <button data-i="0">&lt;p style="color: red;"&gt;</button>
+        <button data-i="1">&lt;p color="red"&gt;</button>
+        <button data-i="2">&lt;red&gt;</button>
+        <button data-i="3">&lt;p:red&gt;</button>
+      </div>
+      <div class="ex">✅ <b>style="color: red;"</b> が今日の書き方。<br>「コロン (:)」と「セミコロン (;)」 を 忘れないように！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できるように なったこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>タグ ＝ 文字を かこむ 記号</h3><p style="color:var(--muted)">&lt;h1&gt;〜&lt;/h1&gt; のように ペアで かこむ</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>文字・画像・リスト を 自由に置ける</h3><p style="color:var(--muted)">&lt;h1&gt; &lt;p&gt; &lt;img&gt; &lt;ul&gt;&lt;li&gt; が 基本セット</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>style で 色・大きさ・場所 を 指定</h3><p style="color:var(--muted)">color / background / font-size / padding</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>div で まとまりを 作って レイアウト</h3><p style="color:var(--muted)">かこめば まとめて デザイン できる</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>自分の 1ページ が 完成 🎉</h3><p style="color:var(--muted)">おうちで 家族に 見せよう！</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🤖✨</div>
+  <h2>次回 ｜ AIと いっしょに 作品紹介</h2>
+  <p>今日のページを AIに 紹介してもらおう！ そして 発表会へ。</p>
+</div>
+
+<footer>小学生プログラミング教室 ／ 中級 第3回｜HTMLで自己紹介ページ</footer>
+
+<script>
+  /* =========================================================
+     共通：プログレスバー／ナビ／モーダル／キーボード
+     ========================================================= */
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  /* Toast */
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+
+  /* =========================================================
+     タグ図鑑（modal で 表示）
+     ========================================================= */
+  const TAGS = [
+    { name:'<h1>', desc:'大きな見出し', emoji:'🏆',
+      code:'<h1>こんにちは！</h1>',
+      preview:'<h1 style="font-size:28px;margin:0">こんにちは！</h1>',
+      hint:'h1 が 一番大きく、h2、h3 と 数が大きくなるほど 小さい。' },
+    { name:'<p>', desc:'文の かたまり（段落）', emoji:'📝',
+      code:'<p>わたしは ゆうたです。<br>4ねんせいです。</p>',
+      preview:'<p style="margin:0">わたしは ゆうたです。<br>4ねんせいです。</p>',
+      hint:'p の中に <br> を入れると 改行できる。' },
+    { name:'<br>', desc:'改行（閉じタグなし）', emoji:'↵',
+      code:'一行目<br>二行目',
+      preview:'一行目<br>二行目',
+      hint:'<br> は スラッシュなしで OK。閉じタグも 不要！' },
+    { name:'<ul><li>', desc:'リスト（・つきの一覧）', emoji:'📋',
+      code:'<ul>\n  <li>サッカー</li>\n  <li>ねこ</li>\n  <li>カレー</li>\n</ul>',
+      preview:'<ul style="margin:0 0 0 22px"><li>サッカー</li><li>ねこ</li><li>カレー</li></ul>',
+      hint:'<ul> は外側のかこみ、<li> は1つ1つの項目。' },
+    { name:'<img>', desc:'画像（閉じタグなし）', emoji:'🖼️',
+      code:'<img src="neko.jpg" alt="うちのねこ" width="120">',
+      preview:'<div style="font-size:60px">🐈</div>',
+      hint:'src ＝ 画像のばしょ。alt ＝ 出なかったときの 説明。' },
+    { name:'<a>', desc:'リンク（クリックで 移動）', emoji:'🔗',
+      code:'<a href="https://scratch.mit.edu">Scratchへ</a>',
+      preview:'<a href="#" style="color:#4C97FF">Scratchへ →</a>',
+      hint:'href＝行き先の URL。教室では <b>使わなくてOK</b>。' },
+    { name:'<div>', desc:'まとめる ハコ', emoji:'📦',
+      code:'<div style="background:gold;padding:10px">\n  ここは ひとかたまり\n</div>',
+      preview:'<div style="background:gold;padding:10px;border-radius:8px">ここは ひとかたまり</div>',
+      hint:'div で かこむと、まとめて 色や 場所を 変えられる。' },
+    { name:'<span>', desc:'文の 一部だけ デザイン', emoji:'🎯',
+      code:'今日は <span style="color:red">あつい</span> 日！',
+      preview:'今日は <span style="color:red;font-weight:bold">あつい</span> 日！',
+      hint:'文の中の <b>一部だけ</b> 色を変えたい時に つかう。' },
+    { name:'style=""', desc:'見た目の 指示書', emoji:'🎨',
+      code:'<h1 style="color: red; font-size: 40px;">タイトル</h1>',
+      preview:'<h1 style="color:red;font-size:30px;margin:0">タイトル</h1>',
+      hint:'style="〜" の中に、色・大きさ・場所 など 見た目を 書く。' },
+  ];
+
+  function escapeHTML(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  const dictEl = document.getElementById('tagdict');
+  TAGS.forEach((t, i)=>{
+    const b = document.createElement('button');
+    b.className = 'tagbtn';
+    b.innerHTML = `<span class="tname">${escapeHTML(t.name)}</span><span class="tdesc">${t.desc}</span>`;
+    b.addEventListener('click', ()=>{
+      info(t.emoji, t.name + ' ＝ ' + t.desc, `
+        <div style="margin-bottom:10px"><b>📝 書きかた</b></div>
+        <div style="background:var(--code-bg);color:var(--code-text);padding:12px 16px;border-radius:10px;
+                    font-family:'SF Mono','Menlo',monospace;font-size:14px;line-height:1.6;white-space:pre;overflow-x:auto">${escapeHTML(t.code)}</div>
+        <div style="margin:14px 0 6px"><b>👀 見え方</b></div>
+        <div style="background:white;border:2px dashed #FFB74D;padding:12px;border-radius:10px">${t.preview}</div>
+        <div style="margin-top:14px;font-size:14px;color:var(--muted)">💡 ${t.hint}</div>
+      `);
+    });
+    dictEl.appendChild(b);
+  });
+
+  /* =========================================================
+     ライブ HTMLエディタ
+     ========================================================= */
+  const editor = document.getElementById('liveEditor');
+  const preview = document.getElementById('livePreview');
+
+  const PRESETS = {
+    hello: `<!DOCTYPE html>
+<html>
+<body style="background:#FFF8EE; font-family:sans-serif; padding:30px">
+  <h1 style="color:#FF8C1A">こんにちは！</h1>
+  <p>わたしの 名前は ゆうた です。</p>
+</body>
+</html>`,
+    profile: `<!DOCTYPE html>
+<html>
+<body style="background:#FFF8EE; font-family:sans-serif; padding:30px; text-align:center">
+
+  <div style="font-size:80px">😺</div>
+  <h1 style="color:#FF8C1A">ゆうた の ページ</h1>
+  <p style="font-size:18px">しょうがく4ねんせい です。</p>
+
+  <h2 style="color:#4C97FF; margin-top:30px">じぶんのこと</h2>
+  <p>カレーが だいすき！<br>休みの日は サッカーを してます。</p>
+
+</body>
+</html>`,
+    hobby: `<!DOCTYPE html>
+<html>
+<body style="background:#E3F2FD; font-family:sans-serif; padding:30px">
+
+  <h1 style="color:#4C97FF; text-align:center">わたしの すきなもの</h1>
+
+  <ul style="font-size:22px; line-height:2">
+    <li>🎮 マインクラフト</li>
+    <li>🐈 ねこ</li>
+    <li>🍛 カレーライス</li>
+  </ul>
+
+</body>
+</html>`,
+    colorful: `<!DOCTYPE html>
+<html>
+<body style="padding:30px; font-family:sans-serif;
+             background:linear-gradient(135deg,#FF8C1A,#FCBD19,#4C97FF)">
+
+  <div style="background:white; padding:25px; border-radius:20px; text-align:center">
+    <h1 style="color:hotpink">カラフル ページ！</h1>
+    <p style="font-size:20px">
+      <span style="color:red">あ</span>
+      <span style="color:orange">い</span>
+      <span style="color:gold">う</span>
+      <span style="color:green">え</span>
+      <span style="color:blue">お</span>
+    </p>
+    <div style="background:#FFE082; padding:14px; border-radius:14px; margin-top:14px">
+      🎉 たのしい HTML 🎉
+    </div>
+  </div>
+
+</body>
+</html>`
+  };
+
+  function updatePreview(){
+    const doc = preview.contentDocument || preview.contentWindow.document;
+    doc.open(); doc.write(editor.value); doc.close();
+  }
+  let upT = null;
+  editor.addEventListener('input', ()=>{
+    clearTimeout(upT);
+    upT = setTimeout(updatePreview, 350);
+  });
+  // Tab key inserts spaces
+  editor.addEventListener('keydown', e=>{
+    if(e.key === 'Tab'){
+      e.preventDefault();
+      const s = editor.selectionStart, ee = editor.selectionEnd;
+      editor.value = editor.value.substring(0,s) + '  ' + editor.value.substring(ee);
+      editor.selectionStart = editor.selectionEnd = s+2;
+    }
+  });
+  function loadPreset(name){
+    editor.value = PRESETS[name] || PRESETS.hello;
+    updatePreview();
+    showToast('サンプルを 読み込みました');
+  }
+  function resetEditor(){ loadPreset('profile'); }
+  function copyEditor(){
+    navigator.clipboard.writeText(editor.value)
+      .then(()=>showToast('📋 コピーしました！'))
+      .catch(()=>showToast('コピー できませんでした'));
+  }
+  function downloadEditor(){
+    const blob = new Blob([editor.value], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'my-page.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 my-page.html を 保存しました');
+  }
+  loadPreset('profile');
+
+  /* =========================================================
+     色ラボ
+     ========================================================= */
+  const ctxt = document.getElementById('ctxt');
+  const cbg = document.getElementById('cbg');
+  const csz = document.getElementById('csz');
+  const crd = document.getElementById('crd');
+  const cszLbl = document.getElementById('cszLbl');
+  const crdLbl = document.getElementById('crdLbl');
+  const colorPrev = document.getElementById('colorPrev');
+  const colorOut = document.getElementById('colorOut');
+
+  function updateColor(){
+    const t = ctxt.value, b = cbg.value, s = csz.value, r = crd.value;
+    cszLbl.textContent = s; crdLbl.textContent = r;
+    colorPrev.style.color = t;
+    colorPrev.style.background = b;
+    colorPrev.style.fontSize = s + 'px';
+    colorPrev.style.borderRadius = r + 'px';
+    colorOut.innerHTML = `<span style="color:#79B8FF">&lt;p</span> <span style="color:#FFD33D">style</span>=<span style="color:#FF8C42">"color: ${t}; background: ${b};\n         font-size: ${s}px; border-radius: ${r}px;\n         padding: 30px 20px; text-align: center;"</span><span style="color:#79B8FF">&gt;</span>\n  こんにちは！\n<span style="color:#79B8FF">&lt;/p&gt;</span>`;
+  }
+  [ctxt, cbg, csz, crd].forEach(el => el.addEventListener('input', updateColor));
+
+  const POPCOLORS = ['#FF8C1A','#FCBD19','#4C97FF','#FF4D6D','#9966FF','#59C059',
+                     '#FF6B6B','#4ECDC4','#FFE66D','#A8E6CF','#FFB74D','#CE93D8',
+                     '#FFF8EE','#2D3436','#FFFFFF'];
+  const swEl = document.getElementById('swatches');
+  POPCOLORS.forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'swatch';
+    b.style.background = c;
+    b.title = c;
+    b.addEventListener('click', ()=>{ cbg.value = c; updateColor(); });
+    swEl.appendChild(b);
+  });
+  updateColor();
+
+  /* =========================================================
+     レイアウトラボ
+     ========================================================= */
+  const lp = document.getElementById('lp');
+  const lw = document.getElementById('lw');
+  const lalign = document.getElementById('lalign');
+  const lpLbl = document.getElementById('lpLbl');
+  const lwLbl = document.getElementById('lwLbl');
+  const lbox = document.getElementById('lbox');
+  const lcode = document.getElementById('lcode');
+
+  function updateLayout(){
+    const p = lp.value, w = lw.value, a = lalign.value;
+    lpLbl.textContent = p; lwLbl.textContent = w;
+    lbox.style.padding = p + 'px';
+    lbox.style.width = w + '%';
+    lbox.style.textAlign = a;
+    lbox.style.margin = '0 auto';
+    lcode.innerHTML = `<span style="color:#79B8FF">&lt;div</span> <span style="color:#FFD33D">style</span>=<span style="color:#FF8C42">"padding: ${p}px;\n          width: ${w}%;\n          margin: 0 auto;\n          text-align: ${a};\n          background: linear-gradient(135deg,#FCBD19,#FF8C1A);\n          color: white; border-radius: 8px;"</span><span style="color:#79B8FF">&gt;</span>\n  ここは &amp;lt;div&amp;gt; の中\n<span style="color:#79B8FF">&lt;/div&gt;</span>`;
+  }
+  [lp, lw, lalign].forEach(el => el.addEventListener('input', updateLayout));
+  updateLayout();
+
+  /* =========================================================
+     自己紹介メーカー
+     ========================================================= */
+  const EMOJIS = ['😀','😁','😊','😎','🤓','🐱','🐶','🐰','🐼','🐯','🐸','🐧',
+                  '🦊','🐻','🦁','🐮','🐷','🐵','🌟','⭐','✨','🌈','🎮','⚽',
+                  '🍕','🍰','🍦','🍩','🍓','🚀','🎨','📚','🎵','🌸','🍀'];
+  const pmEmoji = document.getElementById('pmEmoji');
+  let selectedEmoji = '😺';
+  function buildEmoji(){
+    pmEmoji.innerHTML = '';
+    ['😺',...EMOJIS].forEach(em=>{
+      const b = document.createElement('button');
+      b.textContent = em;
+      if(em === selectedEmoji) b.classList.add('on');
+      b.addEventListener('click', ()=>{
+        selectedEmoji = em;
+        [...pmEmoji.querySelectorAll('button')].forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        updateMaker();
+      });
+      pmEmoji.appendChild(b);
+    });
+  }
+  buildEmoji();
+
+  function escape(s){
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;');
+  }
+  function makerHTML(){
+    const name = escape(document.getElementById('pmName').value || 'なまえ');
+    const hello = escape(document.getElementById('pmHello').value || 'こんにちは！');
+    const p1 = escape(document.getElementById('pm1').value);
+    const p2 = escape(document.getElementById('pm2').value);
+    const p3 = escape(document.getElementById('pm3').value);
+    const dream = escape(document.getElementById('pmDream').value);
+    const color = document.getElementById('pmColor').value;
+    const emoji = selectedEmoji;
+    const items = [p1, p2, p3].filter(x => x.trim()).map(x => `      <li>${x}</li>`).join('\n');
+
+    return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>${name} の ページ</title>
+</head>
+<body style="background: #FFF8EE; font-family: sans-serif; padding: 0; margin: 0;">
+
+  <div style="background: linear-gradient(135deg, ${color}, #FCBD19);
+              color: white; text-align: center; padding: 30px 20px;">
+    <div style="font-size: 80px; line-height: 1;">${emoji}</div>
+    <h1 style="margin: 10px 0 4px;">${name} の ページ</h1>
+    <p style="font-size: 18px; margin: 0; opacity: .95;">${hello}</p>
+  </div>
+
+  <div style="max-width: 600px; margin: 30px auto; padding: 0 20px;">
+
+    <h2 style="color: ${color};">わたしの すきなもの</h2>
+    <ul style="font-size: 18px; line-height: 1.8;">
+${items}
+    </ul>
+
+    ${dream ? `<h2 style="color: ${color}; margin-top: 30px;">しょうらいの ゆめ</h2>
+    <p style="font-size: 18px; background: white; padding: 16px;
+              border-radius: 12px; border-left: 6px solid ${color};">
+      ${dream}
+    </p>` : ''}
+
+    <p style="text-align: center; color: #999; margin-top: 40px; font-size: 13px;">
+      🌐 HTMLで 作りました
+    </p>
+
+  </div>
+</body>
+</html>`;
+  }
+  const pmFrame = document.getElementById('pmFrame');
+  function updateMaker(){
+    const html = makerHTML();
+    const doc = pmFrame.contentDocument || pmFrame.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+  }
+  document.querySelectorAll('#maker input, #maker textarea, #maker select')
+    .forEach(el => el.addEventListener('input', updateMaker));
+  updateMaker();
+
+  function copyMakerHTML(){
+    navigator.clipboard.writeText(makerHTML())
+      .then(()=>showToast('📋 HTMLをコピーしました'))
+      .catch(()=>showToast('コピー できませんでした'));
+  }
+  function downloadMakerHTML(){
+    const name = (document.getElementById('pmName').value || 'me').replace(/[^a-zA-Z0-9ぁ-んァ-ヶー一-龯]/g,'') || 'me';
+    const blob = new Blob([makerHTML()], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name + '.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    showToast('💾 ' + a.download + ' を 保存しました');
+  }
+  function sendToEditor(){
+    editor.value = makerHTML();
+    updatePreview();
+    document.getElementById('editor').scrollIntoView({behavior:'smooth',block:'start'});
+    showToast('✏️ エディタに 送りました');
+  }
+
+  /* =========================================================
+     クイズ
+     ========================================================= */
+  document.querySelectorAll('.qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* =========================================================
+     ヘルプ ／ キーボードショートカット
+     ========================================================= */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:14px;line-height:2">
+        <div><b>← ↑ PageUp</b> 前の章</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプ</div>
+      </div>`);
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>
