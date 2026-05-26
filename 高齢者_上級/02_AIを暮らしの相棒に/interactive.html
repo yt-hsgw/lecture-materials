@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高齢者・上級 第2回｜AIを暮らしの相棒に</title>
+<style>
+  :root{
+    --primary:#5E35B1; --secondary:#FFA726; --accent:#26A69A;
+    --warn:#D32F2F; --dark:#1A237E; --light:#F7F5FA;
+    --panel:#FFFFFF; --muted:#5C6BC0; --shadow:0 3px 10px rgba(30,30,80,.12);
+    --border:rgba(30,30,80,.1);
+    --gpt:#10A37F; --gemini:#4285F4; --claude:#D97757;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px;}
+  body{font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+    color:#1A1A2E;background:var(--light);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:15px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.05);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.1)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:6px 16px;color:#1A1A2E;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:15px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:22px;height:22px;padding:0;border-radius:50%;
+    border:2px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;opacity:1;pointer-events:none;transform:none;color:#1A1A2E;}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.96);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:42px;height:42px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(26,35,126,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:18px;padding:32px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:70px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.9;color:#1A1A2E;}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#5E35B1 0%,#3949AB 50%,#26A69A 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:10px 26px;
+    border-radius:999px;font-weight:bold;margin-bottom:22px;backdrop-filter:blur(4px);font-size:16px}
+  .hero h1{font-size:clamp(46px,8vw,90px);line-height:1.2;margin-bottom:22px;
+    text-shadow:0 4px 16px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(20px,2.6vw,28px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,110px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:16px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:8px;font-weight:bold;font-size:15px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(34px,5vw,48px);color:var(--primary);margin-bottom:10px;font-weight:800}
+  .lead{font-size:21px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,58px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:#1A1A2E;font-size:24px;margin-bottom:10px;font-weight:700}
+  .card p{font-size:18px;line-height:1.8}
+  .card.warn{border-left:6px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:6px solid var(--accent);background:#E0F2F1}
+  .card.tip{border-left:6px solid var(--secondary);background:#FFF3E0}
+
+  /* Service comparison */
+  .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+  .svc{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    border:2px solid var(--border);cursor:pointer;transition:all .15s}
+  .svc:hover{transform:translateY(-4px);border-color:currentColor}
+  .svc.gpt{color:var(--gpt)}
+  .svc.gemini{color:var(--gemini)}
+  .svc.claude{color:var(--claude)}
+  .svc h3{font-size:22px;margin-bottom:6px}
+  .svc .badge{display:inline-block;background:#E0F2F1;color:#004D40;padding:4px 12px;
+    border-radius:6px;font-size:14px;font-weight:700;margin:6px 0}
+  .svc .meta{font-size:15px;color:var(--muted);line-height:1.8;margin-top:8px}
+  .svc .meta b{color:#1A1A2E}
+
+  /* Prompt maker */
+  .pm{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .pm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;border-bottom:2px solid var(--border)}
+  .pm-tabs button{background:transparent;border:none;padding:10px 18px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:15px;color:var(--muted);
+    border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
+  .pm-tabs button.active{color:var(--primary);border-bottom-color:var(--primary)}
+  .pm-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+  .pm-form .full{grid-column:1 / -1}
+  .pm-form label{display:block;font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px}
+  .pm-form input,.pm-form select,.pm-form textarea{width:100%;padding:11px 14px;
+    border:1.5px solid #CFD8DC;border-radius:8px;font-family:inherit;font-size:16px;
+    background:white;color:#1A1A2E}
+  .pm-form input:focus,.pm-form select:focus,.pm-form textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(94,53,177,.15)}
+  .pm-form textarea{min-height:60px;resize:vertical}
+  .pm-prompt{background:#1A237E;color:#E8EAF6;border-radius:10px;padding:16px 20px;
+    font-family:'SF Mono','Menlo',monospace;font-size:14px;line-height:1.8;
+    white-space:pre-wrap;min-height:120px;position:relative}
+  .pm-prompt .corner{position:absolute;top:6px;right:12px;font-size:11px;color:#9FA8DA}
+  .pm-quality{text-align:center;margin-top:10px;font-size:14px;color:var(--muted)}
+  .pm-quality .stars{font-size:22px;letter-spacing:5px;color:var(--secondary)}
+  .pm-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .pm-tools button{font-family:inherit;border:none;border-radius:8px;padding:10px 22px;
+    font-weight:700;cursor:pointer;font-size:15px;background:var(--primary);color:white;
+    box-shadow:0 3px 0 rgba(0,0,0,.12)}
+  .pm-tools button:hover{transform:translateY(-1px)}
+  .pm-tools button.gray{background:var(--muted)}
+  .pm-tools button.accent{background:var(--accent)}
+
+  /* AI Response */
+  .airesp{margin-top:14px;background:white;border:2px solid var(--accent);border-radius:12px;
+    overflow:hidden;display:none}
+  .airesp.show{display:block;animation:popIn .3s}
+  .airesp .head{background:var(--accent);color:white;padding:10px 18px;font-weight:bold;font-size:15px;
+    display:flex;align-items:center;gap:10px}
+  .airesp .head .dot{width:10px;height:10px;border-radius:50%;background:#A7F3D0;animation:blink 1.5s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .airesp .body{padding:18px 22px;font-size:16px;line-height:1.9;white-space:pre-wrap}
+  .airesp .body .caret{display:inline-block;width:8px;height:1.1em;background:var(--accent);
+    vertical-align:middle;margin-left:1px;animation:caret 1s steps(1) infinite}
+  @keyframes caret{50%{opacity:0}}
+  .airesp .meta{padding:10px 18px;background:#FFF3E0;font-size:13px;color:#7C5800;
+    border-top:1px solid var(--border)}
+
+  /* NG Info Checker */
+  .ngcheck{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .ngcheck-input{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .ngcheck-input input{flex:1;min-width:240px;padding:11px 16px;border:1.5px solid #CFD8DC;
+    border-radius:8px;font-family:inherit;font-size:16px;background:white}
+  .ngcheck-input input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(94,53,177,.15)}
+  .ngcheck-input button{background:var(--primary);color:white;border:none;border-radius:8px;
+    padding:11px 22px;cursor:pointer;font-family:inherit;font-weight:700;font-size:15px}
+  .ngcheck-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .ngcheck-presets span{align-self:center;color:var(--muted);font-size:14px;font-weight:bold}
+  .ngcheck-presets button{background:#F7F5FA;border:1.5px solid var(--primary);color:var(--primary);
+    padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .ngcheck-presets button:hover{background:var(--primary);color:white}
+  .ngcheck-history{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto}
+  .ng-row{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;
+    border-left:6px solid;background:white;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .ng-row.ok{border-color:var(--accent);background:#E0F2F1}
+  .ng-row.warn{border-color:var(--secondary);background:#FFF3E0}
+  .ng-row.ng{border-color:var(--warn);background:#FFEBEE}
+  .ng-row .ic{font-size:32px;flex-shrink:0}
+  .ng-row .info{flex:1}
+  .ng-row .text{font-weight:700;font-size:16px;margin-bottom:4px;font-family:'SF Mono','Menlo',monospace}
+  .ng-row .reason{font-size:14px;color:var(--muted)}
+
+  /* Lie detection game */
+  .lie{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .lie-row{margin-bottom:24px;padding-bottom:20px;border-bottom:2px dashed #CFD8DC}
+  .lie-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .lie-resp{background:#E0F2F1;border-radius:10px;padding:16px 20px;
+    border-left:5px solid var(--accent);font-size:16px;line-height:1.8;margin-bottom:12px}
+  .lie-resp .header{font-size:13px;color:#004D40;font-weight:bold;margin-bottom:6px}
+  .lie-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:680px){.lie-opts{grid-template-columns:1fr}}
+  .lie-opts button{background:white;border:2px solid #CFD8DC;color:#1A1A2E;
+    padding:14px 18px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:700;transition:all .15s}
+  .lie-opts button:hover{border-color:var(--primary);background:#F7F5FA}
+  .lie-opts button.right{background:#B2DFDB;border-color:var(--accent);color:#004D40}
+  .lie-opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .lie-row.answered .ex{display:block}
+  .lie-row .ex{display:none;margin-top:12px;padding:14px;background:#FFF3E0;
+    border-radius:8px;font-size:14px;line-height:1.8;border-left:5px solid var(--secondary)}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:18px;padding-bottom:16px;border-bottom:1px dashed #CFD8DC}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:19px;margin-bottom:12px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .qrow .opts button{background:white;border:2px solid #CFD8DC;color:#1A1A2E;
+    padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F7F5FA}
+  .qrow .opts button.right{background:#B2DFDB;border-color:var(--accent);color:#004D40}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .qrow .ex{font-size:15px;color:var(--muted);margin-top:10px;display:none;background:#F7F5FA;padding:12px;border-radius:8px;line-height:1.8}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:12px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .summary-row h3{font-size:19px}
+  .summary-row p{font-size:15px;color:var(--muted)}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  .next p{font-size:18px}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:14px 28px;border-radius:10px;
+    font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:16px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第2回</span> <b>AIを暮らしの相棒に</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#services">2<span>AI 3社比較</span><span class="ic">🤖</span></a>
+  <a href="#maker">3<span>プロンプトメーカー</span><span class="ic">✍️</span></a>
+  <a href="#ngcheck">4<span>NG情報チェッカー</span><span class="ic">🛡️</span></a>
+  <a href="#lie">5<span>AI嘘発見ゲーム</span><span class="ic">🕵️</span></a>
+  <a href="#quiz">6<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">7<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 高齢者向けパソコン教室・上級</div>
+    <h1>AIを<br>暮らしの相棒に</h1>
+    <p>手紙・俳句・調べ物 を <b>AIと一緒に</b>。 入れていい/だめな 情報も</p>
+    <div class="em">🤖✍️🌸</div>
+  </div>
+  <div class="scroll-hint">下に すすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「下調べと 整理」 が AIで サクッと</h2>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🤖</span><h3>AIを 知る</h3><p>3社の 違い</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">✍️</span><h3>プロンプト</h3><p>良い 質問の しかた</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🛡️</span><h3>安全</h3><p>NG情報を 見極める</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🕵️</span><h3>嘘 見抜き</h3><p>ハルシネーション</p></div>
+  </div>
+</section>
+
+<!-- 1. AI 3社比較 -->
+<div class="divider" id="services" data-snav-target>
+  <div class="num">1.</div>
+  <h2>AI 3社 比較</h2>
+</div>
+
+<section class="section">
+  <h2>無料で 試せる 3つ の AI</h2>
+  <p class="lead">特徴 が 違うので、 用途で 使い分け。 クリックで くわしい 情報。</p>
+
+  <div class="services">
+    <div class="svc gpt" onclick="svcInfo('gpt')">
+      <h3>💚 ChatGPT</h3>
+      <span class="badge">無料 / OpenAI</span>
+      <div class="meta"><b>強み：</b>日本語 自然・万能・情報量 豊富<br>
+      <b>こんな用途：</b>文章・アイデア・なんでも</div>
+    </div>
+    <div class="svc gemini" onclick="svcInfo('gemini')">
+      <h3>🟦 Gemini</h3>
+      <span class="badge">無料 / Google</span>
+      <div class="meta"><b>強み：</b>検索 と 連携・最新情報・Googleサービスと一体<br>
+      <b>こんな用途：</b>調べもの・今日のニュース</div>
+    </div>
+    <div class="svc claude" onclick="svcInfo('claude')">
+      <h3>🟧 Claude</h3>
+      <span class="badge">無料 / Anthropic</span>
+      <div class="meta"><b>強み：</b>長文 が 得意・丁寧な 文体・推敲 上手<br>
+      <b>こんな用途：</b>手紙・俳句・文章 仕上げ</div>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:18px">
+    <h3>💡 まず1つ 試す なら…</h3>
+    <p style="margin-top:6px"><b>ChatGPT</b>（chatgpt.com）が 一番 情報が 多く 始めやすい。<br>
+    慣れたら 別の AIも 試して 「これは Claude が 上手だな」 など 違いを 楽しもう！</p>
+  </div>
+</section>
+
+<!-- 2. プロンプトメーカー -->
+<div class="divider" id="maker" data-snav-target>
+  <div class="num">2.</div>
+  <h2>暮らしの プロンプト メーカー</h2>
+</div>
+
+<section class="section">
+  <h2>用途別に 質問文を 組み立てる</h2>
+  <p class="lead">上の <b>タブ</b> で 用途を 選び、 項目を 埋めると <b>そのまま 使える 質問文</b> が 完成。<br>
+  「AIに 聞いてみる」 ボタン で 模擬回答 も 体験！</p>
+
+  <div class="pm">
+    <div class="pm-tabs" id="pmTabs">
+      <button class="active" data-fmt="letter" onclick="pmTab('letter')">✉️ 手紙</button>
+      <button data-fmt="haiku" onclick="pmTab('haiku')">🌸 俳句</button>
+      <button data-fmt="research" onclick="pmTab('research')">🔍 調べもの</button>
+      <button data-fmt="recipe" onclick="pmTab('recipe')">🍳 レシピ</button>
+      <button data-fmt="greeting" onclick="pmTab('greeting')">🎤 挨拶文</button>
+    </div>
+
+    <div class="pm-form" id="pmForm">
+      <!-- generated -->
+    </div>
+
+    <div class="pm-quality">
+      <div class="stars" id="pmStars">⭐⭐⭐⭐⭐</div>
+      <div id="pmHint" style="margin-top:4px">完璧！</div>
+    </div>
+
+    <div class="pm-prompt" id="pmPrompt">
+      <span class="corner">📝 AIに 入れる 質問</span>
+    </div>
+
+    <div class="pm-tools">
+      <button onclick="copyPrompt()">📋 コピー</button>
+      <button class="accent" onclick="askAI()">🤖 AIに 聞いてみる（デモ）</button>
+      <button class="gray" onclick="resetPM()">↺ 初期値</button>
+    </div>
+
+    <div class="airesp" id="airesp">
+      <div class="head"><span class="dot"></span>🤖 AI（シミュレーション）の 答え</div>
+      <div class="body" id="aiBody"></div>
+      <div class="meta">⚠️ これは デモです。 本物の AIは もっと いろんな答え を 返します。 必ず 自分で 確認しよう！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. NG情報チェッカー -->
+<div class="divider" id="ngcheck" data-snav-target>
+  <div class="num">3.</div>
+  <h2>NG情報 チェッカー</h2>
+</div>
+
+<section class="section">
+  <h2>AIに 入れて 大丈夫？ 判定</h2>
+  <p class="lead">入れたい 情報を 1つずつ 入力 or プリセット選択 → ✅入れていい / ⚠️注意 / ❌NG を 判定。</p>
+
+  <div class="ngcheck">
+    <div class="ngcheck-input">
+      <input type="text" id="ngInput" placeholder="例：山田太郎 / 60代男性 / 03-1234-5678..." maxlength="60">
+      <button onclick="checkNg()">判定</button>
+    </div>
+    <div class="ngcheck-presets">
+      <span>例：</span>
+      <button onclick="presetNg('山田太郎（本名）')">本名</button>
+      <button onclick="presetNg('60代 男性')">年代</button>
+      <button onclick="presetNg('東京都新宿区1-2-3')">住所</button>
+      <button onclick="presetNg('○○市 在住')">大まかな地域</button>
+      <button onclick="presetNg('1234-5678-9012-3456')">カード番号</button>
+      <button onclick="presetNg('俳句が趣味')">趣味</button>
+      <button onclick="presetNg('xxxxx@example.com')">メアド</button>
+      <button onclick="presetNg('糖尿病で薬を飲んでいる')">健康状態</button>
+      <button onclick="presetNg('夫婦二人暮らし')">家族構成</button>
+    </div>
+    <div class="ngcheck-history" id="ngHistory"></div>
+  </div>
+</section>
+
+<!-- 4. AI 嘘発見ゲーム -->
+<div class="divider" id="lie" data-snav-target>
+  <div class="num">4.</div>
+  <h2>AI 嘘発見 ゲーム</h2>
+</div>
+
+<section class="section">
+  <h2>5問 — どれが 嘘？</h2>
+  <p class="lead">AI が 答えた 内容 が <b>本当 か 嘘 か</b>。 5問 やってみて、 嘘の パターンを 体感！</p>
+
+  <div class="lie" id="lieBox"></div>
+</section>
+
+<!-- 5. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">5.</div>
+  <h2>たしかめ クイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみましょう</h2>
+  <p class="lead">答えが わかったら 解説 が 出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. AI に <b>絶対 入れてはいけない</b> 情報は？</div>
+      <div class="opts">
+        <button data-i="0">60代</button>
+        <button data-i="1">趣味は 俳句</button>
+        <button data-i="2">マイナンバーや 口座番号</button>
+        <button data-i="3">○○市 近郊 在住</button>
+      </div>
+      <div class="ex">✅ <b>個人特定 ＋ 金銭 リスク</b> がある情報 は 絶対NG。<br>年代・趣味・大まかな地域は OK！ ぼかして 入力 が 上級の コツ。</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q2. AI が 自信満々で 間違える 現象 を 何と 言う？</div>
+      <div class="opts">
+        <button data-i="0">バグ</button>
+        <button data-i="1">ハルシネーション（幻覚）</button>
+        <button data-i="2">フリーズ</button>
+        <button data-i="3">スリープ</button>
+      </div>
+      <div class="ex">✅ <b>ハルシネーション</b>＝AIが「もっともらしい嘘」を作る現象。<br>とくに <b>数字・年号・電話番号</b> で よく出る。 公式サイトで 確認の くせを！</div>
+    </div>
+
+    <div class="qrow" data-a="3">
+      <div class="q">Q3. AI の 答え を <b>確認する</b> 一番の 方法 は？</div>
+      <div class="opts">
+        <button data-i="0">もう一度 同じ 質問</button>
+        <button data-i="1">別の AI で 試す</button>
+        <button data-i="2">家族に 聞く</button>
+        <button data-i="3">公式サイト / 専門家 で 確認</button>
+      </div>
+      <div class="ex">✅ 重要な 情報（医療・法律・税金 など）は <b>必ず 公式・専門家</b>。<br>AI は <b>「下調べ」</b> として 便利だが、 <b>「最終判断」 は 人間</b>！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>🤖 AI 3社（ChatGPT/Gemini/Claude）</h3><p>用途で 使い分け</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>✍️ プロンプトの 3原則</h3><p>具体的・長さ・雰囲気</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>📋 暮らしの 5用途</h3><p>手紙・俳句・調べもの・レシピ・挨拶</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🛡️ NG情報 を 入れない</h3><p>個人情報・金銭・健康詳細</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>🕵️ AI の 嘘を 見抜く</h3><p>公式・専門家 で 確認</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">📝 🌐</div>
+  <h2>第3回 ｜ 情報発信を 楽しむ</h2>
+  <p>ブログ / SNS で 写真・文章 を 公開！</p>
+</div>
+
+<footer>高齢者向けパソコン教室 ／ 上級 第2回｜AIを暮らしの相棒に</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* サービス */
+  const SVC = {
+    gpt: { e:'💚', t:'ChatGPT',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>提供：</b>OpenAI 社 (chatgpt.com)<br>
+        <b>料金：</b>無料プラン あり／Plus 月20ドル<br>
+        <b>強み：</b>日本語が 自然・情報量 多い・万能<br><br>
+        <b>こんな方向け：</b><br>
+        ・まず 1つ 試したい<br>
+        ・<b>何でも</b> 聞いてみたい<br>
+        ・SNS で 話題に なって 知ってる人 多い</div>`},
+    gemini: { e:'🟦', t:'Gemini',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>提供：</b>Google 社 (gemini.google.com)<br>
+        <b>料金：</b>無料／Gmail アカウントで 即使える<br>
+        <b>強み：</b>Google検索 と 連携・最新情報 反映 早い<br><br>
+        <b>こんな方向け：</b><br>
+        ・Android スマホ・Gmail 中心<br>
+        ・<b>今日のニュース・天気</b> など 最新情報<br>
+        ・Google Drive / Gmail と 連携</div>`},
+    claude: { e:'🟧', t:'Claude',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>提供：</b>Anthropic 社 (claude.ai)<br>
+        <b>料金：</b>無料プラン あり／Pro 月20ドル<br>
+        <b>強み：</b>長文 推敲が 得意・丁寧な 言葉づかい<br><br>
+        <b>こんな方向け：</b><br>
+        ・<b>手紙・俳句・文章 仕上げ</b><br>
+        ・長文（小説風 / レポート）を 書きたい<br>
+        ・落ち着いた 文体が 好き</div>`},
+  };
+  function svcInfo(k){
+    const s = SVC[k];
+    if(s) info(s.e, s.t, s.b);
+  }
+
+  /* プロンプトメーカー */
+  const PM_TEMPLATES = {
+    letter: {
+      label: '手紙の 下書き',
+      fields: [
+        { id:'who', label:'相手は？（例：お世話になった看護師）', value:'お世話になった 看護師さん' },
+        { id:'event', label:'用件（例：退院のお礼）', value:'退院の お礼' },
+        { id:'len', label:'長さ', type:'select', opts:['100文字','200文字','300文字','便箋1枚（400字程度）'], value:'200文字' },
+        { id:'tone', label:'雰囲気', type:'select', opts:['丁寧な 言葉','やさしい 言葉','親しい 言葉','短めで 端的'], value:'丁寧な 言葉' },
+      ],
+      build: (v) => `私は 60代の患者 です。
+${v.who} への <b>${v.event}</b>の 手紙を、
+<b>${v.len}・${v.tone}</b> で 書いてください。`,
+      reply: (v) => `拝啓 暖かい日が 続く 折、 いかがお過ごしでしょうか。
+
+入院中は 大変 お世話に なり、 心より お礼申し上げます。
+${v.who.replace(/さん$/,'')}様 の 細やかな お声がけ に 支えられ、無事に 退院 することが できました。
+
+季節の変わり目、 どうぞ ご自愛ください。 重ねて お礼申し上げます。
+
+敬具`
+    },
+    haiku: {
+      label: '俳句の アイデア',
+      fields: [
+        { id:'theme', label:'お題（例：桜）', value:'桜' },
+        { id:'season', label:'季節', type:'select', opts:['春','夏','秋','冬','新年'], value:'春' },
+        { id:'mood', label:'雰囲気', type:'select', opts:['静か・しみじみ','明るい・賑やか','懐かしい','希望'], value:'静か・しみじみ' },
+        { id:'count', label:'何句 作る？', type:'select', opts:['3句','5句','10句'], value:'3句' },
+      ],
+      build: (v) => `${v.season} の 季語「<b>${v.theme}</b>」を 使った 俳句を、
+<b>${v.count}</b>、<b>${v.mood}</b> な 雰囲気で 考えてください。
+俳句の 5-7-5 の 形式 で お願いします。`,
+      reply: (v) => `お題「${v.theme}」 で 3句 考えました：
+
+1. 散る${v.theme} 風の重さを 知る昼下がり
+2. ${v.theme}咲く 校庭の端の 兄妹かな
+3. 夜${v.theme}や 一人歩きの 影もまた
+
+※ あくまで 案です。 季語の 使い方・季節感は ご自身で 調整して みてください。`
+    },
+    research: {
+      label: '調べもの',
+      fields: [
+        { id:'topic', label:'何について', value:'マイナンバーカードの 受け取り方' },
+        { id:'goal', label:'何が 知りたい？', value:'手続きの 流れ' },
+        { id:'format', label:'答えの 形', type:'select', opts:['箇条書き 5項目','短い 段落','表で 比較','Q&A 形式'], value:'箇条書き 5項目' },
+      ],
+      build: (v) => `<b>${v.topic}</b> について、
+<b>${v.goal}</b> を 知りたいです。
+<b>${v.format}</b> で 教えてください。
+最後に 「公式サイトで 確認すべき 点」 も 1〜2点 教えてください。`,
+      reply: (v) => `${v.topic} の 流れは 以下の通りです：
+
+1. 申請して 約1ヶ月後 に「交付通知書」が 自宅に 届きます
+2. 通知書 / 本人確認書類 / 印鑑 を 持って 市役所へ
+3. 窓口で 暗証番号（4桁 + 6桁以上）を 設定
+4. 写真照合・本人確認 を 受ける
+5. その場で カードが 渡される
+
+【公式で 確認】
+・お住まいの市役所の 開庁時間 / 必要書類
+・予約が 必要か（混雑時 は 必要な ことが あります）`
+    },
+    recipe: {
+      label: '今日の レシピ',
+      fields: [
+        { id:'ingredients', label:'冷蔵庫の 材料', value:'キャベツ・卵・玉ねぎ' },
+        { id:'people', label:'何人前', type:'select', opts:['1人前','2人前','3人前','4人前'], value:'2人前' },
+        { id:'time', label:'時間', type:'select', opts:['10分以内','20分以内','30分以内'], value:'10分以内' },
+        { id:'genre', label:'ジャンル', type:'select', opts:['和食','洋食','中華','エスニック','問わない'], value:'問わない' },
+      ],
+      build: (v) => `冷蔵庫に <b>${v.ingredients}</b> があります。
+<b>${v.people}・${v.time}</b> で 作れる
+<b>${v.genre}</b> の 夜ご飯 レシピを 1つ 教えてください。
+塩分は 控えめで お願いします。`,
+      reply: (v) => `${v.genre} の レシピを 1つ ご紹介します：
+
+【キャベツと卵の 中華風 卵とじ】
+
+材料：
+・キャベツ 1/4個
+・卵 2個
+・玉ねぎ 1/2個
+・中華スープの素 小さじ1
+・ごま油 大さじ1
+
+作り方：
+1. キャベツを ざく切り（2分）
+2. 玉ねぎを 薄切り（1分）
+3. フライパンに ごま油 → 玉ねぎ → キャベツ → 中華スープの素（4分）
+4. 溶き卵を 回し入れ、半熟で 火を止める（2分）`
+    },
+    greeting: {
+      label: '挨拶文',
+      fields: [
+        { id:'occasion', label:'場面（例：法事の挨拶）', value:'法事の 施主挨拶' },
+        { id:'audience', label:'参列者', value:'親族・故人の友人' },
+        { id:'len', label:'長さ', type:'select', opts:['1分（300字程度）','2分（600字程度）','3分（900字程度）'], value:'1分（300字程度）' },
+      ],
+      build: (v) => `<b>${v.occasion}</b> の 挨拶文を、
+参列者（<b>${v.audience}</b>）に 向けて
+<b>${v.len}</b> で 書いてください。
+丁寧で 落ち着いた 言葉づかい でお願いします。`,
+      reply: (v) => `本日は ご多用の中、 父○○の ▲▲忌に お運びいただき、 誠に ありがとうございます。
+
+父が 亡くなりましてから、 早いもので ▲▲年が 経ちました。 皆さま方の お力添えのおかげで、 こうして 無事に 法要を 営むことが できました。
+
+ささやかでは ございますが お食事を 用意いたしましたので、 父との 思い出話など しながら ごゆっくり お過ごし いただければ 幸いです。
+
+本日は 誠に ありがとうございました。`
+    },
+  };
+  let pmCurrent = 'letter';
+  function pmTab(t){
+    pmCurrent = t;
+    document.querySelectorAll('#pmTabs button').forEach(b => b.classList.toggle('active', b.dataset.fmt === t));
+    renderPmForm();
+    refreshPrompt();
+    $('airesp').classList.remove('show');
+  }
+  function renderPmForm(){
+    const tpl = PM_TEMPLATES[pmCurrent];
+    const root = $('pmForm');
+    root.innerHTML = '';
+    tpl.fields.forEach(f => {
+      const div = document.createElement('div');
+      if(f.id === 'topic' || f.id === 'who' || f.id === 'event' || f.id === 'occasion' || f.id === 'audience' || f.id === 'goal' || f.id === 'theme' || f.id === 'ingredients') div.className = 'full';
+      let inp = '';
+      if(f.type === 'select'){
+        inp = `<select id="pm_${f.id}">${f.opts.map(o => `<option ${o===f.value?'selected':''}>${escapeHTML(o)}</option>`).join('')}</select>`;
+      } else {
+        inp = `<input type="text" id="pm_${f.id}" value="${escapeHTML(f.value)}" maxlength="60">`;
+      }
+      div.innerHTML = `<label>${escapeHTML(f.label)}</label>${inp}`;
+      root.appendChild(div);
+    });
+    [...root.querySelectorAll('input, select')].forEach(el => {
+      el.addEventListener('input', refreshPrompt);
+      el.addEventListener('change', refreshPrompt);
+    });
+  }
+  function getValues(){
+    const tpl = PM_TEMPLATES[pmCurrent];
+    const v = {};
+    tpl.fields.forEach(f => {
+      const el = $('pm_' + f.id);
+      v[f.id] = el ? el.value.trim() : f.value;
+    });
+    return v;
+  }
+  function refreshPrompt(){
+    const tpl = PM_TEMPLATES[pmCurrent];
+    const v = getValues();
+    const text = tpl.build(v).replace(/<b>/g,'').replace(/<\/b>/g,'');
+    $('pmPrompt').innerHTML = `<span class="corner">📝 AIに 入れる 質問</span>${escapeHTML(text)}`;
+
+    // quality
+    let stars = 5;
+    const hints = [];
+    Object.values(v).forEach(val => {
+      if(!val || val.length < 2){ stars--; hints.push('全部 埋めよう'); }
+    });
+    stars = Math.max(1, Math.min(5, stars));
+    $('pmStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(5-stars);
+    $('pmHint').textContent = hints.length === 0 ? '完璧！ そのまま AIに 入れられます' : 'ヒント： ' + [...new Set(hints)].join('／');
+  }
+  function copyPrompt(){
+    const tpl = PM_TEMPLATES[pmCurrent];
+    const text = tpl.build(getValues()).replace(/<b>/g,'').replace(/<\/b>/g,'');
+    navigator.clipboard.writeText(text).then(()=>showToast('📋 コピーしました'));
+  }
+  function resetPM(){
+    pmTab(pmCurrent);
+    showToast('↺ 初期値に 戻しました');
+  }
+  let typingT = null;
+  function askAI(){
+    const tpl = PM_TEMPLATES[pmCurrent];
+    const v = getValues();
+    const reply = tpl.reply(v);
+    $('airesp').classList.add('show');
+    const body = $('aiBody');
+    body.innerHTML = '';
+    clearInterval(typingT);
+    let i = 0;
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    body.appendChild(caret);
+    typingT = setInterval(()=>{
+      if(i >= reply.length){ clearInterval(typingT); caret.remove(); return; }
+      caret.before(reply[i]);
+      i++;
+    }, 18);
+  }
+  renderPmForm();
+  refreshPrompt();
+
+  /* NG情報チェッカー */
+  const NG_RULES = [
+    [/(\d{3,4}-?\d{4}-?\d{4}-?\d{4})|(クレジット|カード番号)/, 'ng', '🚫', 'クレジットカード番号は 絶対 NG！'],
+    [/(口座|銀行|預金).{0,5}番号|(\d{7}|\d{8})/, 'ng', '🚫', '口座番号 は 絶対 NG！'],
+    [/マイナンバー|個人番号/, 'ng', '🚫', 'マイナンバーは 絶対 NG！'],
+    [/パスワード|password/i, 'ng', '🚫', 'パスワードは 絶対 NG！'],
+    [/\d{2,4}-\d{2,4}-\d{4}|電話番号|0\d{9,10}/, 'ng', '🚫', '電話番号 は 絶対 NG！'],
+    [/[一-龥]{1,3}[一-龥]{1,3}(さん|さま|氏)?\s*[（(]?(本名|氏名|フルネーム)/, 'ng', '🚫', '本名・フルネーム は NG！ ぼかして'],
+    [/^[一-龥]{2,4}[一-龥]{2,4}$/, 'warn', '⚠️', '本名 の 可能性。 ニックネーム or 「私」 に'],
+    [/(東京都|大阪府|.{1,3}県).{0,5}(市|区|町|村).{0,5}\d/, 'ng', '🚫', '番地 まで 入った 住所 は NG！'],
+    [/[\w\.-]+@[\w\.-]+\.\w+/, 'ng', '🚫', 'メールアドレス は NG！ AIに 渡すと 学習される 可能性'],
+    [/(○○|XX|○|△△).{0,3}(市|町|区|村|地区)/, 'ok', '✅', '大まかな 地域名 — OK！'],
+    [/(\d{2})[代歳]/, 'ok', '✅', '年代（範囲のみ）— OK！'],
+    [/(夫婦|一人暮らし|家族|二人|三人).{0,5}(暮らし|住まい)?/, 'ok', '✅', '家族構成（範囲のみ）— OK！'],
+    [/(俳句|園芸|読書|散歩|料理|手芸|写真|川柳).{0,5}(趣味|好き)?/, 'ok', '✅', '趣味 — OK！'],
+    [/(糖尿病|高血圧|心臓病|がん|抗がん剤|認知症)/, 'warn', '⚠️', '具体的な 病名 は できれば 避ける（「持病あり」程度に）'],
+    [/(薬|処方薬|睡眠薬).{0,5}名/, 'warn', '⚠️', '薬の 具体名 は 注意。 「お薬手帳」 ベースで 薬剤師 相談を'],
+  ];
+  function checkNg(){
+    const v = $('ngInput').value.trim();
+    if(!v) return;
+    addNgRow(v);
+    $('ngInput').value = '';
+  }
+  function presetNg(text){
+    addNgRow(text);
+  }
+  function addNgRow(name){
+    let verdict = 'ok', icon = '📄', reason = 'おそらく OK — 一般的な 情報';
+    for(const [pat, v, ic, r] of NG_RULES){
+      if(pat.test(name)){ verdict = v; icon = ic; reason = r; break; }
+    }
+    const div = document.createElement('div');
+    div.className = 'ng-row ' + verdict;
+    const verdictText = verdict === 'ok' ? '✅ 入れて OK' :
+                        verdict === 'warn' ? '⚠️ 注意' :
+                        '❌ 絶対 NG';
+    div.innerHTML = `<div class="ic">${icon}</div>
+      <div class="info">
+        <div class="text">${escapeHTML(name)}</div>
+        <div class="reason">${verdictText} — ${reason}</div>
+      </div>`;
+    const hist = $('ngHistory');
+    hist.insertBefore(div, hist.firstChild);
+  }
+  $('ngInput').addEventListener('keypress', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); checkNg(); }
+  });
+
+  /* AI 嘘発見ゲーム */
+  const LIES = [
+    {
+      header:'Q1. 「徳川家康が 江戸幕府を 開いた 年」',
+      body:'徳川家康 は <b>1605年に</b> 江戸幕府を 開きました。 当時 65歳でした。',
+      ans:'lie',
+      ex:'<b>嘘です。</b> 正解は <b>1603年</b>（家康 60歳の時）。 AIは <b>年号 で よく間違える</b>。<br>歴史 や 数字は <b>必ず 検索 / 教科書 で 確認</b>！'
+    },
+    {
+      header:'Q2. 「○○市役所 の 電話番号」（仮の市）',
+      body:'△△市役所 の 代表 電話番号は <b>03-1234-5678</b> です。 平日 9時〜17時 受付です。',
+      ans:'lie',
+      ex:'<b>嘘です（架空の番号）。</b> AI が知らない or 学習時点の 古い情報の 場合、 <b>もっともらしい番号 を でっちあげる</b>！<br>電話番号・住所 は <b>絶対 公式サイトで 再確認</b>。'
+    },
+    {
+      header:'Q3. 「夏目漱石 の 代表作」',
+      body:'夏目漱石 の 代表作 は『吾輩は猫である』『坊っちゃん』『こころ』 などです。 1867年生まれ、 1916年没。',
+      ans:'real',
+      ex:'<b>本当です。</b> 有名な 文学者・歴史人物の <b>基本情報</b> は AI も 正確に 答えやすい。<br>ただし マイナーな作品 や 詳細な エピソード は ハルシネーション の可能性が 高くなる。'
+    },
+    {
+      header:'Q4. 「血圧の薬 と 飲み合わせ」',
+      body:'高血圧 の 薬「アムロジピン」 は、 <b>グレープフルーツジュース</b> と 同時に 飲むと 効果が 強く出ることが あります。',
+      ans:'real',
+      ex:'<b>本当です（知識として）。</b> 一般論として 正しい が、 <b>個人の処方薬は 必ず 薬剤師 / 医師に 確認</b>！<br>AIの 医療情報は <b>下調べ専用</b>、 最終判断は 必ず 専門家。'
+    },
+    {
+      header:'Q5. 「マイナポイント 2025年版」',
+      body:'2025年4月から 開始の 新マイナポイント事業 では、 <b>最大 30,000円分</b> の ポイントが もらえます。 申請期限は 2026年3月31日です。',
+      ans:'lie',
+      ex:'<b>嘘の可能性 大。</b> 制度・キャンペーンの <b>金額・期限</b> は AI が 勝手に作る 典型例。<br><b>必ず 総務省マイナポイント 公式サイト で 確認</b>！'
+    },
+  ];
+  const lieBox = $('lieBox');
+  LIES.forEach((q, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'lie-row';
+    row.innerHTML = `<div class="lie-resp">
+      <div class="header">${escapeHTML(q.header)}</div>
+      ${q.body}
+    </div>
+    <div class="lie-opts">
+      <button data-v="real">✅ 本当 だと思う</button>
+      <button data-v="lie">⚠️ 嘘 だと思う</button>
+    </div>
+    <div class="ex">${q.ex}</div>`;
+    row.querySelectorAll('.lie-opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const v = b.dataset.v;
+        row.classList.add('answered');
+        if(v === q.ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.lie-opts button[data-v="${q.ans}"]`).classList.add('right');
+        }
+      });
+    });
+    lieBox.appendChild(row);
+  });
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:16px;line-height:2.2">
+        <div><b>← ↑ PageUp</b> 前の章へ</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章へ</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプを 開く</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

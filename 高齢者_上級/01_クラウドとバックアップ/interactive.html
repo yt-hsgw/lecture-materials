@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高齢者・上級 第1回｜クラウドとバックアップ</title>
+<style>
+  :root{
+    --primary:#5E35B1; --secondary:#FFA726; --accent:#26A69A;
+    --warn:#D32F2F; --dark:#1A237E; --light:#F7F5FA;
+    --panel:#FFFFFF; --muted:#5C6BC0; --shadow:0 3px 10px rgba(30,30,80,.12);
+    --border:rgba(30,30,80,.1);
+    --google:#4285F4; --apple:#A2AAAD; --onedrive:#0078D4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px;}
+  body{font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+    color:#1A1A2E;background:var(--light);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:15px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.05);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.1)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:6px 16px;color:#1A1A2E;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:15px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:22px;height:22px;padding:0;border-radius:50%;
+    border:2px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;opacity:1;pointer-events:none;transform:none;color:#1A1A2E;}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.96);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:42px;height:42px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(26,35,126,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:18px;padding:32px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:70px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.9;color:#1A1A2E;}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#5E35B1 0%,#3949AB 50%,#1A237E 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:10px 26px;
+    border-radius:999px;font-weight:bold;margin-bottom:22px;backdrop-filter:blur(4px);font-size:16px}
+  .hero h1{font-size:clamp(46px,8vw,90px);line-height:1.2;margin-bottom:22px;
+    text-shadow:0 4px 16px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(20px,2.6vw,28px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,110px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:16px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:8px;font-weight:bold;font-size:15px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(34px,5vw,48px);color:var(--primary);margin-bottom:10px;font-weight:800}
+  .lead{font-size:21px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,58px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:#1A1A2E;font-size:24px;margin-bottom:10px;font-weight:700}
+  .card p{font-size:18px;line-height:1.8}
+  .card.warn{border-left:6px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:6px solid var(--accent);background:#E0F2F1}
+  .card.tip{border-left:6px solid var(--secondary);background:#FFF3E0}
+
+  /* Service comparison */
+  .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+  .svc{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    border:2px solid var(--border);cursor:pointer;transition:all .15s}
+  .svc:hover{transform:translateY(-4px);border-color:currentColor}
+  .svc.google{color:var(--google)} .svc.apple{color:var(--apple)} .svc.onedrive{color:var(--onedrive)}
+  .svc h3{font-size:22px;margin-bottom:6px}
+  .svc .badge{display:inline-block;background:#E8F5E9;color:#1B5E20;padding:4px 12px;
+    border-radius:6px;font-size:14px;font-weight:700;margin:6px 0}
+  .svc .meta{font-size:15px;color:var(--muted);line-height:1.8;margin-top:8px}
+  .svc .meta b{color:#1A1A2E}
+
+  /* Important docs checklist */
+  .doclist{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .doc-categories{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .doc-cat{background:#F7F5FA;border-radius:10px;padding:14px}
+  .doc-cat h4{color:var(--primary);font-size:17px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .doc-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:white;border-radius:6px;
+    margin-bottom:6px;cursor:pointer;transition:all .15s;border-left:4px solid transparent;font-size:14px}
+  .doc-item:hover{transform:translateX(2px)}
+  .doc-item.on{background:#E0F2F1;border-left-color:var(--accent)}
+  .doc-item .box{width:20px;height:20px;border:2px solid var(--muted);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;background:white;font-size:13px;font-weight:bold}
+  .doc-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .doc-item.on .box::before{content:'✓'}
+  .doc-summary{margin-top:14px;padding:14px 18px;background:#FFF3E0;border-radius:10px;
+    border-left:5px solid var(--secondary);font-size:15px;text-align:center;font-weight:bold;color:#7C5800}
+
+  /* Folder structure */
+  .folder{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .folder-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+  .folder-form label{display:block;font-weight:700;font-size:14px;color:var(--muted);margin-bottom:6px}
+  .folder-form input,.folder-form select{width:100%;padding:10px 14px;border:1.5px solid #CFD8DC;
+    border-radius:8px;font-family:inherit;font-size:15px;background:white;color:#1A1A2E}
+  .folder-form input:focus,.folder-form select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(94,53,177,.15)}
+  .folder-tree{background:#1A237E;color:#E8EAF6;border-radius:10px;padding:18px;
+    font-family:'SF Mono','Menlo',monospace;font-size:14px;line-height:1.9;white-space:pre;
+    overflow-x:auto;min-height:200px}
+  .folder-tree .yr{color:#FFAB91}
+  .folder-tree .imp{color:#FF8A65;font-weight:bold}
+  .folder-tee{color:#90A4AE}
+
+  /* Filename generator */
+  .fname{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .fname-form{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+  @media (max-width:680px){.fname-form{grid-template-columns:1fr 1fr}}
+  .fname-form label{display:block;font-weight:700;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .fname-form input,.fname-form select{width:100%;padding:10px;border:1.5px solid #CFD8DC;
+    border-radius:8px;font-family:'SF Mono','Menlo',monospace;font-size:14px;background:white}
+  .fname-form input:focus,.fname-form select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(94,53,177,.15)}
+  .fname-output{background:#1A237E;color:#E8EAF6;border-radius:8px;padding:16px 20px;
+    font-family:'SF Mono','Menlo',monospace;font-size:18px;text-align:center;
+    border:2px dashed var(--secondary);font-weight:bold}
+  .fname-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .fname-presets span{align-self:center;color:var(--muted);font-size:14px;font-weight:bold}
+  .fname-presets button{background:#F7F5FA;border:1.5px solid var(--primary);color:var(--primary);
+    padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;font-size:13px}
+  .fname-presets button:hover{background:var(--primary);color:white}
+
+  /* 3-2-1 strategy */
+  .strategy{background:white;border-radius:14px;padding:30px 24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px;text-align:center}
+  .strategy .title{font-size:60px;font-weight:bold;color:var(--primary);letter-spacing:8px;margin-bottom:18px}
+  .strategy-row{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin:20px 0}
+  .strategy-box{background:#F7F5FA;border:2px solid var(--primary);border-radius:12px;
+    padding:18px;min-width:160px;text-align:center;cursor:pointer;transition:all .15s}
+  .strategy-box:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+  .strategy-box.active{background:var(--primary);color:white;transform:scale(1.05)}
+  .strategy-box .ic{font-size:42px;line-height:1;display:block}
+  .strategy-box .name{font-weight:bold;font-size:16px;margin-top:6px}
+  .strategy-box .where{font-size:13px;color:var(--muted);margin-top:4px}
+  .strategy-box.active .where{color:#E8EAF6}
+  .strategy-explain{background:#E8EAF6;border-radius:10px;padding:18px;
+    font-size:15px;line-height:1.8;margin-top:14px}
+  .strategy-explain b{color:var(--primary)}
+
+  /* 2FA diagnosis */
+  .diag{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .diag-q{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #CFD8DC}
+  .diag-q:last-of-type{border-bottom:none}
+  .diag-q .q{font-weight:700;font-size:17px;margin-bottom:10px}
+  .diag-q .opts{display:flex;gap:10px;flex-wrap:wrap}
+  .diag-q .opts button{background:white;border:2px solid #CFD8DC;color:#1A1A2E;
+    padding:8px 18px;border-radius:8px;cursor:pointer;font-family:inherit;
+    font-weight:600;font-size:14px;transition:all .15s}
+  .diag-q .opts button:hover{border-color:var(--primary);background:#F7F5FA}
+  .diag-q .opts button.sel{background:var(--primary);color:white;border-color:var(--primary)}
+  .diag-result{margin-top:16px;padding:18px 22px;border-radius:10px;display:none;font-size:16px;line-height:1.8}
+  .diag-result.show{display:block;animation:popIn .3s}
+  .diag-result.safe{background:#E0F2F1;border-left:6px solid var(--accent);color:#004D40}
+  .diag-result.warn{background:#FFF3E0;border-left:6px solid var(--secondary);color:#7C5800}
+  .diag-result.danger{background:#FFEBEE;border-left:6px solid var(--warn);color:#B71C1C}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:18px;padding-bottom:16px;border-bottom:1px dashed #CFD8DC}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:19px;margin-bottom:12px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .qrow .opts button{background:white;border:2px solid #CFD8DC;color:#1A1A2E;
+    padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F7F5FA}
+  .qrow .opts button.right{background:#B2DFDB;border-color:var(--accent);color:#004D40}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .qrow .ex{font-size:15px;color:var(--muted);margin-top:10px;display:none;background:#F7F5FA;padding:12px;border-radius:8px;line-height:1.8}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:12px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .summary-row h3{font-size:19px}
+  .summary-row p{font-size:15px;color:var(--muted)}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  .next p{font-size:18px}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:14px 28px;border-radius:10px;
+    font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:16px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第1回</span> <b>クラウドとバックアップ</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#services">2<span>3社比較</span><span class="ic">☁️</span></a>
+  <a href="#docs">3<span>重要書類チェック</span><span class="ic">📄</span></a>
+  <a href="#folder">4<span>フォルダ構造</span><span class="ic">📁</span></a>
+  <a href="#fname">5<span>ファイル名生成</span><span class="ic">📝</span></a>
+  <a href="#strategy">6<span>3-2-1 戦略</span><span class="ic">🛡️</span></a>
+  <a href="#twofa">7<span>2段階認証診断</span><span class="ic">🔐</span></a>
+  <a href="#quiz">8<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">9<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 高齢者向けパソコン教室・上級</div>
+    <h1>クラウドと<br>バックアップ</h1>
+    <p>重要書類を <b>10年後の自分</b> まで 安全に 保管</p>
+    <div class="em">☁️🔐🛡️</div>
+  </div>
+  <div class="scroll-hint">下に すすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「自分の暮らしを 守る 仕組み」</h2>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">☁️</span><h3>整理</h3><p>フォルダ・ファイル名</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🛡️</span><h3>バックアップ</h3><p>3-2-1 ルール</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🔐</span><h3>2段階認証</h3><p>鍵を 2つに</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">👨‍👩‍👧</span><h3>緊急連絡先</h3><p>家族と 共有</p></div>
+  </div>
+</section>
+
+<!-- 1. 3社比較 -->
+<div class="divider" id="services" data-snav-target>
+  <div class="num">1.</div>
+  <h2>主要 3 社 比較</h2>
+</div>
+
+<section class="section">
+  <h2>「ぜんぶ 保管」 用 の クラウド</h2>
+  <p class="lead">中級では <b>写真共有</b> 中心 でしたが、 上級では <b>書類・契約書 など 全部</b> を 預けます。<br>
+  クリックで くわしい 情報。</p>
+
+  <div class="services">
+    <div class="svc google" onclick="svcInfo('google')">
+      <h3>🟦 Googleドライブ</h3>
+      <span class="badge">無料 15GB</span>
+      <div class="meta"><b>強み：</b>文書・写真 まとめて 1か所／Gmail と セット<br>
+      <b>料金：</b>100GB = 月 250円</div>
+    </div>
+    <div class="svc apple" onclick="svcInfo('apple')">
+      <h3>🍎 iCloud Drive</h3>
+      <span class="badge">無料 5GB</span>
+      <div class="meta"><b>強み：</b>iPhone との 完全 同期／書類が 自動アップロード<br>
+      <b>料金：</b>50GB = 月 130円</div>
+    </div>
+    <div class="svc onedrive" onclick="svcInfo('onedrive')">
+      <h3>🟦 OneDrive</h3>
+      <span class="badge">無料 5GB</span>
+      <div class="meta"><b>強み：</b>Word/Excel と 一体／Microsoft 365 で 1TB 一気に<br>
+      <b>料金：</b>100GB = 月 260円</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 重要書類チェック -->
+<div class="divider" id="docs" data-snav-target>
+  <div class="num">2.</div>
+  <h2>重要書類 チェックリスト</h2>
+</div>
+
+<section class="section">
+  <h2>自分が 持っている書類は どれ？</h2>
+  <p class="lead">クリックで チェック。 これを 機に、 一つずつ <b>スキャン → クラウド</b> へ！</p>
+
+  <div class="doclist">
+    <div class="doc-categories" id="docCats">
+      <!-- generated -->
+    </div>
+    <div class="doc-summary" id="docSummary">0 / 0 件 チェック</div>
+  </div>
+</section>
+
+<!-- 3. フォルダ構造 -->
+<div class="divider" id="folder" data-snav-target>
+  <div class="num">3.</div>
+  <h2>フォルダ構造 ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>暮らしに 合わせた 整理パターン</h2>
+  <p class="lead">家族構成・ライフスタイル を 選ぶと、 おすすめの フォルダ構造 が 表示されます。</p>
+
+  <div class="folder">
+    <div class="folder-form">
+      <div>
+        <label>家族構成</label>
+        <select id="fStyle" onchange="renderFolder()">
+          <option value="solo">一人暮らし</option>
+          <option value="couple" selected>夫婦 二人</option>
+          <option value="family">家族と 同居</option>
+          <option value="oya">親の 介護中</option>
+        </select>
+      </div>
+      <div>
+        <label>趣味・活動</label>
+        <select id="fHobby" onchange="renderFolder()">
+          <option value="travel">旅行・写真</option>
+          <option value="volunteer">町内会・ボランティア</option>
+          <option value="art" selected>俳句・書道・絵画</option>
+          <option value="garden">園芸・家庭菜園</option>
+        </select>
+      </div>
+      <div>
+        <label>名前（フォルダの 一番上）</label>
+        <input type="text" id="fName" value="ゆうこさんの フォルダ" maxlength="30" oninput="renderFolder()">
+      </div>
+    </div>
+    <div class="folder-tree" id="fTree"></div>
+  </div>
+</section>
+
+<!-- 4. ファイル名生成 -->
+<div class="divider" id="fname" data-snav-target>
+  <div class="num">4.</div>
+  <h2>ファイル名 ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>「日付＋内容」 で 整然と</h2>
+  <p class="lead">4つの 項目を 入力 → <b>並び替えに 強い 名前</b> が 完成。 プリセットから 試して！</p>
+
+  <div class="fname">
+    <div class="fname-form">
+      <div>
+        <label>年（YYYY）</label>
+        <input type="text" id="fnY" value="2026" maxlength="4">
+      </div>
+      <div>
+        <label>月（MM）</label>
+        <input type="text" id="fnM" value="04" maxlength="2">
+      </div>
+      <div>
+        <label>日（DD）</label>
+        <input type="text" id="fnD" value="15" maxlength="2">
+      </div>
+      <div>
+        <label>カテゴリ</label>
+        <select id="fnCat">
+          <option>町内会</option>
+          <option>健康診断</option>
+          <option>保険証券</option>
+          <option>確定申告</option>
+          <option>家電保証書</option>
+          <option>旅行</option>
+          <option>俳句</option>
+          <option>その他</option>
+        </select>
+      </div>
+      <div style="grid-column:1 / -1">
+        <label>内容（自由入力）</label>
+        <input type="text" id="fnBody" value="春のお花見_案内" maxlength="40">
+      </div>
+    </div>
+    <div class="fname-output" id="fnOut">2026-04-15_町内会_春のお花見_案内.pdf</div>
+
+    <div class="fname-presets">
+      <span>例：</span>
+      <button onclick="setFname('2026','04','15','町内会','春のお花見_案内')">町内会 案内</button>
+      <button onclick="setFname('2025','12','01','健康診断','結果_鈴木医院')">健康診断 結果</button>
+      <button onclick="setFname('2024','03','20','保険証券','医療保険_アフラック')">保険証券</button>
+      <button onclick="setFname('2026','01','10','確定申告','所得税_2025年分')">確定申告</button>
+    </div>
+
+    <div class="card tip" style="margin-top:18px">
+      <h3>💡 なぜ「YYYY-MM-DD」が ベスト？</h3>
+      <p style="margin-top:6px;font-size:16px">アルファベット順で 並べると、<b>そのまま 古い → 新しい</b> 順に なる。<br>
+      「4月15日_町内会」 だと 4月、 5月… で バラバラ。 「2026-04-15」 なら きれい！</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 3-2-1 戦略 -->
+<div class="divider" id="strategy" data-snav-target>
+  <div class="num">5.</div>
+  <h2>3-2-1 バックアップ 戦略</h2>
+</div>
+
+<section class="section">
+  <h2>プロも 使う 鉄則ルール</h2>
+  <p class="lead">各ボックスを クリックで くわしい 解説。</p>
+
+  <div class="strategy">
+    <div class="title">3 - 2 - 1</div>
+    <div class="strategy-row">
+      <div class="strategy-box" data-key="three" onclick="strategyClick('three')">
+        <span class="ic">3️⃣</span>
+        <div class="name">3つの コピー</div>
+        <div class="where">原本 + 2つ</div>
+      </div>
+      <div class="strategy-box" data-key="two" onclick="strategyClick('two')">
+        <span class="ic">2️⃣</span>
+        <div class="name">2種類の メディア</div>
+        <div class="where">PC + クラウド or USB</div>
+      </div>
+      <div class="strategy-box" data-key="one" onclick="strategyClick('one')">
+        <span class="ic">1️⃣</span>
+        <div class="name">1つは 家の外</div>
+        <div class="where">クラウド or 実家</div>
+      </div>
+    </div>
+    <div class="strategy-explain" id="strategyExplain">
+      ↑ いずれかの ボックスを クリック して みてください
+    </div>
+  </div>
+
+  <div class="card ok" style="margin-top:18px">
+    <h3>📋 高齢者向け 実装例</h3>
+    <p style="font-size:16px;margin-top:8px">
+      <b>例：「保険証券.pdf」の 3-2-1</b><br>
+      <b>1.</b> パソコンの 「重要書類」 フォルダ（原本）<br>
+      <b>2.</b> Googleドライブ に 自動同期（クラウド）<br>
+      <b>3.</b> USBメモリ に 月1回 コピー → 引き出しへ（家の外でも 外でも 別 物理メディア）
+    </p>
+  </div>
+</section>
+
+<!-- 6. 2段階認証診断 -->
+<div class="divider" id="twofa" data-snav-target>
+  <div class="num">6.</div>
+  <h2>2段階認証 セキュリティ 診断</h2>
+</div>
+
+<section class="section">
+  <h2>あなたの アカウント、 安全 度は？</h2>
+  <p class="lead">5問 に「はい / いいえ」で 答えると、 セキュリティレベルを 判定します。</p>
+
+  <div class="diag" id="diag">
+    <div class="diag-q" data-w="3">
+      <div class="q">Q1. パスワードは <b>12文字 以上</b> で 数字・記号 を 含んでいる？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div>
+    </div>
+    <div class="diag-q" data-w="3">
+      <div class="q">Q2. パスワードは <b>サービスごとに 違う</b> ものを 使っている？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div>
+    </div>
+    <div class="diag-q" data-w="4">
+      <div class="q">Q3. <b>二段階認証</b> を 設定している？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div>
+    </div>
+    <div class="diag-q" data-w="3">
+      <div class="q">Q4. <b>緊急連絡先</b>（家族の メールや 電話）を 登録している？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div>
+    </div>
+    <div class="diag-q" data-w="2">
+      <div class="q">Q5. <b>バックアップコード</b> を 印刷して 大切に 保管している？</div>
+      <div class="opts"><button data-v="1">はい</button><button data-v="0">いいえ</button></div>
+    </div>
+    <div class="diag-result" id="diagResult"></div>
+  </div>
+</section>
+
+<!-- 7. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">7.</div>
+  <h2>たしかめ クイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみましょう</h2>
+  <p class="lead">答えが わかったら 解説 が 出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="2">
+      <div class="q">Q1. ファイル名 として <b>一番 整理しやすい</b> のは？</div>
+      <div class="opts">
+        <button data-i="0">町内会_案内.pdf</button>
+        <button data-i="1">2026年4月15日 町内会.pdf</button>
+        <button data-i="2">2026-04-15_町内会_春のお花見.pdf</button>
+        <button data-i="3">IMG_1234.pdf</button>
+      </div>
+      <div class="ex">✅ <b>YYYY-MM-DD_内容</b> 形式。 アルファベット順 でも 日付順 でも 並ぶ。<br>
+      「2026年4月15日」だと 「2026年5月1日」より 後ろに 来てしまう（文字列比較 で「4」＞「1」）！</div>
+    </div>
+
+    <div class="qrow" data-a="3">
+      <div class="q">Q2. 3-2-1 ルールで <b>「1」</b> が 意味するのは？</div>
+      <div class="opts">
+        <button data-i="0">1つの ファイル</button>
+        <button data-i="1">1人で 管理</button>
+        <button data-i="2">1か月に 1回 バックアップ</button>
+        <button data-i="3">1つ は 家の外（クラウドなど）</button>
+      </div>
+      <div class="ex">✅ 3つの コピー、 2種類の メディア、 1つは <b>家の外</b>（火事や 盗難で 全滅 を 防ぐ）。<br>クラウド or 実家・貸金庫 など。</div>
+    </div>
+
+    <div class="qrow" data-a="1">
+      <div class="q">Q3. <b>2段階認証</b> を 設定する 前に <b>必ず</b> やるべきは？</div>
+      <div class="opts">
+        <button data-i="0">パソコンを 新しく する</button>
+        <button data-i="1">バックアップコード を 印刷して 保管</button>
+        <button data-i="2">家族の パスワードを 聞く</button>
+        <button data-i="3">SNS に 投稿する</button>
+      </div>
+      <div class="ex">✅ スマホを 無くしたら ログイン不可！ <b>バックアップコード</b>（紙に印刷）が ある と 復旧 可能。<br>
+      金庫 / 鍵付き 引き出し に 大切に 保管！</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>☁️ クラウドの 3社 を 把握</h3><p>Google / iCloud / OneDrive</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>📄 重要書類 の 保管リスト</h3><p>公的 / 金融 / 医療 / 暮らし</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>📁 フォルダ＋ファイル名 規則</h3><p>YYYY-MM-DD_内容.拡張子</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🛡️ 3-2-1 バックアップ 戦略</h3><p>3コピー・2メディア・1外</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>🔐 2段階認証 + 緊急連絡先</h3><p>10年後の自分への 贈り物</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🤖 ✨</div>
+  <h2>第2回 ｜ AIを 暮らしの相棒に</h2>
+  <p>手紙の下書き・俳句・調べもの を AI と！</p>
+</div>
+
+<footer>高齢者向けパソコン教室 ／ 上級 第1回｜クラウドとバックアップ</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* サービス */
+  const SVC = {
+    google: { e:'🟦', t:'Googleドライブ',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>15GB 無料／100GB＝月 250円<br>
+        <b>強み：</b>文書・写真・表 をまとめて。 Gmail / カレンダー と 連携抜群<br><br>
+        <b>こんな方 向け：</b><br>
+        ・Gメールを 使っている<br>
+        ・Android スマホ<br>
+        ・文書も 写真も 一か所に まとめたい</div>`},
+    apple: { e:'🍎', t:'iCloud Drive',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>5GB 無料／50GB＝月 130円<br>
+        <b>強み：</b>iPhone・Mac と 完全同期。 書類が 自動 アップロード<br><br>
+        <b>こんな方 向け：</b><br>
+        ・iPhone / Mac 中心<br>
+        ・<b>とにかく 自動</b> で 楽したい<br>
+        ・写真・書類を 端末ごと に 共有</div>`},
+    onedrive: { e:'🟦', t:'OneDrive',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>料金：</b>5GB 無料／100GB＝月 260円<br>
+        <b>Microsoft 365 加入なら 1TB！</b><br>
+        <b>強み：</b>Word / Excel / PowerPoint と 一体<br><br>
+        <b>こんな方 向け：</b><br>
+        ・Windows パソコン中心<br>
+        ・Office を 既に使用<br>
+        ・文書中心 で 写真は 別管理</div>`},
+  };
+  function svcInfo(k){
+    const s = SVC[k];
+    if(s) info(s.e, s.t, s.b);
+  }
+
+  /* 重要書類チェックリスト */
+  const DOC_CATS = [
+    { name:'📄 公的書類', items:['住民票 控え','年金関係 書類','健康保険証 写し','戸籍謄本 控え'] },
+    { name:'💴 金融', items:['預金口座 情報メモ','保険証券（写真）','株式・投信 明細','確定申告 書類'] },
+    { name:'🏥 医療', items:['病院 診察券（写真）','お薬手帳（写真）','健康診断 結果','紹介状'] },
+    { name:'🏠 暮らし', items:['賃貸契約書 / 権利書','家電 保証書（写真）','取扱説明書 PDF','家族の 連絡先'] },
+  ];
+  const docCats = $('docCats');
+  let totalDoc = 0, checkedDoc = 0;
+  DOC_CATS.forEach(cat => {
+    const div = document.createElement('div');
+    div.className = 'doc-cat';
+    let html = `<h4>${cat.name}</h4>`;
+    cat.items.forEach(item => {
+      html += `<div class="doc-item" data-name="${escapeHTML(item)}"><div class="box"></div><div>${escapeHTML(item)}</div></div>`;
+      totalDoc++;
+    });
+    div.innerHTML = html;
+    docCats.appendChild(div);
+  });
+  function updateDocSummary(){
+    const s = $('docSummary');
+    s.textContent = checkedDoc + ' / ' + totalDoc + ' 件 チェック';
+    if(checkedDoc >= 8){
+      s.style.color = '#1B5E20';
+      s.style.background = '#E0F2F1';
+      s.style.borderLeftColor = 'var(--accent)';
+      s.textContent = '🎉 ' + checkedDoc + ' / ' + totalDoc + ' 件 — 上級レベル！ 重要書類が 整理されています';
+    } else if(checkedDoc >= 4){
+      s.style.color = '#7C5800';
+      s.textContent = '✨ ' + checkedDoc + ' / ' + totalDoc + ' 件 — 順調！ もう少し チェックを 増やしましょう';
+    } else {
+      s.style.color = '#7C5800';
+      s.style.background = '#FFF3E0';
+      s.style.borderLeftColor = 'var(--secondary)';
+    }
+  }
+  document.querySelectorAll('.doc-item').forEach(it => {
+    it.addEventListener('click', ()=>{
+      it.classList.toggle('on');
+      checkedDoc = document.querySelectorAll('.doc-item.on').length;
+      updateDocSummary();
+    });
+  });
+  updateDocSummary();
+
+  /* フォルダ構造 */
+  const FOLDER_TEMPLATES = {
+    solo: { hobby: { travel:'旅行記録', volunteer:'町内会', art:'創作物', garden:'家庭菜園' } },
+    couple: { hobby: { travel:'旅行記録', volunteer:'町内会', art:'創作物', garden:'家庭菜園' } },
+    family: { hobby: { travel:'旅行記録', volunteer:'町内会', art:'創作物', garden:'家庭菜園' } },
+    oya: { hobby: { travel:'旅行記録', volunteer:'町内会', art:'創作物', garden:'家庭菜園' } },
+  };
+  function renderFolder(){
+    const style = $('fStyle').value;
+    const hobby = $('fHobby').value;
+    const name = $('fName').value.trim() || 'マイドライブ';
+    const yr = new Date().getFullYear();
+    const hobbyName = (FOLDER_TEMPLATES.solo.hobby[hobby] || '趣味');
+    let tree = `<span class="imp">📁 ${escapeHTML(name)}</span>\n`;
+    tree += `├── 📁 <span class="imp">1_重要書類</span> <span class="folder-tee">（自分のみ）</span>\n`;
+    tree += `│   ├── 📁 公的書類\n`;
+    tree += `│   ├── 📁 金融\n`;
+    tree += `│   └── 📁 医療\n`;
+    tree += `├── 📁 2_暮らし <span class="folder-tee">（契約・保証書）</span>\n`;
+    tree += `├── 📁 3_写真_<span class="yr">${yr}</span>\n`;
+    if(style === 'oya'){
+      tree += `├── 📁 4_親の管理 <span class="folder-tee">（家族と 共有）</span>\n`;
+      tree += `│   ├── 📁 医療・介護\n`;
+      tree += `│   └── 📁 金融・年金\n`;
+      tree += `├── 📁 5_${escapeHTML(hobbyName)}\n`;
+      tree += `└── 📁 6_家族と共有\n`;
+    } else if(style === 'family'){
+      tree += `├── 📁 4_${escapeHTML(hobbyName)}\n`;
+      tree += `├── 📁 5_家族行事 <span class="folder-tee">（家族と共有）</span>\n`;
+      tree += `└── 📁 6_その他\n`;
+    } else {
+      tree += `├── 📁 4_${escapeHTML(hobbyName)}\n`;
+      tree += `└── 📁 5_家族と共有\n`;
+    }
+    $('fTree').innerHTML = tree;
+  }
+  renderFolder();
+
+  /* ファイル名生成 */
+  const FN_FIELDS = ['fnY','fnM','fnD','fnCat','fnBody'];
+  function renderFname(){
+    const y = $('fnY').value.padStart(4,'0');
+    const m = $('fnM').value.padStart(2,'0');
+    const d = $('fnD').value.padStart(2,'0');
+    const cat = $('fnCat').value;
+    const body = $('fnBody').value.trim() || '内容';
+    $('fnOut').textContent = `${y}-${m}-${d}_${cat}_${body}.pdf`;
+  }
+  function setFname(y,m,d,cat,body){
+    $('fnY').value=y; $('fnM').value=m; $('fnD').value=d;
+    const sel = $('fnCat');
+    [...sel.options].forEach((o,i)=>{ if(o.value === cat) sel.selectedIndex = i; });
+    $('fnBody').value=body;
+    renderFname();
+    showToast('📝 サンプル を 読み込みました');
+  }
+  FN_FIELDS.forEach(id => $(id).addEventListener('input', renderFname));
+  FN_FIELDS.forEach(id => $(id).addEventListener('change', renderFname));
+  renderFname();
+
+  /* 3-2-1 戦略 */
+  const STRATEGY = {
+    three: { color:'#5E35B1',
+      txt:`<b>3つの コピー</b><br>
+      <b>例：</b><br>
+      1. パソコンの 「保険証券.pdf」（原本）<br>
+      2. Googleドライブ に 同期版<br>
+      3. USBメモリ に コピー<br><br>
+      → どれか 1つが 壊れても、 残り 2つで <b>復元</b> 可能！` },
+    two: { color:'#26A69A',
+      txt:`<b>2種類の メディア</b><br>
+      <b>例：</b>パソコン（内蔵 SSD）＋ クラウド（インターネット）<br>
+      <b>NG例：</b>パソコン＋ 同じパソコンの 別フォルダ（同じ メディア）<br><br>
+      → 種類が 違うと、 同時に 壊れる 確率が <b>ぐっと 下がる</b>！` },
+    one: { color:'#FFA726',
+      txt:`<b>1つは 家の外</b><br>
+      <b>例：</b>クラウド（Google ドライブなど）／ 実家 ／ 貸金庫<br>
+      <b>なぜ？</b>火事・地震・盗難 で <b>家の中の もの 全滅</b> でも、 家の外 なら 残る！<br><br>
+      → 高齢者向け 一番 簡単 ＝ <b>クラウド</b>！` },
+  };
+  function strategyClick(k){
+    document.querySelectorAll('.strategy-box').forEach(b => b.classList.toggle('active', b.dataset.key === k));
+    const s = STRATEGY[k];
+    if(s) $('strategyExplain').innerHTML = s.txt;
+  }
+
+  /* 2段階認証 診断 */
+  function updateDiag(){
+    const rows = [...document.querySelectorAll('.diag-q')];
+    let total = 0, max = 0, answered = 0;
+    rows.forEach(row => {
+      const w = parseInt(row.dataset.w, 10);
+      max += w;
+      const sel = row.querySelector('.opts button.sel');
+      if(sel){
+        answered++;
+        total += parseInt(sel.dataset.v, 10) * w;
+      }
+    });
+    if(answered < rows.length){
+      $('diagResult').classList.remove('show');
+      return;
+    }
+    const ratio = total / max;
+    const r = $('diagResult');
+    r.classList.add('show');
+    r.classList.remove('safe','warn','danger');
+    if(ratio >= 0.85){
+      r.classList.add('safe');
+      r.innerHTML = `🎉 <b>セキュリティ レベル：高（${total}/${max}点）</b><br>
+        申し分のない 設定です！ このまま 続けてください。<br>
+        年に 1回 パスワードの 更新と、 緊急連絡先 が 古くなって いないか 確認を。`;
+    } else if(ratio >= 0.55){
+      r.classList.add('warn');
+      r.innerHTML = `⚠️ <b>セキュリティ レベル：中（${total}/${max}点）</b><br>
+        基本は できていますが、 <b>2段階認証</b> の 設定 or <b>バックアップコード</b> の保管が 必要。<br>
+        今日 1つ ずつ 設定して いきましょう！`;
+    } else {
+      r.classList.add('danger');
+      r.innerHTML = `⚠️ <b>セキュリティ レベル：要改善（${total}/${max}点）</b><br>
+        パスワード が 弱い or 2段階認証 なし。 <b>今日 が 設定の チャンス</b>！<br>
+        まず：① パスワード強化 → ② 2段階認証 → ③ 緊急連絡先 → ④ バックアップコード保管<br>
+        の 順番で OK！`;
+    }
+  }
+  document.querySelectorAll('.diag-q').forEach(row => {
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', ()=>{
+        row.querySelectorAll('.opts button').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+        updateDiag();
+      });
+    });
+  });
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ / ショートカット */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:16px;line-height:2.2">
+        <div><b>← ↑ PageUp</b> 前の章へ</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章へ</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプを 開く</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高齢者・上級 第3回｜情報発信を楽しむ</title>
+<style>
+  :root{
+    --primary:#5E35B1; --secondary:#FFA726; --accent:#26A69A;
+    --warn:#D32F2F; --dark:#1A237E; --light:#F7F5FA;
+    --panel:#FFFFFF; --muted:#5C6BC0; --shadow:0 3px 10px rgba(30,30,80,.12);
+    --border:rgba(30,30,80,.1);
+    --hatena:#00A4DE; --note:#41C9B4; --facebook:#1877F2; --instagram:#E4405F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px;}
+  body{font-family:'Hiragino Sans','Yu Gothic','Meiryo',sans-serif;
+    color:#1A1A2E;background:var(--light);line-height:1.8;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:6px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+    z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:15px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{width:46px;height:46px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:2px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.12);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px) scale(1.05);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.1)}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 12px);top:50%;
+    transform:translateY(-50%) translateX(6px);
+    background:white;border:2px solid var(--primary);border-radius:999px;
+    padding:6px 16px;color:#1A1A2E;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:15px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-7px;right:-7px;left:auto;
+    background:var(--secondary);width:22px;height:22px;padding:0;border-radius:50%;
+    border:2px solid white;display:flex;align-items:center;justify-content:center;
+    font-size:12px;line-height:1;opacity:1;pointer-events:none;transform:none;color:#1A1A2E;}
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;
+    background:rgba(255,255,255,.96);border:2px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:42px;height:42px;border-radius:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;box-shadow:var(--shadow);}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(26,35,126,.65);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:18px;padding:32px;max-width:580px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:4px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-14px;right:-14px;width:42px;height:42px;
+    background:var(--warn);color:white;border:4px solid white;border-radius:50%;
+    font-size:20px;cursor:pointer;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:70px;text-align:center;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.9;color:#1A1A2E;}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:20px;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#5E35B1 0%,#7E57C2 50%,#FFA726 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.2);padding:10px 26px;
+    border-radius:999px;font-weight:bold;margin-bottom:22px;backdrop-filter:blur(4px);font-size:16px}
+  .hero h1{font-size:clamp(46px,8vw,90px);line-height:1.2;margin-bottom:22px;
+    text-shadow:0 4px 16px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(20px,2.6vw,28px);opacity:.96}
+  .hero .em{font-size:clamp(64px,10vw,110px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:16px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-8px)}}
+
+  .section{padding:80px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:6px 18px;border-radius:8px;font-weight:bold;font-size:15px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(34px,5vw,48px);color:var(--primary);margin-bottom:10px;font-weight:800}
+  .lead{font-size:21px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+  .divider{background:var(--dark);color:white;text-align:center;padding:64px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:22px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,58px);margin-top:8px}
+
+  .grid{display:grid;gap:18px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .card{background:var(--panel);border-radius:14px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:#1A1A2E;font-size:24px;margin-bottom:10px;font-weight:700}
+  .card p{font-size:18px;line-height:1.8}
+  .card.warn{border-left:6px solid var(--warn);background:#FFEBEE}
+  .card.ok{border-left:6px solid var(--accent);background:#E0F2F1}
+  .card.tip{border-left:6px solid var(--secondary);background:#FFF3E0}
+
+  /* Service comparison */
+  .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}
+  .svc{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);
+    border:2px solid var(--border);cursor:pointer;transition:all .15s;border-top-width:6px}
+  .svc:hover{transform:translateY(-4px);border-color:currentColor}
+  .svc.hatena{color:var(--hatena);border-top-color:var(--hatena)}
+  .svc.note{color:var(--note);border-top-color:var(--note)}
+  .svc.facebook{color:var(--facebook);border-top-color:var(--facebook)}
+  .svc.instagram{color:var(--instagram);border-top-color:var(--instagram)}
+  .svc h3{font-size:20px;margin-bottom:6px}
+  .svc .badge{display:inline-block;background:#E0F2F1;color:#004D40;padding:4px 12px;
+    border-radius:6px;font-size:13px;font-weight:700;margin:6px 0}
+  .svc .meta{font-size:14px;color:var(--muted);line-height:1.7;margin-top:6px}
+  .svc .meta b{color:#1A1A2E}
+
+  /* Style diagnosis */
+  .diag{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .diag-q{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #CFD8DC}
+  .diag-q:last-of-type{border-bottom:none}
+  .diag-q .q{font-weight:700;font-size:17px;margin-bottom:10px}
+  .diag-q .opts{display:flex;gap:10px;flex-wrap:wrap}
+  .diag-q .opts button{background:white;border:2px solid #CFD8DC;color:#1A1A2E;
+    padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;
+    font-weight:600;font-size:14px;transition:all .15s}
+  .diag-q .opts button:hover{border-color:var(--primary);background:#F7F5FA}
+  .diag-q .opts button.sel{background:var(--primary);color:white;border-color:var(--primary)}
+  .diag-result{margin-top:18px;padding:20px 24px;border-radius:10px;display:none;
+    background:#E0F2F1;border-left:6px solid var(--accent);font-size:16px;line-height:1.8}
+  .diag-result.show{display:block;animation:popIn .3s}
+  .diag-result h4{color:var(--accent);font-size:20px;margin-bottom:8px}
+  .diag-result .scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:12px}
+  .diag-result .score{background:white;padding:8px;border-radius:6px;text-align:center;font-size:13px;border:1px solid var(--border)}
+  .diag-result .score b{display:block;font-size:20px;color:var(--primary);font-family:'SF Mono','Menlo',monospace}
+  .diag-result .score.best{background:#26A69A;color:white}
+  .diag-result .score.best b{color:white}
+  .diag-reset{background:var(--muted);color:white;border:none;border-radius:6px;
+    padding:6px 14px;cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;margin-top:14px}
+
+  /* Scope simulator */
+  .scope{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .scope-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
+  .scope-tab{background:white;border:2px solid var(--border);border-radius:10px;
+    padding:14px;cursor:pointer;text-align:center;transition:all .15s}
+  .scope-tab:hover{transform:translateY(-2px)}
+  .scope-tab.active{border-color:currentColor;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+  .scope-tab.private{color:var(--warn)}
+  .scope-tab.friends{color:var(--accent)}
+  .scope-tab.link{color:#B8860B}
+  .scope-tab.public{color:var(--primary)}
+  .scope-tab .ic{font-size:36px;display:block;margin-bottom:4px}
+  .scope-tab .name{font-weight:bold;font-size:15px}
+
+  .scope-stage{background:#F7F5FA;border-radius:12px;padding:24px;
+    border:2px dashed var(--border)}
+  .scope-post{background:white;border-radius:10px;padding:14px 18px;text-align:center;
+    box-shadow:var(--shadow);max-width:320px;margin:0 auto 18px}
+  .scope-post .img{font-size:50px;line-height:1}
+  .scope-post .text{font-size:14px;color:var(--muted);margin-top:4px}
+  .scope-audience{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;max-width:680px;margin:0 auto}
+  .scope-person{background:white;border:2px solid var(--border);border-radius:10px;
+    padding:10px;text-align:center;transition:all .25s}
+  .scope-person.see{border-color:var(--accent);background:#E0F2F1}
+  .scope-person.hide{opacity:.3;text-decoration:line-through}
+  .scope-person .face{font-size:32px;line-height:1}
+  .scope-person .who{font-size:12px;font-weight:bold;margin-top:3px}
+  .scope-explain{margin-top:14px;padding:14px 18px;border-radius:10px;font-size:15px;line-height:1.8}
+  .scope-explain.private{background:#FFEBEE;border-left:6px solid var(--warn)}
+  .scope-explain.friends{background:#E0F2F1;border-left:6px solid var(--accent)}
+  .scope-explain.link{background:#FFF3E0;border-left:6px solid var(--secondary)}
+  .scope-explain.public{background:#F7F5FA;border-left:6px solid var(--primary)}
+
+  /* Photo checker */
+  .photochk{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .photochk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .photochk-col{background:#F7F5FA;border-radius:10px;padding:14px}
+  .photochk-col h4{color:var(--primary);font-size:17px;margin-bottom:10px}
+  .photo-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border-radius:6px;
+    margin-bottom:6px;cursor:pointer;transition:all .15s;border-left:4px solid transparent;font-size:14px}
+  .photo-item:hover{transform:translateX(2px)}
+  .photo-item.on{background:#E0F2F1;border-left-color:var(--accent)}
+  .photo-item .box{width:20px;height:20px;border:2px solid var(--muted);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;background:white;font-size:13px;font-weight:bold}
+  .photo-item.on .box{background:var(--accent);border-color:var(--accent)}
+  .photo-item.on .box::before{content:'✓'}
+  .photochk-result{margin-top:14px;padding:16px 20px;border-radius:10px;text-align:center;font-size:16px;font-weight:bold}
+  .photochk-result.safe{background:#E0F2F1;color:#004D40;border-left:6px solid var(--accent)}
+  .photochk-result.warn{background:#FFF3E0;color:#7C5800;border-left:6px solid var(--secondary)}
+  .photochk-result.danger{background:#FFEBEE;color:#B71C1C;border-left:6px solid var(--warn)}
+
+  /* Comment reply */
+  .reply{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .reply-cases{display:grid;gap:14px}
+  .reply-case{background:#F7F5FA;border-radius:10px;padding:16px 20px}
+  .reply-case .header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .reply-case .header .type{padding:4px 12px;border-radius:6px;font-size:13px;font-weight:700;color:white}
+  .reply-case .header .type.good{background:var(--accent)}
+  .reply-case .header .type.question{background:var(--primary)}
+  .reply-case .header .type.criticism{background:var(--warn)}
+  .reply-case .header .type.spam{background:var(--muted)}
+  .reply-case .comment{background:white;border-radius:8px;padding:10px 14px;font-size:15px;line-height:1.7;margin-bottom:10px;
+    border-left:4px solid var(--muted)}
+  .reply-case .options{display:grid;gap:8px}
+  .reply-case .opt-row{background:white;border-radius:8px;padding:10px 14px;border:2px solid transparent;cursor:pointer;transition:all .15s}
+  .reply-case .opt-row:hover{border-color:var(--primary)}
+  .reply-case .opt-row.show-result{cursor:default}
+  .reply-case .opt-row.show-result.ok{border-color:var(--accent);background:#E0F2F1}
+  .reply-case .opt-row.show-result.ng{border-color:var(--warn);background:#FFEBEE}
+  .reply-case .opt-row .verdict{font-size:13px;font-weight:bold;margin-top:6px;display:none}
+  .reply-case .opt-row.show-result .verdict{display:block}
+  .reply-case .opt-row.show-result.ok .verdict{color:#004D40}
+  .reply-case .opt-row.show-result.ng .verdict{color:#B71C1C}
+
+  /* Quiz */
+  .quiz{background:white;border-radius:14px;padding:24px;box-shadow:var(--shadow);
+    border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:18px;padding-bottom:16px;border-bottom:1px dashed #CFD8DC}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:19px;margin-bottom:12px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .qrow .opts button{background:white;border:2px solid #CFD8DC;color:#1A1A2E;
+    padding:10px 18px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:16px;
+    font-weight:600;transition:all .15s}
+  .qrow .opts button:hover{border-color:var(--primary);background:#F7F5FA}
+  .qrow .opts button.right{background:#B2DFDB;border-color:var(--accent);color:#004D40}
+  .qrow .opts button.wrong{background:#FFCDD2;border-color:var(--warn);color:#B71C1C}
+  .qrow .ex{font-size:15px;color:var(--muted);margin-top:10px;display:none;background:#F7F5FA;padding:12px;border-radius:8px;line-height:1.8}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:12px;margin-top:24px}
+  .summary-row{background:white;border-radius:12px;padding:20px;
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  .summary-row .num{flex-shrink:0;width:48px;height:48px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:bold;}
+  .summary-row h3{font-size:19px}
+  .summary-row p{font-size:15px;color:var(--muted)}
+  .next{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:54px 24px;border-radius:14px;margin:32px 24px;}
+  .next .em{font-size:84px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:14px 0}
+  .next p{font-size:18px}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:14px 28px;border-radius:10px;
+    font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:all .25s;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:16px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第3回</span> <b>情報発信を楽しむ</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🎯</span></a>
+  <a href="#services">2<span>4サービス比較</span><span class="ic">📱</span></a>
+  <a href="#style">3<span>発信スタイル診断</span><span class="ic">🎨</span></a>
+  <a href="#scope">4<span>公開範囲シミュ</span><span class="ic">🔒</span></a>
+  <a href="#photo">5<span>写り込みチェック</span><span class="ic">📸</span></a>
+  <a href="#reply">6<span>コメント返し方</span><span class="ic">💬</span></a>
+  <a href="#quiz">7<span>クイズ</span><span class="ic">❓</span></a>
+  <a href="#wrap">8<span>まとめ</span><span class="ic">📝</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 高齢者向けパソコン教室・上級</div>
+    <h1>情報発信を<br>楽しむ</h1>
+    <p>ブログ / SNS で <b>自分の暮らし</b> を 発信。 安全に、 楽しく</p>
+    <div class="em">📝🌐✨</div>
+  </div>
+  <div class="scroll-hint">下に すすむ ↓</div>
+</header>
+
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>「自分の ペース」 で 発信</h2>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📱</span><h3>サービス</h3><p>4社を 知る</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🎨</span><h3>診断</h3><p>自分に合うもの</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">🔒</span><h3>公開範囲</h3><p>4段階</p></div>
+    <div class="card" style="text-align:center"><span style="font-size:52px;display:block">📸</span><h3>写真チェック</h3><p>個人情報 注意</p></div>
+  </div>
+</section>
+
+<!-- 1. 4サービス比較 -->
+<div class="divider" id="services" data-snav-target>
+  <div class="num">1.</div>
+  <h2>4サービス 比較</h2>
+</div>
+
+<section class="section">
+  <h2>主要 4社（無料 で 始められる）</h2>
+  <p class="lead">それぞれ 特徴 が 違うので、 <b>何を 発信したいか</b> で 選ぶ。 クリックで くわしい 情報。</p>
+
+  <div class="services">
+    <div class="svc hatena" onclick="svcInfo('hatena')">
+      <h3>📕 はてなブログ</h3>
+      <span class="badge">古参・コミュニティ強い</span>
+      <div class="meta"><b>強み：</b>文章 中心・読者 と 交流<br>
+      <b>向き：</b>日記・趣味の 記録</div>
+    </div>
+    <div class="svc note" onclick="svcInfo('note')">
+      <h3>📒 note</h3>
+      <span class="badge">きれい・クリエイター 多い</span>
+      <div class="meta"><b>強み：</b>美しいデザイン・有料記事 可能<br>
+      <b>向き：</b>エッセイ・俳句 解説</div>
+    </div>
+    <div class="svc facebook" onclick="svcInfo('facebook')">
+      <h3>📘 Facebook</h3>
+      <span class="badge">実名・中高年 人気</span>
+      <div class="meta"><b>強み：</b>同級生・知人と つながり<br>
+      <b>向き：</b>近況報告・同窓会</div>
+    </div>
+    <div class="svc instagram" onclick="svcInfo('instagram')">
+      <h3>📷 Instagram</h3>
+      <span class="badge">写真・若い人 多い</span>
+      <div class="meta"><b>強み：</b>写真が 主役・ハッシュタグ<br>
+      <b>向き：</b>料理・旅行・園芸</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 発信スタイル診断 -->
+<div class="divider" id="style" data-snav-target>
+  <div class="num">2.</div>
+  <h2>発信スタイル 診断</h2>
+</div>
+
+<section class="section">
+  <h2>5問で あなたに 向く サービス が わかります</h2>
+  <p class="lead">直感で 答えて OK！ 5問 終わると 4社の <b>マッチ度</b> が 表示されます。</p>
+
+  <div class="diag" id="diag">
+    <div class="diag-q" data-q="0">
+      <div class="q">Q1. 発信したい のは どちら？</div>
+      <div class="opts">
+        <button data-tag="hatena,note">📝 文章（日記・エッセイ）</button>
+        <button data-tag="instagram,facebook">📸 写真・絵</button>
+      </div>
+    </div>
+    <div class="diag-q" data-q="1">
+      <div class="q">Q2. 反応 は どの くらい 欲しい？</div>
+      <div class="opts">
+        <button data-tag="hatena,note">📔 じっくり 読んで ほしい</button>
+        <button data-tag="instagram,facebook">👍 「いいね」 で 軽く 反応</button>
+      </div>
+    </div>
+    <div class="diag-q" data-q="2">
+      <div class="q">Q3. つながり たい 相手は？</div>
+      <div class="opts">
+        <button data-tag="facebook">👥 知人・同級生（実名）</button>
+        <button data-tag="hatena,note,instagram">🌍 同じ 趣味の人（匿名 OK）</button>
+      </div>
+    </div>
+    <div class="diag-q" data-q="3">
+      <div class="q">Q4. 1記事 の 長さ の イメージ</div>
+      <div class="opts">
+        <button data-tag="note,hatena">📜 500〜2000字（じっくり）</button>
+        <button data-tag="facebook,instagram">📝 100字 ＋ 写真</button>
+      </div>
+    </div>
+    <div class="diag-q" data-q="4">
+      <div class="q">Q5. デザイン の 好み</div>
+      <div class="opts">
+        <button data-tag="note,instagram">🎨 きれいで シンプル</button>
+        <button data-tag="hatena,facebook">📚 機能 重視・カスタマイズ</button>
+      </div>
+    </div>
+    <div class="diag-result" id="diagResult"></div>
+    <button class="diag-reset" onclick="diagReset()">↺ もう一度 やる</button>
+  </div>
+</section>
+
+<!-- 3. 公開範囲シミュ -->
+<div class="divider" id="scope" data-snav-target>
+  <div class="num">3.</div>
+  <h2>公開範囲 シミュレータ</h2>
+</div>
+
+<section class="section">
+  <h2>4段階 — 誰が 見える？</h2>
+  <p class="lead">同じ 投稿でも 公開範囲を 変えると 見える人 が 大きく 変わる。 4ボタンで 体感！</p>
+
+  <div class="scope">
+    <div class="scope-tabs">
+      <div class="scope-tab private active" data-scope="private" onclick="setScope('private')">
+        <span class="ic">🔒</span>
+        <div class="name">非公開</div>
+      </div>
+      <div class="scope-tab friends" data-scope="friends" onclick="setScope('friends')">
+        <span class="ic">👥</span>
+        <div class="name">友だち のみ</div>
+      </div>
+      <div class="scope-tab link" data-scope="link" onclick="setScope('link')">
+        <span class="ic">🔗</span>
+        <div class="name">限定公開（リンク）</div>
+      </div>
+      <div class="scope-tab public" data-scope="public" onclick="setScope('public')">
+        <span class="ic">🌍</span>
+        <div class="name">公開（全体）</div>
+      </div>
+    </div>
+
+    <div class="scope-stage">
+      <div class="scope-post">
+        <div class="img">📷🌸</div>
+        <div class="text">「庭の桜が 満開！」 という 投稿</div>
+      </div>
+      <div class="scope-audience">
+        <div class="scope-person" data-who="me"><div class="face">😊</div><div class="who">自分</div></div>
+        <div class="scope-person" data-who="son"><div class="face">👨</div><div class="who">息子<br>（友だち）</div></div>
+        <div class="scope-person" data-who="wife"><div class="face">👵</div><div class="who">奥様<br>（友だち）</div></div>
+        <div class="scope-person" data-who="friend"><div class="face">👴</div><div class="who">同級生<br>（友だち）</div></div>
+        <div class="scope-person" data-who="hobby"><div class="face">🧑</div><div class="who">趣味仲間<br>（リンク）</div></div>
+        <div class="scope-person" data-who="stranger"><div class="face">👤</div><div class="who">知らない人<br>（検索）</div></div>
+      </div>
+    </div>
+
+    <div class="scope-explain" id="scopeExplain"></div>
+  </div>
+</section>
+
+<!-- 4. 写真写り込みチェック -->
+<div class="divider" id="photo" data-snav-target>
+  <div class="num">4.</div>
+  <h2>写真 写り込み チェッカー</h2>
+</div>
+
+<section class="section">
+  <h2>投稿 前 に 1分 確認</h2>
+  <p class="lead">11項目を 確認して 写真の 安全度 を 判定！ チェックを 入れるほど 安全です。</p>
+
+  <div class="photochk">
+    <div class="photochk-grid" id="photoChkGrid">
+      <div class="photochk-col">
+        <h4>🚫 写ってない？（必ず 確認）</h4>
+        <div class="photo-item" data-w="3"><div class="box"></div><div>家族 以外の <b>顔</b></div></div>
+        <div class="photo-item" data-w="3"><div class="box"></div><div>子・孫の <b>名札・制服</b></div></div>
+        <div class="photo-item" data-w="3"><div class="box"></div><div><b>表札・郵便受け</b></div></div>
+        <div class="photo-item" data-w="3"><div class="box"></div><div><b>住所が わかる 看板</b></div></div>
+        <div class="photo-item" data-w="2"><div class="box"></div><div><b>車の ナンバープレート</b></div></div>
+        <div class="photo-item" data-w="2"><div class="box"></div><div><b>マンション 名 / 部屋番号</b></div></div>
+      </div>
+      <div class="photochk-col">
+        <h4>📱 設定・編集（事前に）</h4>
+        <div class="photo-item" data-w="2"><div class="box"></div><div><b>位置情報</b> を 削除した</div></div>
+        <div class="photo-item" data-w="2"><div class="box"></div><div>必要な所 を <b>ぼかし</b> 加工した</div></div>
+        <div class="photo-item" data-w="1"><div class="box"></div><div>背景に <b>カレンダー / 予定</b> ない</div></div>
+        <div class="photo-item" data-w="1"><div class="box"></div><div>背景に <b>領収書 / 書類</b> ない</div></div>
+        <div class="photo-item" data-w="1"><div class="box"></div><div>家族 全員に <b>投稿の 許可</b> を もらった</div></div>
+      </div>
+    </div>
+    <div class="photochk-result" id="photoChkResult">クリックで チェック → 判定が 表示されます</div>
+  </div>
+</section>
+
+<!-- 5. コメント返し方 -->
+<div class="divider" id="reply" data-snav-target>
+  <div class="num">5.</div>
+  <h2>コメント 返し方 ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <h2>4タイプの コメント に どう 返す？</h2>
+  <p class="lead">それぞれ <b>良い返し / NG返し</b> の どちらか クリックで 判定。</p>
+
+  <div class="reply">
+    <div class="reply-cases" id="replyCases"></div>
+  </div>
+</section>
+
+<!-- 6. クイズ -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">6.</div>
+  <h2>たしかめ クイズ</h2>
+</div>
+
+<section class="section">
+  <h2>3問 やってみましょう</h2>
+  <p class="lead">答えが わかったら 解説 が 出ます。</p>
+  <div class="quiz" id="quizBox">
+    <div class="qrow" data-a="1">
+      <div class="q">Q1. 慎重派 が <b>最初に</b> 選ぶ 公開範囲 は？</div>
+      <div class="opts">
+        <button data-i="0">公開（全体）</button>
+        <button data-i="1">非公開 → 友だちのみ → 限定公開</button>
+        <button data-i="2">いきなり 全員 公開</button>
+        <button data-i="3">設定 を 確認しない</button>
+      </div>
+      <div class="ex">✅ <b>「迷ったら 狭く」</b> から 始める。 慣れたら 段階的に 広げる。<br>削除より、 <b>そもそも 限定 で 投稿</b> の方が 安心！</div>
+    </div>
+
+    <div class="qrow" data-a="2">
+      <div class="q">Q2. 写真投稿 で <b>絶対に</b> 注意 すべき は？</div>
+      <div class="opts">
+        <button data-i="0">いいね が 少ないこと</button>
+        <button data-i="1">投稿の 時刻</button>
+        <button data-i="2">家族以外の 顔／名札／住所の写り込み</button>
+        <button data-i="3">写真の 枚数</button>
+      </div>
+      <div class="ex">✅ <b>個人情報の 写り込み</b> は 絶対 注意！ 写真 1枚で 住所が バレることも。<br>位置情報 も 自動で 添付 されるので、 設定から OFF にしておく！</div>
+    </div>
+
+    <div class="qrow" data-a="0">
+      <div class="q">Q3. 知らない人 から <b>批判コメント</b>。 一番 大事な 心構え は？</div>
+      <div class="opts">
+        <button data-i="0">24時間 待って 冷静に、ブロック も OK</button>
+        <button data-i="1">すぐに 感情的に 反論</button>
+        <button data-i="2">相手の 個人情報を 探す</button>
+        <button data-i="3">同じ 言葉で 言い返す</button>
+      </div>
+      <div class="ex">✅ ネットでは <b>「すぐ 反応しない」</b> が 鉄則。 24時間 待つと 落ち着く。<br>無視・ブロック・削除 も 立派な 対処法！ 警察相談ダイヤル <b>#9110</b> も 覚えておく。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>今日 できたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📱 4サービス（はてな/note/Facebook/Instagram）</h3><p>用途で 使い分け</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>🎨 自分に 向く サービス を 診断</h3><p>5問の 結果から 選ぶ</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🔒 公開範囲 4段階</h3><p>「迷ったら 狭く」</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>📸 写真 11項目チェック</h3><p>個人情報 写り込み 防止</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>💬 コメント への 上手な 返し方</h3><p>批判は 24時間 待つ</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🏛️ 📱</div>
+  <h2>第4回 ｜ 行政・金融 の 電子化</h2>
+  <p>マイナポータル / ねんきんネット / e-Tax</p>
+</div>
+
+<footer>高齢者向けパソコン教室 ／ 上級 第3回｜情報発信を楽しむ</footer>
+
+<script>
+  /* 共通 */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  function $(id){ return document.getElementById(id); }
+  const toast = $('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+  function escapeHTML(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  /* サービス */
+  const SVC = {
+    hatena: { e:'📕', t:'はてなブログ',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>運営：</b>株式会社はてな（日本）<br>
+        <b>料金：</b>無料／Pro 月 600円〜<br>
+        <b>強み：</b>古参の ブログサービス／読者と コミュニティ 形成しやすい<br><br>
+        <b>こんな方向け：</b><br>
+        ・日記・趣味の 記録 を じっくり書く<br>
+        ・同じ趣味の人と 交流したい<br>
+        ・カスタマイズ したい</div>`},
+    note: { e:'📒', t:'note',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>運営：</b>note株式会社（日本）<br>
+        <b>料金：</b>無料／プレミアム 月 500円<br>
+        <b>強み：</b>美しい デザイン／文章・写真・音声 が きれいに 表示<br><br>
+        <b>こんな方向け：</b><br>
+        ・<b>エッセイ・俳句解説</b><br>
+        ・将来 有料記事 も 検討<br>
+        ・SNS では 読まれない 長文 を 書きたい</div>`},
+    facebook: { e:'📘', t:'Facebook',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>運営：</b>Meta社（米国）<br>
+        <b>料金：</b>無料<br>
+        <b>強み：</b>実名 文化／中高年に 人気／同級生・知人 と つながりやすい<br><br>
+        <b>こんな方向け：</b><br>
+        ・<b>同窓会・親戚</b> と つながりたい<br>
+        ・近況報告 中心<br>
+        ・お祝いごと・記念日 を 共有</div>`},
+    instagram: { e:'📷', t:'Instagram',
+      b:`<div style="font-size:16px;line-height:1.9">
+        <b>運営：</b>Meta社（米国）<br>
+        <b>料金：</b>無料<br>
+        <b>強み：</b>写真・動画 が 主役／ハッシュタグ（#旅行 #園芸 など）で 発見<br><br>
+        <b>こんな方向け：</b><br>
+        ・<b>写真</b> を 主役に 発信したい<br>
+        ・料理・旅行・園芸 が 趣味<br>
+        ・若い世代とも つながりたい</div>`},
+  };
+  function svcInfo(k){
+    const s = SVC[k];
+    if(s) info(s.e, s.t, s.b);
+  }
+
+  /* スタイル診断 */
+  const DIAG_LABELS = {
+    hatena:'📕 はてなブログ',
+    note:'📒 note',
+    facebook:'📘 Facebook',
+    instagram:'📷 Instagram',
+  };
+  function updateDiag(){
+    const scores = { hatena:0, note:0, facebook:0, instagram:0 };
+    const rows = [...document.querySelectorAll('#diag .diag-q')];
+    let answered = 0;
+    rows.forEach(row => {
+      const sel = row.querySelector('.opts button.sel');
+      if(sel){
+        answered++;
+        const tags = sel.dataset.tag.split(',');
+        tags.forEach(t => scores[t]++);
+      }
+    });
+    if(answered < rows.length){
+      $('diagResult').classList.remove('show');
+      return;
+    }
+    const max = Math.max(...Object.values(scores));
+    const r = $('diagResult');
+    r.classList.add('show');
+    let html = '<h4>🎯 あなたに 向いている サービス</h4>';
+    html += '<div class="scores">';
+    Object.entries(scores).forEach(([k,v])=>{
+      const isBest = v === max && v > 0;
+      html += `<div class="score${isBest?' best':''}">${DIAG_LABELS[k]}<b>${v}/5</b></div>`;
+    });
+    html += '</div>';
+    const winners = Object.entries(scores).filter(([k,v]) => v === max).map(([k]) => DIAG_LABELS[k]);
+    html += `<div style="margin-top:12px"><b>おすすめ：</b>${winners.join(' / ')}</div>`;
+    html += `<div style="margin-top:8px;font-size:14px;color:var(--muted)">※ 直感です。 「気になる」 と 思った サービスを 試してOK！</div>`;
+    r.innerHTML = html;
+  }
+  document.querySelectorAll('#diag .diag-q').forEach(row => {
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', ()=>{
+        row.querySelectorAll('.opts button').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel');
+        updateDiag();
+      });
+    });
+  });
+  function diagReset(){
+    document.querySelectorAll('#diag .opts button.sel').forEach(b => b.classList.remove('sel'));
+    $('diagResult').classList.remove('show');
+  }
+
+  /* 公開範囲シミュ */
+  const SCOPE = {
+    private: { visible:['me'],
+      cls:'private',
+      explain:'<b>🔒 非公開：</b>自分 だけが 見られます。 下書き や 完全な 日記に。 投稿しても 誰にも 通知 されません。' },
+    friends: { visible:['me','son','wife','friend'],
+      cls:'friends',
+      explain:'<b>👥 友だちのみ：</b>承認した「友だち」 だけが 見られます。 顔写真・家族写真 を 安全に 共有 できる レベル。 <b>一番おすすめ</b>！' },
+    link: { visible:['me','son','wife','friend','hobby'],
+      cls:'link',
+      explain:'<b>🔗 限定公開：</b>リンクを 知っている 人 全員 が 見られます。 同じ趣味の人 に 教えるとき に 便利 だが、 <b>転送される リスク</b> あり。' },
+    public: { visible:['me','son','wife','friend','hobby','stranger'],
+      cls:'public',
+      explain:'<b>🌍 公開（全体）：</b>インターネット 誰でも、 検索 でも 発見されます。 ブログ で 知見共有 / 趣味の 作品紹介 など。 顔・名前・住所 は 絶対 NG！' },
+  };
+  function setScope(s){
+    document.querySelectorAll('.scope-tab').forEach(t => t.classList.toggle('active', t.dataset.scope === s));
+    const cfg = SCOPE[s];
+    document.querySelectorAll('.scope-person').forEach(p => {
+      const w = p.dataset.who;
+      if(cfg.visible.includes(w)){
+        p.classList.add('see'); p.classList.remove('hide');
+      } else {
+        p.classList.add('hide'); p.classList.remove('see');
+      }
+    });
+    const ex = $('scopeExplain');
+    ex.className = 'scope-explain ' + cfg.cls;
+    ex.innerHTML = cfg.explain;
+  }
+  setScope('private');
+
+  /* 写り込みチェッカー */
+  (function(){
+    const items = [...document.querySelectorAll('.photo-item')];
+    const result = $('photoChkResult');
+    let totalW = items.reduce((s,it) => s + parseInt(it.dataset.w, 10), 0);
+    function update(){
+      const checkedW = items.filter(it => it.classList.contains('on'))
+        .reduce((s,it) => s + parseInt(it.dataset.w, 10), 0);
+      const ratio = checkedW / totalW;
+      result.classList.remove('safe','warn','danger');
+      if(ratio >= 0.85){
+        result.classList.add('safe');
+        result.innerHTML = `✅ ${checkedW} / ${totalW} ポイント — <b>投稿 OK！</b> 個人情報は 守られています`;
+      } else if(ratio >= 0.55){
+        result.classList.add('warn');
+        result.innerHTML = `⚠️ ${checkedW} / ${totalW} ポイント — <b>もう一度 確認</b>。 残りも チェック`;
+      } else {
+        result.classList.add('danger');
+        result.innerHTML = `🚨 ${checkedW} / ${totalW} ポイント — <b>投稿 待った</b>！ 写真を 編集 / 別の 写真に`;
+      }
+    }
+    items.forEach(it => it.addEventListener('click', ()=>{ it.classList.toggle('on'); update(); }));
+    update();
+  })();
+
+  /* コメント返し方 */
+  const REPLY_CASES = [
+    {
+      type:'good', typeName:'😊 好意的',
+      comment:'「素敵な 写真ですね！ 桜が きれいです。」',
+      options:[
+        { text:'「ありがとうございます。 庭の桜が 今年は ひときわ きれいで」', ok:true,
+          why:'✅ お礼＋一言 添える。 シンプル かつ 丁寧 で 関係性 を 育む。' },
+        { text:'返信 しない', ok:false,
+          why:'❌ 反応しないと「冷たい」と 思われがち。 一言で OK！' },
+      ]
+    },
+    {
+      type:'question', typeName:'🙋 質問',
+      comment:'「この 桜の 品種 は 何ですか？ うちでも 植えたいです」',
+      options:[
+        { text:'「ソメイヨシノ です。 ご参考に なれば！」', ok:true,
+          why:'✅ 質問に 答える＋気遣い。 ただし <b>住所・場所 が 特定される</b> 情報は 避ける。' },
+        { text:'「うちは ○○市 ○○町 ○丁目 の 庭です ぜひ 見に来てください」', ok:false,
+          why:'❌ 住所を 言わない！ 知らない人に 自宅 を 教えると 危険。 品種 だけ 答える。' },
+      ]
+    },
+    {
+      type:'criticism', typeName:'😠 批判的',
+      comment:'「センス 悪いですね こんな 写真 載せないで ください」',
+      options:[
+        { text:'24時間 待って、 落ち着いてから ブロック or 無視', ok:true,
+          why:'✅ ネットで <b>即 反論しない</b>。 ブロック・無視 も 立派な 対処。 ひどい場合は スクショして 警察相談 ダイヤル #9110。' },
+        { text:'「あなたの方が センス 悪い」 と すぐ 反論', ok:false,
+          why:'❌ 同じ 土俵に 立つと 泥沼。 感情的な やりとり は <b>誰の ためにも ならない</b>。' },
+      ]
+    },
+    {
+      type:'spam', typeName:'🤖 怪しい広告',
+      comment:'「初めまして！ 投資で 月100万 稼げます。 こちら → bit.ly/xxxx」',
+      options:[
+        { text:'リンクを タップして 見てみる', ok:false,
+          why:'❌ 詐欺の 可能性 大！ <b>絶対に リンクを 押さない</b>。 ウイルス感染・口座情報 盗難 の リスク。' },
+        { text:'<b>削除・ブロック・スパム報告</b>', ok:true,
+          why:'✅ 完全 無視 ＋ 報告。 各SNSに「スパム 報告」 機能 あり。 ブロックで 二度と 来ない！' },
+      ]
+    },
+  ];
+  const replyBox = $('replyCases');
+  REPLY_CASES.forEach((rc, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'reply-case';
+    let optsHtml = '';
+    rc.options.forEach((o, oi) => {
+      optsHtml += `<div class="opt-row" data-idx="${oi}" data-ok="${o.ok}">
+        ${o.text}
+        <div class="verdict">${o.why}</div>
+      </div>`;
+    });
+    div.innerHTML = `<div class="header">
+        <span class="type ${rc.type}">${escapeHTML(rc.typeName)}</span>
+      </div>
+      <div class="comment">${escapeHTML(rc.comment)}</div>
+      <div class="options">${optsHtml}</div>`;
+    div.querySelectorAll('.opt-row').forEach(row => {
+      row.addEventListener('click', ()=>{
+        if([...div.querySelectorAll('.opt-row')].some(r => r.classList.contains('show-result'))) return;
+        // すべての結果表示
+        div.querySelectorAll('.opt-row').forEach(r => {
+          r.classList.add('show-result');
+          r.classList.add(r.dataset.ok === 'true' ? 'ok' : 'ng');
+        });
+      });
+    });
+    replyBox.appendChild(div);
+  });
+
+  /* クイズ */
+  document.querySelectorAll('#quizBox .qrow').forEach(row=>{
+    const ans = parseInt(row.dataset.a, 10);
+    row.querySelectorAll('.opts button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(row.classList.contains('answered')) return;
+        const i = parseInt(b.dataset.i, 10);
+        row.classList.add('answered');
+        if(i === ans){ b.classList.add('right'); }
+        else {
+          b.classList.add('wrong');
+          row.querySelector(`.opts button[data-i="${ans}"]`).classList.add('right');
+        }
+      });
+    });
+  });
+
+  /* ヘルプ */
+  function showHelp(){
+    info('⌨️','キーボードショートカット',`
+      <div style="text-align:left;font-size:16px;line-height:2.2">
+        <div><b>← ↑ PageUp</b> 前の章へ</div>
+        <div><b>→ ↓ PageDown Space</b> 次の章へ</div>
+        <div><b>1〜${targets.length}</b> 章番号で 直行</div>
+        <div><b>Home / End</b> 最初／最後</div>
+        <div><b>?</b> このヘルプを 開く</div>
+      </div>`);
+  }
+  $('snav-help').addEventListener('click', showHelp);
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(e.target.isContentEditable) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0,Math.min(targets.length-1,i)); targets[i].scrollIntoView({behavior:'smooth',block:'start'}); };
+    if(e.key==='?'||(e.key==='/'&&e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i=parseInt(e.key,10)-1; if(i<targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key==='Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key==='End'){ e.preventDefault(); goto(targets.length-1); return; }
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); }
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); }
+  });
+</script>
+</body>
+</html>
