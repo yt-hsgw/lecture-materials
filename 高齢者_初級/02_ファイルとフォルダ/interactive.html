@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第2回｜ファイルとフォルダ</title>
+<style>
+  :root{
+    --primary:#2E7D32;
+    --secondary:#FFA000;
+    --accent:#5D4037;
+    --warn:#C62828;
+    --dark:#212121;
+    --light:#FFF8E1;
+    --panel:#FFFFFF;
+    --muted:#5F6368;
+    --shadow:0 4px 0 rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px}
+  body{
+    font-family:'Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.8;
+    font-size:1.1rem;
+  }
+  button,input,select,textarea{font:inherit}
+
+  .progress{position:fixed;top:0;left:0;height:8px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--warn));
+    z-index:100;transition:width .15s;}
+  .top-status{
+    position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:1rem;font-weight:bold;}
+  .top-status b{color:var(--primary)}
+
+  /* SIDE NAV — large */
+  .snav{position:fixed;right:18px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:3px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:18px;
+    box-shadow:0 3px 8px rgba(0,0,0,.15);position:relative;
+    transition:transform .15s,background .15s,color .15s;}
+  .snav a:hover,.snav a:focus{transform:translateX(-4px) scale(1.1);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.18)}
+  .snav a > span:not(.ic){
+    position:absolute;right:calc(100% + 14px);top:50%;
+    transform:translateY(-50%) translateX(8px);
+    background:white;border:3px solid var(--primary);border-radius:999px;
+    padding:8px 16px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:16px;font-weight:bold;}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-9px;right:-9px;left:auto;
+    background:var(--secondary);width:24px;height:24px;
+    padding:0;border-radius:50%;border:2px solid white;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;line-height:1;opacity:1;pointer-events:none;transform:none;color:white;}
+  .snav-help{position:fixed;left:18px;bottom:18px;z-index:80;
+    background:rgba(255,255,255,.96);border:3px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:48px;height:48px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-family:inherit;
+    box-shadow:0 3px 8px rgba(0,0,0,.15);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;
+    max-width:540px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+    animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-16px;right:-16px;
+    width:48px;height:48px;background:var(--warn);color:white;
+    border:5px solid white;border-radius:50%;
+    font-size:24px;cursor:pointer;font-family:inherit;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:80px;text-align:center;line-height:1;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:22px;flex-wrap:wrap;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:14px;font-family:inherit;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .12s;}
+  .modal-btn:hover{transform:translateY(-2px)}
+  .modal-btn.cancel{background:var(--muted)}
+  .modal-btn.danger{background:var(--warn)}
+
+  /* Hero */
+  .hero{
+    min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:60px 24px;position:relative;
+    background:linear-gradient(135deg,#2E7D32 0%,#FFA000 100%);}
+  .hero-inner{position:relative;z-index:1;max-width:920px}
+  .hero .label{display:inline-block;background:rgba(255,255,255,.25);
+    padding:10px 24px;border-radius:999px;font-weight:bold;margin-bottom:22px;
+    backdrop-filter:blur(4px);font-size:20px;}
+  .hero h1{font-size:clamp(48px,8vw,96px);line-height:1.15;margin-bottom:22px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);font-weight:bold;}
+  .hero p{font-size:clamp(20px,2.5vw,28px);opacity:.96;line-height:1.6}
+  .hero .em{font-size:clamp(60px,9vw,100px);margin-top:36px}
+  .scroll-hint{margin-top:34px;font-size:18px;opacity:.92}
+
+  /* Sections */
+  .section{padding:80px 28px;max-width:1080px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:8px 22px;border-radius:999px;font-weight:bold;font-size:18px;margin-bottom:18px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);line-height:1.3;margin-bottom:14px;font-weight:bold}
+  .lead{font-size:22px;color:var(--muted);margin-bottom:34px;line-height:1.7}
+  .divider{background:var(--accent);color:white;text-align:center;padding:64px 24px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:24px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,60px);margin-top:8px}
+
+  .grid{display:grid;gap:22px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:26px;box-shadow:var(--shadow);font-size:1.05rem}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:10px}
+  .card.ok{border-left:10px solid var(--primary)}
+  .card.warn{border-left:10px solid var(--warn)}
+  .card.tip{border-left:10px solid var(--secondary);background:#FFFDF7}
+  .card .em{font-size:60px;line-height:1;margin-bottom:10px;display:block}
+
+  /* File type cards */
+  .ftype{text-align:center;cursor:pointer;transition:transform .12s,box-shadow .12s}
+  .ftype:hover{transform:translateY(-3px);box-shadow:0 8px 0 rgba(0,0,0,.1)}
+  .ftype .ext{
+    display:inline-block;background:var(--accent);color:white;
+    padding:4px 12px;border-radius:6px;font-size:14px;font-weight:bold;
+    margin-top:6px;font-family:'Courier New',monospace;
+  }
+
+  /* Folder tree visualization */
+  .tree{
+    background:white;border-radius:14px;padding:24px 28px;
+    box-shadow:var(--shadow);
+    font-family:'Hiragino Sans','Yu Gothic',sans-serif;font-size:20px;line-height:2;
+    color:var(--dark);
+  }
+  .tree .folder{color:var(--secondary);font-weight:bold}
+  .tree .file{color:var(--primary)}
+
+  /* Desktop simulator */
+  .desk{
+    background:white;border-radius:20px;padding:24px;box-shadow:var(--shadow);
+    margin:22px 0;
+  }
+  .desk h3{color:var(--primary);font-size:22px;margin-bottom:12px}
+  .desk-status{
+    background:#FFFDE7;border:2px solid var(--secondary);border-radius:12px;
+    padding:14px 18px;font-size:18px;font-weight:bold;
+    min-height:60px;margin-bottom:14px;
+  }
+  .desk-status.success{background:#E8F5E9;border-color:var(--primary);color:var(--primary)}
+  .desk-status.error{background:#FFEBEE;border-color:var(--warn);color:var(--warn)}
+  .desk-stage{
+    background:linear-gradient(135deg,#B3E5FC 0%,#81D4FA 100%);
+    border-radius:14px;padding:20px;min-height:380px;
+    position:relative;border:3px solid #4FC3F7;
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  }
+  .desk-area{
+    background:rgba(255,255,255,.4);border-radius:12px;padding:14px;
+    border:2px dashed rgba(255,255,255,.6);
+    display:flex;flex-wrap:wrap;gap:12px;align-content:flex-start;
+    min-height:340px;
+    transition:background .15s,border-color .15s;
+  }
+  .desk-area.drop-target{background:rgba(255,255,255,.85);border-color:var(--primary)}
+  .desk-area .area-label{
+    width:100%;font-weight:bold;font-size:16px;color:var(--dark);
+    background:white;padding:6px 12px;border-radius:8px;text-align:center;
+    margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .desk-area .area-label .em{font-size:24px}
+  .desk-area .area-label .count{
+    background:var(--accent);color:white;border-radius:999px;
+    padding:2px 10px;font-size:14px;
+  }
+  .item{
+    background:white;border-radius:10px;padding:10px 6px;
+    min-width:84px;max-width:84px;text-align:center;
+    cursor:grab;user-select:none;
+    box-shadow:0 2px 4px rgba(0,0,0,.15);
+    transition:transform .12s,box-shadow .12s;
+    position:relative;border:2px solid transparent;
+  }
+  .item:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,.2)}
+  .item.dragging{opacity:.4;cursor:grabbing}
+  .item.selected{border-color:var(--secondary);background:#FFFDE7}
+  .item .icon{font-size:36px;line-height:1;display:block;margin-bottom:4px}
+  .item .name{font-size:13px;font-weight:bold;word-break:break-word;line-height:1.3}
+  .item .ext{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* Folders inside */
+  .folder-tabs{
+    display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;
+  }
+  .folder-tab{
+    background:white;border:2px solid var(--accent);color:var(--accent);
+    padding:8px 16px;border-radius:10px;cursor:pointer;
+    font-family:inherit;font-weight:bold;font-size:15px;
+    display:flex;align-items:center;gap:6px;
+    transition:all .12s;
+  }
+  .folder-tab.active{background:var(--accent);color:white}
+  .folder-tab .count{
+    background:rgba(255,255,255,.3);color:inherit;
+    padding:2px 8px;border-radius:999px;font-size:12px;
+  }
+  .folder-tab.active .count{background:rgba(255,255,255,.3)}
+
+  /* Trash row */
+  .trash-row{
+    display:grid;grid-template-columns:1fr 220px;gap:14px;margin-top:14px;
+  }
+  .trash{
+    background:#F5F5F5;border:3px dashed #BDBDBD;border-radius:14px;
+    padding:14px;text-align:center;min-height:140px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    transition:background .15s,border-color .15s;
+  }
+  .trash.drop-target{background:#FFEBEE;border-color:var(--warn)}
+  .trash .em{font-size:48px}
+  .trash .label{font-weight:bold;font-size:16px;color:var(--dark)}
+  .trash .count{
+    background:var(--warn);color:white;padding:2px 12px;border-radius:999px;
+    font-size:14px;font-weight:bold;
+  }
+  .trash.empty .count{background:#9E9E9E}
+
+  .desk-actions{
+    display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;
+  }
+  .btn{
+    background:var(--primary);color:white;border:none;padding:14px 26px;
+    border-radius:14px;font-family:inherit;font-size:16px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .12s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.gray{background:var(--muted)}
+  .btn.warn{background:var(--warn)}
+  .btn.secondary{background:var(--secondary);color:var(--dark)}
+
+  /* Rename UI */
+  .rename-bar{
+    display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap;
+  }
+  .rename-bar label{font-weight:bold}
+  .rename-bar input{
+    flex:1;min-width:200px;border:3px solid #BDBDBD;border-radius:12px;
+    padding:12px 16px;font-size:18px;background:white;outline:none;
+  }
+  .rename-bar input:focus{border-color:var(--primary)}
+
+  /* Summary */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{
+    background:white;border-radius:18px;padding:22px;
+    display:flex;align-items:center;gap:22px;box-shadow:var(--shadow);
+  }
+  .summary-row .num{
+    flex-shrink:0;width:56px;height:56px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:bold;
+  }
+  .summary-row h3{font-size:22px}
+
+  /* Next */
+  .next{background:linear-gradient(135deg,var(--secondary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:60px 28px;border-radius:24px;margin:32px 24px;}
+  .next .em{font-size:96px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:18px 0}
+  .next p{font-size:20px;opacity:.96}
+  footer{padding:50px 20px;text-align:center;color:var(--muted);font-size:16px}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 18px}
+    .desk-stage{grid-template-columns:1fr}
+    .trash-row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>第2回</span> <b>ファイルとフォルダ</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🌱</span></a>
+  <a href="#file">2<span>ファイルって？</span><span class="ic">📄</span></a>
+  <a href="#folder">3<span>フォルダって？</span><span class="ic">📁</span></a>
+  <a href="#dragdrop">4<span>動かしてみる</span><span class="ic">✋</span></a>
+  <a href="#rename">5<span>名前を変える</span><span class="ic">✏️</span></a>
+  <a href="#trash">6<span>ゴミ箱と復元</span><span class="ic">🗑️</span></a>
+  <a href="#wrap">7<span>まとめ</span><span class="ic">📋</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="キーボードショートカット (?)" aria-label="キーボードショートカット">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="とじる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div id="modal-actions" class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 高齢者向け パソコン教室</div>
+    <h1>ファイルと<br>フォルダ</h1>
+    <p>整理してみる、戻してみる。<br><b>「消しても、戻せる」</b> を、いっしょに たしかめましょう。</p>
+    <div class="em">📄📁🗑️</div>
+    <div class="scroll-hint">下へすすみましょう</div>
+  </div>
+</header>
+
+<!-- ゴール -->
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>4つの「できた」を作ります</h2>
+  <p class="lead">前回のおさらいから始めて、ゆっくり進みます。</p>
+  <div class="grid grid-2">
+    <div class="card"><span class="em">📄</span><h3>ファイルとフォルダ</h3><p>ちがいが わかる</p></div>
+    <div class="card"><span class="em">📁</span><h3>フォルダを作る</h3><p>自分のフォルダで 整理する</p></div>
+    <div class="card"><span class="em">✋</span><h3>動かす・名前を変える</h3><p>ドラッグ＆ドロップ</p></div>
+    <div class="card"><span class="em">🗑️</span><h3>ゴミ箱と復元</h3><p>消しても 戻せる</p></div>
+  </div>
+</section>
+
+<!-- ファイル -->
+<div class="divider" id="file" data-snav-target>
+  <div class="num">1.</div>
+  <h2>ファイルって なに？</h2>
+</div>
+
+<section class="section">
+  <h2>パソコンの中の「1まいの紙」</h2>
+  <p class="lead">写真も、文章も、音楽も、ぜんぶ ファイル の形でパソコンに入っています。<br>下のカードをタップで しゅるい を見てみましょう。</p>
+  <div class="grid grid-3">
+    <div class="card ftype" data-info="photo"><span class="em">📷</span><h3>写真</h3><span class="ext">.jpg</span></div>
+    <div class="card ftype" data-info="doc"><span class="em">📝</span><h3>文書</h3><span class="ext">.docx</span></div>
+    <div class="card ftype" data-info="music"><span class="em">🎵</span><h3>音楽</h3><span class="ext">.mp3</span></div>
+  </div>
+  <div class="card tip" style="margin-top:20px">
+    <h3 style="color:var(--secondary)">💡 拡張子（かくちょうし）について</h3>
+    <p style="margin-top:6px;font-size:1.05rem">名前のうしろの <b>「.〇〇〇」</b> が拡張子。<br>
+    <b>触らないのが安心</b> です。変えてしまうと、ファイルが開けなくなることがあります。</p>
+  </div>
+</section>
+
+<!-- フォルダ -->
+<div class="divider" id="folder" data-snav-target>
+  <div class="num">2.</div>
+  <h2>フォルダって なに？</h2>
+</div>
+
+<section class="section">
+  <h2>ファイルを しまう「はこ」</h2>
+  <p class="lead">紙（ファイル）を まとめて、はこ（フォルダ）に 入れる。<br>おうちの書類ケースや アルバム と 同じ考えです。</p>
+
+  <div class="grid grid-2" style="margin-bottom:24px">
+    <div class="card warn">
+      <h3>❌ ぐちゃぐちゃ</h3>
+      <p style="margin-top:8px">ぜんぶ デスクトップに ポイ</p>
+      <p style="margin-top:6px;color:var(--muted)">→ どこにあるか わからない</p>
+    </div>
+    <div class="card ok">
+      <h3>⭕ きれいに整理</h3>
+      <p style="margin-top:8px">しゅるい別に フォルダ分け</p>
+      <p style="margin-top:6px;color:var(--muted)">→ すぐ 見つけられる</p>
+    </div>
+  </div>
+
+  <h3 style="color:var(--accent);font-size:24px;margin-bottom:14px">📂 こんな感じに 整理できます</h3>
+  <div class="tree">
+<span class="folder">📁 写真</span>
+　　<span class="folder">📁 2024年</span>
+　　　　<span class="file">📷 春の桜.jpg</span>
+　　　　<span class="file">📷 夏の海.jpg</span>
+　　<span class="folder">📁 2025年</span>
+　　　　<span class="file">📷 お正月.jpg</span>
+　　　　<span class="file">📷 旅行.jpg</span>
+<span class="folder">📁 書類</span>
+　　<span class="file">📝 保険証_コピー.pdf</span>
+　　<span class="file">📝 おくすり手帳.pdf</span>
+  </div>
+</section>
+
+<!-- ドラッグ＆ドロップ -->
+<div class="divider" id="dragdrop" data-snav-target>
+  <div class="num">3.</div>
+  <h2>動かしてみましょう</h2>
+</div>
+
+<section class="section">
+  <h2>ドラッグ＆ドロップ の練習</h2>
+  <p class="lead">左の「デスクトップ」にあるファイルを、右の「フォルダ」にドラッグして入れましょう。<br><b>つかんで → はなす</b> の練習です。</p>
+
+  <div class="desk">
+    <h3>🖥️ じぶんのデスクトップ</h3>
+    <div class="desk-status" id="deskStatus">ファイルをフォルダにドラッグして入れてみましょう。</div>
+
+    <div class="folder-tabs">
+      <button class="folder-tab active" data-folder="photo"><span class="em">📁</span> 写真 <span class="count" id="cntPhoto">0</span></button>
+      <button class="folder-tab" data-folder="doc"><span class="em">📁</span> 書類 <span class="count" id="cntDoc">0</span></button>
+    </div>
+
+    <div class="desk-stage">
+      <div class="desk-area" id="deskArea" data-drop="desktop">
+        <div class="area-label">🖥️ デスクトップ <span class="count" id="cntDesktop">0</span></div>
+      </div>
+      <div class="desk-area" id="folderArea" data-drop="folder">
+        <div class="area-label"><span class="em">📁</span> <span id="folderName">写真</span> <span class="count" id="cntFolder">0</span></div>
+      </div>
+    </div>
+
+    <div class="trash-row">
+      <div></div>
+      <div class="trash empty" id="trashArea" data-drop="trash">
+        <div class="em">🗑️</div>
+        <div class="label">ゴミ箱</div>
+        <div class="count" id="cntTrash">0</div>
+      </div>
+    </div>
+
+    <div class="desk-actions">
+      <button class="btn gray" id="deskReset">↺ 初期にもどす</button>
+    </div>
+  </div>
+</section>
+
+<!-- 名前を変える -->
+<div class="divider" id="rename" data-snav-target>
+  <div class="num">4.</div>
+  <h2>名前を 変える</h2>
+</div>
+
+<section class="section">
+  <h2>「あとで わかる名前」 に変える</h2>
+  <p class="lead">下のファイルを選んでから、新しい名前を入力して 「変更する」 を押してみましょう。</p>
+
+  <div class="desk">
+    <div class="desk-status" id="renameStatus">ファイルを <b>1回クリック</b> で選んでから 名前を入力してください。</div>
+
+    <div class="desk-stage" style="grid-template-columns:1fr;min-height:auto">
+      <div class="desk-area" id="renameArea" style="min-height:auto;background:rgba(255,255,255,.7);border-style:solid">
+        <div class="area-label">🖥️ デスクトップ</div>
+      </div>
+    </div>
+
+    <div class="rename-bar">
+      <label>新しい名前：</label>
+      <input type="text" id="renameInput" placeholder="例：2025年お正月_家族写真" disabled>
+      <button class="btn secondary" id="renameBtn" disabled>変更する</button>
+    </div>
+  </div>
+
+  <div class="card ok" style="margin-top:18px">
+    <h3 style="color:var(--primary)">⭕ あとで わかる名前 の例</h3>
+    <ul style="margin-left:24px;margin-top:8px;font-size:1.05rem">
+      <li>2025年お正月_家族写真.jpg</li>
+      <li>保険証_コピー.pdf</li>
+      <li>お薬手帳_2025年5月.pdf</li>
+    </ul>
+  </div>
+  <div class="card warn" style="margin-top:14px">
+    <h3 style="color:var(--warn)">❌ あとで わからない名前</h3>
+    <ul style="margin-left:24px;margin-top:8px;font-size:1.05rem">
+      <li>IMG_0382.JPG</li>
+      <li>新しいフォルダー</li>
+      <li>無題.txt</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ゴミ箱と復元 -->
+<div class="divider" id="trash" data-snav-target>
+  <div class="num">5.</div>
+  <h2>ゴミ箱と もとに戻す</h2>
+</div>
+
+<section class="section">
+  <h2>「消しても 戻せる」 を 体で覚える</h2>
+  <p class="lead">いちばん大事な操作。<br>ファイルを <b>ゴミ箱に入れて</b> → <b>戻す</b> を試しましょう。</p>
+
+  <div class="card tip">
+    <h3 style="color:var(--secondary)">💡 「消える」までの 2段階</h3>
+    <ol style="margin-left:24px;margin-top:10px;font-size:1.05rem;line-height:2">
+      <li><b>ゴミ箱に入れる</b>（削除） → まだ戻せる</li>
+      <li><b>ゴミ箱を 空にする</b> → ここで完全に消える</li>
+    </ol>
+    <p style="margin-top:10px">教室では <b>「空にする」前に必ず講師にひと声</b> かけてください。</p>
+  </div>
+
+  <div class="desk" style="margin-top:24px">
+    <div class="desk-status" id="trashStatus">下のファイルをゴミ箱にドラッグしてみましょう。</div>
+
+    <div class="desk-stage" style="grid-template-columns:1fr;min-height:200px">
+      <div class="desk-area" id="trashDeskArea" style="background:rgba(255,255,255,.7);border-style:solid">
+        <div class="area-label">🖥️ デスクトップ <span class="count" id="cntTrashDesk">0</span></div>
+      </div>
+    </div>
+
+    <div class="trash-row" style="grid-template-columns:1fr">
+      <div class="trash empty" id="trashBin2" data-drop="trash2">
+        <div class="em">🗑️</div>
+        <div class="label">ゴミ箱（中身をクリックで戻せます）</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px" id="trashContents"></div>
+      </div>
+    </div>
+
+    <div class="desk-actions">
+      <button class="btn gray" id="trashReset">↺ 初期にもどす</button>
+      <button class="btn" id="trashRestoreAll" disabled>↩ ぜんぶ もどす</button>
+      <button class="btn warn" id="trashEmpty" disabled>🗑️ ゴミ箱を 空にする</button>
+    </div>
+  </div>
+
+  <div class="card warn" style="margin-top:24px">
+    <h3 style="color:var(--warn)">⚠️ 気をつけること</h3>
+    <ul style="margin-left:24px;margin-top:8px;font-size:1.05rem">
+      <li>「<b>システムのフォルダ</b>」（Windows, Program Files, System32 など）は <b>触らない</b></li>
+      <li>「ゴミ箱を 空にする」 ボタンは <b>講師にひと声 かけてから</b></li>
+      <li>USBメモリは <b>「取り外し」をしてから抜く</b>（いきなり抜かない）</li>
+    </ul>
+  </div>
+</section>
+
+<!-- まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>きょう できるようになったこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>ファイル＝紙、フォルダ＝はこ</h3><p style="color:var(--muted)">拡張子は触らない</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>ドラッグ＆ドロップ で 動かせる</h3><p style="color:var(--muted)">つかんで → はなす</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>名前は「あとで わかる名前」に</h3><p style="color:var(--muted)">未来のじぶんが読んでわかる</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>ゴミ箱に入れても 戻せる</h3><p style="color:var(--muted)">「空にする」前は安心して触ってOK</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>困ったら 講師か家族に きく</h3><p style="color:var(--muted)">ひとりで詰まらない</p></div></div>
+  </div>
+
+  <div class="card" style="margin-top:30px;background:var(--primary);color:white;text-align:center;border:none">
+    <h3 style="color:var(--secondary);font-size:28px">いちばん大事なこと</h3>
+    <p style="font-size:26px;margin-top:10px"><b>「消しても、戻せる」</b></p>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">🌐</div>
+  <h2>次回 ｜ インターネットを安全に使う</h2>
+  <p>ブラウザ・検索・<b>詐欺サイトの見分け方</b> を学びます。</p>
+</div>
+
+<footer>
+  高齢者向け パソコン教室 ／ 初級 第2回｜ファイルとフォルダ
+</footer>
+
+<script>
+  // ===== progress + scroll-spy =====
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.32;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  // ===== Modal =====
+  const mb = document.getElementById('modal-bg');
+  const me = document.getElementById('modal-emoji');
+  const mt = document.getElementById('modal-title');
+  const mbody = document.getElementById('modal-body');
+  const mactions = document.getElementById('modal-actions');
+  function showInfo({emoji='', title='', bodyHTML=''}){
+    me.textContent = emoji; me.style.display = emoji ? 'block' : 'none';
+    mt.textContent = title; mbody.innerHTML = bodyHTML;
+    mactions.innerHTML = '<button class="modal-btn" onclick="closeModal()">わかりました</button>';
+    mb.classList.add('show');
+  }
+  function showConfirm({emoji='', title='', bodyHTML='', okLabel='はい', cancelLabel='やめる', onOk}){
+    me.textContent = emoji; me.style.display = emoji ? 'block' : 'none';
+    mt.textContent = title; mbody.innerHTML = bodyHTML;
+    mactions.innerHTML = `<button class="modal-btn cancel" id="mcancel">${cancelLabel}</button><button class="modal-btn danger" id="mok">${okLabel}</button>`;
+    mb.classList.add('show');
+    document.getElementById('mcancel').onclick = closeModal;
+    document.getElementById('mok').onclick = ()=>{ closeModal(); onOk && onOk(); };
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  // ===== File-type info =====
+  const ftypeInfo = {
+    photo: {emoji:'📷', title:'写真ファイル (.jpg / .png)', bodyHTML:'カメラ・スマートフォンで撮った写真や、いただいた画像。<br>ダブルクリックで開くと、画面に大きく表示されます。'},
+    doc: {emoji:'📝', title:'文書ファイル (.docx / .txt)', bodyHTML:'Word（ワード）などで作る文章。<br>役所の書類や、おてがみを書くときに使います。'},
+    music: {emoji:'🎵', title:'音楽ファイル (.mp3)', bodyHTML:'歌や音楽。<br>ダブルクリックで音楽プレイヤーが立ち上がり、聞けるようになります。'},
+  };
+  document.querySelectorAll('.ftype').forEach(c=>{
+    c.addEventListener('click', ()=> showInfo(ftypeInfo[c.dataset.info]));
+  });
+
+  // ===== Drag & Drop simulator =====
+  const initialFiles = [
+    {id:'f1', icon:'📷', name:'桜の写真', ext:'.jpg', type:'photo'},
+    {id:'f2', icon:'📝', name:'保険証コピー', ext:'.pdf', type:'doc'},
+    {id:'f3', icon:'📷', name:'お正月', ext:'.jpg', type:'photo'},
+    {id:'f4', icon:'📝', name:'お薬手帳', ext:'.pdf', type:'doc'},
+    {id:'f5', icon:'📷', name:'旅行写真', ext:'.jpg', type:'photo'},
+    {id:'f6', icon:'📝', name:'町内会のお知らせ', ext:'.txt', type:'doc'},
+  ];
+  let state = null;
+  let currentFolder = 'photo';
+
+  function makeItem(file){
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.draggable = true;
+    div.dataset.id = file.id;
+    div.innerHTML = `<span class="icon">${file.icon}</span><div class="name">${file.name}</div><div class="ext">${file.ext}</div>`;
+    div.addEventListener('dragstart', e=>{
+      div.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', file.id);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    div.addEventListener('dragend', ()=>div.classList.remove('dragging'));
+    return div;
+  }
+
+  function resetDesk(){
+    state = {
+      desktop: initialFiles.slice(),
+      photo: [],
+      doc: [],
+      trash: [],
+    };
+    renderDesk();
+    document.getElementById('deskStatus').textContent = 'ファイルをフォルダにドラッグして入れてみましょう。';
+    document.getElementById('deskStatus').className = 'desk-status';
+  }
+  function renderDesk(){
+    const deskArea = document.getElementById('deskArea');
+    const folderArea = document.getElementById('folderArea');
+    const trashArea = document.getElementById('trashArea');
+    // clear (keep labels)
+    deskArea.querySelectorAll('.item').forEach(i=>i.remove());
+    folderArea.querySelectorAll('.item').forEach(i=>i.remove());
+
+    state.desktop.forEach(f=>deskArea.appendChild(makeItem(f)));
+    state[currentFolder].forEach(f=>folderArea.appendChild(makeItem(f)));
+
+    document.getElementById('cntDesktop').textContent = state.desktop.length;
+    document.getElementById('cntPhoto').textContent = state.photo.length;
+    document.getElementById('cntDoc').textContent = state.doc.length;
+    document.getElementById('cntFolder').textContent = state[currentFolder].length;
+    document.getElementById('folderName').textContent = currentFolder === 'photo' ? '写真' : '書類';
+    document.getElementById('cntTrash').textContent = state.trash.length;
+    trashArea.classList.toggle('empty', state.trash.length === 0);
+  }
+
+  function findFile(id){
+    for(const area of ['desktop','photo','doc','trash']){
+      const i = state[area].findIndex(f=>f.id===id);
+      if(i>=0) return {area, index:i, file:state[area][i]};
+    }
+    return null;
+  }
+
+  function moveFile(id, toArea){
+    const found = findFile(id);
+    if(!found) return;
+    state[found.area].splice(found.index, 1);
+    state[toArea].push(found.file);
+    return found.file;
+  }
+
+  function setStatus(text, kind=''){
+    const s = document.getElementById('deskStatus');
+    s.textContent = text;
+    s.className = 'desk-status' + (kind ? ' '+kind : '');
+  }
+
+  ['deskArea','folderArea','trashArea'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.addEventListener('dragover', e=>{
+      e.preventDefault();
+      el.classList.add('drop-target');
+    });
+    el.addEventListener('dragleave', ()=>el.classList.remove('drop-target'));
+    el.addEventListener('drop', e=>{
+      e.preventDefault();
+      el.classList.remove('drop-target');
+      const id = e.dataTransfer.getData('text/plain');
+      if(!id) return;
+      const target = id === 'deskArea' ? 'desktop' :
+        (id === 'folderArea' ? currentFolder :
+         (id === 'trashArea' ? 'trash' : null));
+      // Map element id to target name properly:
+      const map = {deskArea:'desktop', folderArea:currentFolder, trashArea:'trash'};
+      const dest = map[el.id];
+      const file = moveFile(id, dest);
+      if(!file) return;
+
+      // Smart hint: correct folder?
+      if(dest === currentFolder){
+        const correct = file.type === currentFolder;
+        if(correct){
+          setStatus(`⭕ 「${file.name}」 を 「${currentFolder==='photo'?'写真':'書類'}」 に入れました。整理できています！`, 'success');
+        } else {
+          setStatus(`🤔 「${file.name}」 は ${file.type==='photo'?'写真':'書類'} なので、「${file.type==='photo'?'写真':'書類'}」 フォルダのほうが いいかも。`, 'error');
+        }
+      } else if(dest === 'trash'){
+        setStatus(`🗑️ 「${file.name}」 を ゴミ箱に入れました。下のゴミ箱から戻せます。`);
+      } else {
+        setStatus(`📤 「${file.name}」 を デスクトップに戻しました。`);
+      }
+      renderDesk();
+    });
+  });
+
+  // Folder tab switching
+  document.querySelectorAll('.folder-tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('.folder-tab').forEach(o=>o.classList.remove('active'));
+      t.classList.add('active');
+      currentFolder = t.dataset.folder;
+      renderDesk();
+    });
+  });
+
+  // Click on trash to restore one
+  document.getElementById('trashArea').addEventListener('click', e=>{
+    if(state.trash.length === 0){
+      setStatus('ゴミ箱は からっぽです。');
+      return;
+    }
+    showConfirm({
+      emoji:'🗑️',
+      title:'ゴミ箱からもどしますか？',
+      bodyHTML: `ゴミ箱には <b>${state.trash.length}個</b> のファイルがあります。<br>全部 デスクトップに もどしますか？`,
+      okLabel:'ぜんぶ もどす',
+      cancelLabel:'やめる',
+      onOk: ()=>{
+        state.desktop = state.desktop.concat(state.trash);
+        state.trash = [];
+        renderDesk();
+        setStatus('🎉 ぜんぶ もどしました。「消しても 戻せる」 が体験できました！', 'success');
+      }
+    });
+  });
+
+  document.getElementById('deskReset').addEventListener('click', resetDesk);
+  resetDesk();
+
+  // ===== Rename simulator =====
+  const renameFiles = [
+    {id:'r1', icon:'📷', name:'IMG_0382', ext:'.JPG'},
+    {id:'r2', icon:'📝', name:'Document1', ext:'.docx'},
+    {id:'r3', icon:'📷', name:'IMG_0411', ext:'.JPG'},
+  ];
+  let renameState = null;
+  let renameSelected = null;
+
+  function resetRename(){
+    renameState = renameFiles.map(f=>({...f}));
+    renameSelected = null;
+    renderRename();
+    document.getElementById('renameStatus').innerHTML = 'ファイルを <b>1回クリック</b> で選んでから 名前を入力してください。';
+    document.getElementById('renameStatus').className = 'desk-status';
+    document.getElementById('renameInput').value = '';
+    document.getElementById('renameInput').disabled = true;
+    document.getElementById('renameBtn').disabled = true;
+  }
+  function renderRename(){
+    const area = document.getElementById('renameArea');
+    area.querySelectorAll('.item').forEach(i=>i.remove());
+    renameState.forEach(f=>{
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.dataset.id = f.id;
+      if(renameSelected === f.id) div.classList.add('selected');
+      div.innerHTML = `<span class="icon">${f.icon}</span><div class="name">${f.name}</div><div class="ext">${f.ext}</div>`;
+      div.addEventListener('click', ()=>{
+        renameSelected = f.id;
+        document.getElementById('renameInput').disabled = false;
+        document.getElementById('renameBtn').disabled = false;
+        document.getElementById('renameInput').value = f.name;
+        document.getElementById('renameInput').focus();
+        document.getElementById('renameInput').select();
+        document.getElementById('renameStatus').innerHTML = `「${f.name}${f.ext}」 を選びました。新しい名前を入力してください。`;
+        document.getElementById('renameStatus').className = 'desk-status';
+        renderRename();
+      });
+      area.appendChild(div);
+    });
+  }
+  function doRename(){
+    if(!renameSelected) return;
+    const newName = document.getElementById('renameInput').value.trim();
+    if(!newName){
+      document.getElementById('renameStatus').textContent = '名前が からっぽ です。何か入力してください。';
+      document.getElementById('renameStatus').className = 'desk-status error';
+      return;
+    }
+    const f = renameState.find(x=>x.id===renameSelected);
+    const oldName = f.name;
+    f.name = newName;
+    document.getElementById('renameStatus').innerHTML = `✏️ 「${oldName}${f.ext}」 → 「${newName}${f.ext}」 に変更しました！`;
+    document.getElementById('renameStatus').className = 'desk-status success';
+    renderRename();
+  }
+  document.getElementById('renameBtn').addEventListener('click', doRename);
+  document.getElementById('renameInput').addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){ e.preventDefault(); doRename(); }
+  });
+  resetRename();
+
+  // ===== Trash + restore demo =====
+  const trashInitial = [
+    {id:'t1', icon:'📄', name:'れんしゅう用メモ', ext:'.txt'},
+    {id:'t2', icon:'📄', name:'いらないメモ', ext:'.txt'},
+    {id:'t3', icon:'📷', name:'ぶれた写真', ext:'.jpg'},
+  ];
+  let trashState = null;
+  function resetTrash(){
+    trashState = {desk: trashInitial.map(f=>({...f})), trash: []};
+    renderTrash();
+    document.getElementById('trashStatus').textContent = '下のファイルをゴミ箱にドラッグしてみましょう。';
+    document.getElementById('trashStatus').className = 'desk-status';
+    document.getElementById('trashRestoreAll').disabled = true;
+    document.getElementById('trashEmpty').disabled = true;
+  }
+  function renderTrash(){
+    const area = document.getElementById('trashDeskArea');
+    area.querySelectorAll('.item').forEach(i=>i.remove());
+    trashState.desk.forEach(f=>{
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.draggable = true;
+      div.dataset.id = f.id;
+      div.innerHTML = `<span class="icon">${f.icon}</span><div class="name">${f.name}</div><div class="ext">${f.ext}</div>`;
+      div.addEventListener('dragstart', e=>{
+        div.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', 'trash:' + f.id);
+      });
+      div.addEventListener('dragend', ()=>div.classList.remove('dragging'));
+      area.appendChild(div);
+    });
+    const contents = document.getElementById('trashContents');
+    contents.innerHTML = '';
+    const bin = document.getElementById('trashBin2');
+    bin.classList.toggle('empty', trashState.trash.length === 0);
+    trashState.trash.forEach(f=>{
+      const chip = document.createElement('button');
+      chip.className = 'btn secondary';
+      chip.style.padding = '8px 16px';
+      chip.style.fontSize = '14px';
+      chip.innerHTML = `↩ ${f.icon} ${f.name}${f.ext}`;
+      chip.title = 'クリックでデスクトップに もどす';
+      chip.addEventListener('click', e=>{
+        e.stopPropagation();
+        const idx = trashState.trash.indexOf(f);
+        trashState.trash.splice(idx, 1);
+        trashState.desk.push(f);
+        renderTrash();
+        document.getElementById('trashStatus').innerHTML = `↩ 「${f.name}${f.ext}」 を デスクトップにもどしました！`;
+        document.getElementById('trashStatus').className = 'desk-status success';
+        updateTrashBtns();
+      });
+      contents.appendChild(chip);
+    });
+    updateTrashBtns();
+  }
+  function updateTrashBtns(){
+    document.getElementById('trashRestoreAll').disabled = trashState.trash.length === 0;
+    document.getElementById('trashEmpty').disabled = trashState.trash.length === 0;
+  }
+
+  const trashBin2 = document.getElementById('trashBin2');
+  trashBin2.addEventListener('dragover', e=>{ e.preventDefault(); trashBin2.classList.add('drop-target'); });
+  trashBin2.addEventListener('dragleave', ()=>trashBin2.classList.remove('drop-target'));
+  trashBin2.addEventListener('drop', e=>{
+    e.preventDefault();
+    trashBin2.classList.remove('drop-target');
+    const data = e.dataTransfer.getData('text/plain');
+    if(!data.startsWith('trash:')) return;
+    const id = data.slice(6);
+    const i = trashState.desk.findIndex(f=>f.id===id);
+    if(i<0) return;
+    const file = trashState.desk[i];
+    trashState.desk.splice(i, 1);
+    trashState.trash.push(file);
+    renderTrash();
+    document.getElementById('trashStatus').innerHTML = `🗑️ 「${file.name}${file.ext}」 を ゴミ箱に入れました。<br>下の <b>ファイル名のボタンをクリック</b> でもどせます。`;
+    document.getElementById('trashStatus').className = 'desk-status';
+  });
+
+  document.getElementById('trashReset').addEventListener('click', resetTrash);
+  document.getElementById('trashRestoreAll').addEventListener('click', ()=>{
+    trashState.desk = trashState.desk.concat(trashState.trash);
+    trashState.trash = [];
+    renderTrash();
+    document.getElementById('trashStatus').innerHTML = '🎉 ぜんぶ もとに戻しました！<b>「消しても、戻せる」</b> を体験できました。';
+    document.getElementById('trashStatus').className = 'desk-status success';
+  });
+  document.getElementById('trashEmpty').addEventListener('click', ()=>{
+    showConfirm({
+      emoji:'⚠️',
+      title:'ゴミ箱を 空にしますか？',
+      bodyHTML: `空にすると <b>${trashState.trash.length}個</b> のファイルが <b>完全に消えます</b>。<br>戻せなくなります。本当によいですか？`,
+      okLabel:'空にする',
+      cancelLabel:'やめる',
+      onOk: ()=>{
+        const n = trashState.trash.length;
+        trashState.trash = [];
+        renderTrash();
+        document.getElementById('trashStatus').innerHTML = `🗑️ ゴミ箱を空にしました。${n}個 のファイルは <b>完全に消えました</b>（練習なので大丈夫）。<br>授業で本物を消すときは、講師にひと声 かけましょう。`;
+        document.getElementById('trashStatus').className = 'desk-status';
+      }
+    });
+  });
+  resetTrash();
+
+  // ===== Help & keyboard =====
+  function showHelp(){
+    showInfo({
+      emoji:'⌨️',
+      title:'キーボードで 章を 移動',
+      bodyHTML:`
+        <div style="text-align:left;font-size:18px;line-height:2.2">
+          <div><b>↓ または スペース</b>　次の章へ</div>
+          <div><b>↑</b>　前の章へ</div>
+          <div><b>1 〜 ${targets.length}</b>　章番号で 直接ジャンプ</div>
+          <div><b>Esc</b>　このまどを とじる</div>
+        </div>`
+    });
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0, Math.min(targets.length-1, i)); targets[i].scrollIntoView({behavior:'smooth', block:'start'}); };
+    if(e.key==='?' || (e.key==='/' && e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){ const i = parseInt(e.key,10) - 1; if(i < targets.length){ e.preventDefault(); goto(i); return; } }
+    if(e.key === 'Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key === 'End'){ e.preventDefault(); goto(targets.length - 1); return; }
+    if(['ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); return; }
+    if(['ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); return; }
+  });
+</script>
+</body>
+</html>

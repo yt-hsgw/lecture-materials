@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第1回｜パソコンを使ってみよう</title>
+<style>
+  :root{
+    --primary:#2E7D32;
+    --secondary:#FFA000;
+    --accent:#5D4037;
+    --warn:#C62828;
+    --dark:#212121;
+    --light:#FFF8E1;
+    --panel:#FFFFFF;
+    --muted:#5F6368;
+    --shadow:0 4px 0 rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;font-size:18px}
+  body{
+    font-family:'Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.8;
+    font-size:1.1rem;
+  }
+  button,input,select,textarea{font:inherit}
+
+  .progress{position:fixed;top:0;left:0;height:8px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--warn));
+    z-index:100;transition:width .15s;}
+  .top-status{
+    position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.96);padding:10px 18px;border-radius:999px;
+    box-shadow:var(--shadow);font-size:1rem;font-weight:bold;
+  }
+  .top-status b{color:var(--primary)}
+
+  /* SIDE NAV — large */
+  .snav{position:fixed;right:18px;top:50%;transform:translateY(-50%);
+    z-index:80;display:flex;flex-direction:column;gap:10px;}
+  .snav a{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:white;border:3px solid var(--primary);color:var(--primary);
+    text-decoration:none;font-weight:bold;font-size:18px;
+    box-shadow:0 3px 8px rgba(0,0,0,.15);position:relative;
+    transition:transform .15s,background .15s,color .15s;
+  }
+  .snav a:hover,.snav a:focus{transform:translateX(-4px) scale(1.1);outline:none}
+  .snav a.active{background:var(--primary);color:white;transform:scale(1.18)}
+  .snav a > span:not(.ic){
+    position:absolute;right:calc(100% + 14px);top:50%;
+    transform:translateY(-50%) translateX(8px);
+    background:white;border:3px solid var(--primary);border-radius:999px;
+    padding:8px 16px;color:var(--dark);white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:16px;font-weight:bold;
+  }
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{
+    position:absolute;top:-9px;right:-9px;left:auto;
+    background:var(--secondary);width:24px;height:24px;
+    padding:0;border-radius:50%;border:2px solid white;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;line-height:1;
+    opacity:1;pointer-events:none;transform:none;color:white;
+  }
+  .snav-help{position:fixed;left:18px;bottom:18px;z-index:80;
+    background:rgba(255,255,255,.96);border:3px solid var(--primary);
+    color:var(--primary);font-weight:bold;
+    width:48px;height:48px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-family:inherit;
+    box-shadow:0 3px 8px rgba(0,0,0,.15);transition:all .15s;}
+  .snav-help:hover{background:var(--primary);color:white;transform:scale(1.1)}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);
+    display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px);}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:24px;padding:32px;
+    max-width:540px;width:100%;position:relative;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+    animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+    border:5px solid var(--secondary);}
+  @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-16px;right:-16px;
+    width:48px;height:48px;background:var(--warn);color:white;
+    border:5px solid white;border-radius:50%;
+    font-size:24px;cursor:pointer;font-family:inherit;font-weight:bold;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .15s;}
+  .modal-close:hover{transform:rotate(90deg) scale(1.1)}
+  .modal-emoji{font-size:80px;text-align:center;line-height:1;margin-bottom:8px;}
+  .modal-title{text-align:center;color:var(--primary);font-size:28px;margin-bottom:14px;font-weight:bold;}
+  .modal-body{font-size:18px;line-height:1.8;color:var(--dark);}
+  .modal-actions{display:flex;gap:12px;justify-content:center;margin-top:22px;flex-wrap:wrap;}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:14px 32px;
+    border-radius:14px;font-family:inherit;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .12s;}
+  .modal-btn:hover{transform:translateY(-2px)}
+
+  /* Hero */
+  .hero{
+    min-height:90vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:60px 24px;position:relative;
+    background:linear-gradient(135deg,#2E7D32 0%,#FFA000 100%);
+  }
+  .hero-inner{position:relative;z-index:1;max-width:920px}
+  .hero .label{display:inline-block;background:rgba(255,255,255,.25);
+    padding:10px 24px;border-radius:999px;font-weight:bold;margin-bottom:22px;
+    backdrop-filter:blur(4px);font-size:20px;}
+  .hero h1{font-size:clamp(48px,8vw,96px);line-height:1.15;margin-bottom:22px;
+    text-shadow:0 4px 12px rgba(0,0,0,.18);font-weight:bold;}
+  .hero p{font-size:clamp(20px,2.5vw,28px);opacity:.96;line-height:1.6}
+  .hero .em{font-size:clamp(60px,9vw,100px);margin-top:36px}
+
+  .scroll-hint{margin-top:34px;font-size:18px;opacity:.92}
+
+  /* Sections */
+  .section{padding:80px 28px;max-width:1080px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;
+    padding:8px 22px;border-radius:999px;font-weight:bold;font-size:18px;margin-bottom:18px;}
+  h2{font-size:clamp(32px,5vw,48px);color:var(--primary);line-height:1.3;margin-bottom:14px;font-weight:bold}
+  .lead{font-size:22px;color:var(--muted);margin-bottom:34px;line-height:1.7}
+  .divider{background:var(--accent);color:white;text-align:center;padding:64px 24px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:24px}
+  .divider h2{color:var(--secondary);font-size:clamp(36px,6vw,60px);margin-top:8px}
+
+  .grid{display:grid;gap:22px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .card{background:var(--panel);border-radius:18px;padding:26px;box-shadow:var(--shadow);font-size:1.05rem}
+  .card h3{color:var(--dark);font-size:24px;margin-bottom:10px}
+  .card.ok{border-left:10px solid var(--primary)}
+  .card.warn{border-left:10px solid var(--warn)}
+  .card.tip{border-left:10px solid var(--secondary);background:#FFFDF7}
+  .card .em{font-size:60px;line-height:1;margin-bottom:10px;display:block}
+
+  /* Mouse practice */
+  .practice{
+    background:white;border-radius:20px;padding:28px;box-shadow:var(--shadow);
+    margin:22px 0;
+  }
+  .practice h3{color:var(--primary);font-size:24px;margin-bottom:12px}
+  .practice .stage{
+    background:#F1F8E9;border-radius:14px;padding:24px;
+    min-height:240px;position:relative;
+    border:3px dashed #C8E6C9;
+    margin-top:14px;
+  }
+  .target{
+    position:absolute;border:none;cursor:pointer;
+    border-radius:50%;background:var(--secondary);color:white;
+    font-weight:bold;font-size:22px;
+    width:80px;height:80px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 0 rgba(0,0,0,.15);transition:all .15s;
+  }
+  .target:hover{transform:scale(1.05);background:var(--primary)}
+  .target.hit{background:var(--primary);transform:scale(0);opacity:0}
+  .practice-status{
+    margin-top:14px;font-size:18px;font-weight:bold;
+    background:#FFFDE7;padding:14px 18px;border-radius:12px;border:2px solid var(--secondary);
+    min-height:54px;
+  }
+  .practice-status.success{background:#E8F5E9;border-color:var(--primary);color:var(--primary)}
+  .practice-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+  .btn{
+    background:var(--primary);color:white;border:none;padding:14px 26px;
+    border-radius:14px;font-family:inherit;font-size:18px;font-weight:bold;cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .12s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn.gray{background:var(--muted)}
+
+  /* Right-click demo */
+  .ctx-stage{
+    background:#FAFAFA;border-radius:14px;padding:30px;text-align:center;
+    border:2px dashed #BDBDBD;cursor:context-menu;user-select:none;
+    position:relative;min-height:180px;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    font-size:18px;color:var(--muted);
+  }
+  .ctx-menu{
+    position:absolute;background:white;border:2px solid var(--accent);
+    border-radius:10px;padding:6px 0;min-width:180px;
+    box-shadow:0 8px 24px rgba(0,0,0,.2);
+    display:none;z-index:5;
+  }
+  .ctx-menu.show{display:block;animation:fadeIn .15s}
+  .ctx-menu .item{
+    padding:10px 18px;font-size:16px;color:var(--dark);cursor:pointer;
+  }
+  .ctx-menu .item:hover{background:var(--secondary);color:white}
+
+  /* Type practice */
+  .type-target{
+    background:#FFF3E0;border-radius:14px;padding:20px 26px;
+    font-size:36px;text-align:center;font-weight:bold;color:var(--accent);
+    margin-bottom:14px;letter-spacing:8px;
+  }
+  .type-input{
+    width:100%;border:3px solid #BDBDBD;border-radius:14px;
+    padding:18px 22px;font-size:28px;text-align:center;
+    background:white;outline:none;letter-spacing:6px;
+  }
+  .type-input:focus{border-color:var(--primary)}
+  .type-input.ok{border-color:var(--primary);background:#E8F5E9}
+  .type-input.partial{border-color:var(--secondary);background:#FFFDE7}
+  .type-feedback{
+    margin-top:14px;font-size:18px;font-weight:bold;min-height:32px;
+  }
+
+  /* Window demo */
+  .winframe{
+    background:white;border:3px solid #BDBDBD;border-radius:12px;
+    margin:20px auto;max-width:480px;overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,.12);transition:all .25s;
+  }
+  .winframe.minimized{transform:scale(.1) translateY(120px);opacity:0;height:0}
+  .winframe.maximized{max-width:96%}
+  .wintitle{
+    background:var(--accent);color:white;padding:10px 14px;
+    display:flex;justify-content:space-between;align-items:center;font-weight:bold;
+  }
+  .winbtns{display:flex;gap:6px}
+  .winbtn{
+    width:32px;height:32px;border:none;border-radius:6px;cursor:pointer;
+    color:white;font-weight:bold;font-size:16px;font-family:inherit;
+    background:rgba(255,255,255,.2);transition:background .15s;
+  }
+  .winbtn:hover{background:rgba(255,255,255,.4)}
+  .winbtn.close{background:var(--warn)}
+  .winbtn.close:hover{background:#B71C1C}
+  .winbody{padding:30px 20px;background:#FFF8E1;font-size:18px;text-align:center}
+  .winrestore{
+    margin-top:14px;text-align:center;
+  }
+  .winrestore button{display:none;background:var(--primary);color:white;border:none;
+    padding:12px 22px;border-radius:12px;font-weight:bold;cursor:pointer;font-size:16px;}
+  .winrestore button.show{display:inline-block}
+
+  /* Summary */
+  .summary{display:grid;gap:14px;margin-top:24px}
+  .summary-row{
+    background:white;border-radius:18px;padding:22px;
+    display:flex;align-items:center;gap:22px;box-shadow:var(--shadow);
+  }
+  .summary-row .num{
+    flex-shrink:0;width:56px;height:56px;background:var(--primary);
+    color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:bold;
+  }
+  .summary-row h3{font-size:22px}
+
+  /* Next */
+  .next{background:linear-gradient(135deg,var(--secondary) 0%,var(--accent) 100%);
+    color:white;text-align:center;padding:60px 28px;border-radius:24px;margin:32px 24px;}
+  .next .em{font-size:96px;line-height:1}
+  .next h2{color:white;font-size:clamp(28px,5vw,42px);margin:18px 0}
+  .next p{font-size:20px;opacity:.96}
+  footer{padding:50px 20px;text-align:center;color:var(--muted);font-size:16px}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:60px 18px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="top-status"><span>第1回</span> <b>パソコンを使ってみよう</b></div>
+
+<!-- side nav -->
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span><span class="ic">🌱</span></a>
+  <a href="#what">2<span>パソコンって？</span><span class="ic">💻</span></a>
+  <a href="#mouse">3<span>マウス練習</span><span class="ic">🖱️</span></a>
+  <a href="#keyboard">4<span>キーボード練習</span><span class="ic">⌨️</span></a>
+  <a href="#window">5<span>ウィンドウ操作</span><span class="ic">🪟</span></a>
+  <a href="#help">6<span>困ったとき</span><span class="ic">🆘</span></a>
+  <a href="#wrap">7<span>まとめ</span><span class="ic">📋</span></a>
+</nav>
+<button class="snav-help" id="snav-help" title="キーボードショートカット (?)" aria-label="キーボードショートカット">?</button>
+
+<!-- modal -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="とじる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかりました</button></div>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 高齢者向け パソコン教室</div>
+    <h1>パソコンを<br>使ってみよう</h1>
+    <p>ゆっくりで、大丈夫です。<br>「こわくない」 「こわれない」 をたしかめましょう。</p>
+    <div class="em">💻🖱️⌨️</div>
+    <div class="scroll-hint">下へすすみましょう</div>
+  </div>
+</header>
+
+<!-- ゴール -->
+<section class="section">
+  <span class="section-label">きょうのゴール</span>
+  <h2>5つの「できた」を作ります</h2>
+  <p class="lead">ひとつずつ、ゆっくり。となりの方と同じスピードでなくて大丈夫です。</p>
+  <div class="grid grid-3">
+    <div class="card"><span class="em">🔌</span><h3>電源を 入れる・切る</h3><p>あんぜんに 電源を扱う</p></div>
+    <div class="card"><span class="em">🖱️</span><h3>マウスを 使う</h3><p>クリック／ダブル／右クリック</p></div>
+    <div class="card"><span class="em">⌨️</span><h3>文字を 入力する</h3><p>おなまえを書ける</p></div>
+    <div class="card"><span class="em">🪟</span><h3>ウィンドウを 操作</h3><p>小さく・大きく・閉じる</p></div>
+    <div class="card"><span class="em">🆘</span><h3>困ったときの 戻し方</h3><p>あわてず 元に戻せる</p></div>
+  </div>
+</section>
+
+<!-- パソコンって？ -->
+<div class="divider" id="what" data-snav-target>
+  <div class="num">1.</div>
+  <h2>パソコンって なに？</h2>
+</div>
+
+<section class="section">
+  <h2>「個人で使える、新しい家電」</h2>
+  <p class="lead">ご家族と連絡したり、写真を見たり、しらべものをしたり — 暮らしの「ちょっと便利」を増やす道具です。</p>
+  <div class="grid grid-3">
+    <div class="card"><span class="em">📷</span><h3>写真</h3><p>家族の写真を 見る・送る</p></div>
+    <div class="card"><span class="em">📞</span><h3>連絡</h3><p>メール・ビデオ通話</p></div>
+    <div class="card"><span class="em">🍳</span><h3>しらべもの</h3><p>レシピ・行き方</p></div>
+    <div class="card"><span class="em">🎵</span><h3>音楽・動画</h3><p>好きなものを いつでも</p></div>
+    <div class="card"><span class="em">🏛️</span><h3>手続き</h3><p>役所・銀行も 少しずつ</p></div>
+    <div class="card"><span class="em">🖨️</span><h3>印刷</h3><p>年賀状・写真</p></div>
+  </div>
+  <div class="card tip" style="margin-top:20px">
+    <h3 style="color:var(--secondary)">💡 だいじなお話</h3>
+    <p style="font-size:20px"><b>普通に使う分には、まずこわれません。</b> 安心して触ってください。<br>
+    <b>「やってしまった！」と思っても、戻せる方法があります</b>。</p>
+  </div>
+</section>
+
+<!-- マウス練習 -->
+<div class="divider" id="mouse" data-snav-target>
+  <div class="num">2.</div>
+  <h2>マウスを 使ってみる</h2>
+</div>
+
+<section class="section">
+  <h2>3つの「クリック」を 練習</h2>
+  <p class="lead">下のボタンを押して練習しましょう。間違えても大丈夫、何度でもやり直せます。</p>
+
+  <div class="practice">
+    <h3>① シングルクリック練習</h3>
+    <p>下の <b>黄色い丸</b> を <b>1回ずつ</b> クリックしてください。全部で 5個です。</p>
+    <div class="stage" id="clickStage"></div>
+    <div class="practice-status" id="clickStatus">「はじめる」を押すと スタートします</div>
+    <div class="practice-actions">
+      <button class="btn" id="clickStart">はじめる</button>
+    </div>
+  </div>
+
+  <div class="practice">
+    <h3>② ダブルクリック練習</h3>
+    <p>真ん中の丸を <b>すばやく 2回</b>（とんとん）クリックしてください。</p>
+    <div class="stage" style="display:flex;align-items:center;justify-content:center" id="dblStage">
+      <button class="target" id="dblTarget" style="position:static">ダブル<br>クリック</button>
+    </div>
+    <div class="practice-status" id="dblStatus">そっと とんとん。間が空きすぎると反応しません。</div>
+    <div class="practice-actions">
+      <button class="btn gray" id="dblReset">もう一度</button>
+    </div>
+  </div>
+
+  <div class="practice">
+    <h3>③ 右クリック練習</h3>
+    <p>下の四角の中で <b>右クリック</b> してください。**メニュー** が出てきます。</p>
+    <div class="ctx-stage" id="ctxStage">
+      <span style="font-size:48px">📁</span>
+      <span>ここを 右クリック</span>
+      <div class="ctx-menu" id="ctxMenu">
+        <div class="item">ひらく</div>
+        <div class="item">名前の変更</div>
+        <div class="item">コピー</div>
+        <div class="item">削除</div>
+      </div>
+    </div>
+    <div class="practice-status" id="ctxStatus">どこか別の場所をクリックすれば メニューは消えます。</div>
+  </div>
+</section>
+
+<!-- キーボード練習 -->
+<div class="divider" id="keyboard" data-snav-target>
+  <div class="num">3.</div>
+  <h2>キーボードで 文字を 入力</h2>
+</div>
+
+<section class="section">
+  <h2>「こんにちは」 と 入力してみましょう</h2>
+  <p class="lead">下の白い四角の中をクリックして、ローマ字または日本語で「こんにちは」と入力してください。</p>
+  <div class="card">
+    <div class="type-target">こんにちは</div>
+    <input type="text" class="type-input" id="typeInput" placeholder="ここに入力（クリックしてから）" autocomplete="off">
+    <div class="type-feedback" id="typeFeedback">日本語入力モードに切り替えてから打ちましょう。</div>
+  </div>
+
+  <div class="grid grid-3" style="margin-top:24px">
+    <div class="card ok">
+      <h3>Enter</h3>
+      <p>「これで決定！」 のキー</p>
+    </div>
+    <div class="card ok">
+      <h3>Backspace</h3>
+      <p>1文字 けすキー</p>
+    </div>
+    <div class="card ok">
+      <h3>Space</h3>
+      <p>空白を入れるキー</p>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:20px">
+    <h3 style="color:var(--secondary)">💡 切り替えに困ったら</h3>
+    <p>Windowsは <b>「半角／全角」</b> キー、Macは <b>「英数」「かな」</b> キー。<br>
+    画面の <b>右下（Macは右上）</b> の <b>「あ」「A」</b> でいまの状態がわかります。</p>
+  </div>
+</section>
+
+<!-- ウィンドウ -->
+<div class="divider" id="window" data-snav-target>
+  <div class="num">4.</div>
+  <h2>ウィンドウ（窓）の 操作</h2>
+</div>
+
+<section class="section">
+  <h2>3つの ボタンを 試してみる</h2>
+  <p class="lead">右上の3つのボタンを、それぞれ押してみてください。</p>
+  <div class="winframe" id="winframe">
+    <div class="wintitle">
+      <span>📄 メモ — れんしゅう用</span>
+      <div class="winbtns">
+        <button class="winbtn" id="winMin" title="最小化">−</button>
+        <button class="winbtn" id="winMax" title="最大化">☐</button>
+        <button class="winbtn close" id="winClose" title="閉じる">×</button>
+      </div>
+    </div>
+    <div class="winbody">
+      <p>これは ウィンドウ の見本です。</p>
+      <p style="margin-top:10px;color:var(--muted);font-size:16px">右上のボタンを試してみましょう</p>
+    </div>
+  </div>
+  <div class="winrestore">
+    <button id="winRestore">⤴ 戻す（最小化を 元にもどす）</button>
+  </div>
+
+  <div class="grid grid-3" style="margin-top:30px">
+    <div class="card"><h3>− 最小化</h3><p style="color:var(--muted)">ウィンドウを <b>かくす</b>。下のバーから戻せます。</p></div>
+    <div class="card"><h3>☐ 最大化</h3><p style="color:var(--muted)">画面いっぱいに <b>広げる</b>。もう一度押すと元に。</p></div>
+    <div class="card warn"><h3>× 閉じる</h3><p style="color:var(--muted)">ウィンドウを <b>おわり</b> に。書きかけがあれば確認されます。</p></div>
+  </div>
+</section>
+
+<!-- 困ったとき -->
+<div class="divider" id="help" data-snav-target>
+  <div class="num">5.</div>
+  <h2>困ったときの 戻し方</h2>
+</div>
+
+<section class="section">
+  <h2>「あれ？」 と思ったら、4ステップ</h2>
+  <p class="lead">あわてず、ひとつずつ。たいていのことは、これで解決します。</p>
+  <div class="grid grid-2">
+    <div class="card ok"><h3>① 何もしない・あわてない</h3><p>5秒 待つ。読み込み中だっただけ、ということが多いです。</p></div>
+    <div class="card ok"><h3>② Esc キーを押す</h3><p>「やっぱり やめる」の合図。多くの場面で効きます。</p></div>
+    <div class="card ok"><h3>③ Ctrl + Z（Mac は ⌘ + Z）</h3><p>「ひとつ前にもどる」の呪文。文字でも操作でも。</p></div>
+    <div class="card warn"><h3>④ それでも → 講師を呼ぶ</h3><p>ひとりで詰まる時間がいちばん もったいないです。</p></div>
+  </div>
+
+  <div class="card" style="margin-top:30px;background:var(--primary);color:white;text-align:center;border:none">
+    <h3 style="color:var(--secondary);font-size:28px">いちばん大事なこと</h3>
+    <p style="font-size:24px;margin-top:10px"><b>「こまったら、ひとに きく」</b></p>
+  </div>
+</section>
+
+<!-- まとめ -->
+<div class="divider" id="wrap" data-snav-target>
+  <h2>まとめ</h2>
+</div>
+
+<section class="section">
+  <h2>きょう できるようになったこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>パソコンの 電源を 入れる・切る</h3><p style="color:var(--muted)">短く ぽちっと押すだけ</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>マウスで クリック・ダブル・右クリック</h3><p style="color:var(--muted)">3種類が使い分けられる</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>キーボードで 文字を入力</h3><p style="color:var(--muted)">日本語・英語の切り替えも</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>ウィンドウを 小さく・大きく・閉じる</h3><p style="color:var(--muted)">3つのボタンを使い分け</p></div></div>
+    <div class="summary-row"><div class="num">5</div><div><h3>困ったら Esc・Ctrl+Z・人に聞く</h3><p style="color:var(--muted)">あわてず、ひとつずつ</p></div></div>
+  </div>
+</section>
+
+<div class="next">
+  <div class="em">📁</div>
+  <h2>次回 ｜ ファイルとフォルダ</h2>
+  <p>写真や書類の整理。捨ててしまっても、戻せます。</p>
+</div>
+
+<footer>
+  高齢者向け パソコン教室 ／ 初級 第1回｜パソコンを使ってみよう
+</footer>
+
+<script>
+  // progress + scroll-spy
+  const progress = document.getElementById('progress');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.32;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  // Modal
+  const mb = document.getElementById('modal-bg');
+  const me = document.getElementById('modal-emoji');
+  const mt = document.getElementById('modal-title');
+  const mbody = document.getElementById('modal-body');
+  function showInfo({emoji='', title='', bodyHTML=''}){
+    me.textContent = emoji; me.style.display = emoji ? 'block' : 'none';
+    mt.textContent = title; mbody.innerHTML = bodyHTML;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+
+  // ===== Click practice =====
+  const clickStage = document.getElementById('clickStage');
+  const clickStatus = document.getElementById('clickStatus');
+  const clickStart = document.getElementById('clickStart');
+  let hits = 0, total = 5;
+
+  function placeTargets(){
+    clickStage.innerHTML = '';
+    hits = 0;
+    const rect = clickStage.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+    for(let i=0; i<total; i++){
+      const t = document.createElement('button');
+      t.className = 'target';
+      t.textContent = i+1;
+      const x = 20 + Math.random()*(w-120);
+      const y = 20 + Math.random()*(h-120);
+      t.style.left = x+'px';
+      t.style.top = y+'px';
+      t.addEventListener('click',()=>{
+        if(t.classList.contains('hit')) return;
+        t.classList.add('hit');
+        hits++;
+        if(hits === total){
+          clickStatus.textContent = '🎉 5個ぜんぶ クリックできました！すばらしい！';
+          clickStatus.classList.add('success');
+          clickStart.textContent = 'もう一度';
+        } else {
+          clickStatus.textContent = `あと ${total - hits} 個！`;
+          clickStatus.classList.remove('success');
+        }
+      });
+      clickStage.appendChild(t);
+    }
+  }
+  clickStart.addEventListener('click',()=>{
+    placeTargets();
+    clickStatus.textContent = `黄色い丸を順番にクリック！ あと ${total} 個`;
+    clickStatus.classList.remove('success');
+    clickStart.textContent = 'やり直す';
+  });
+
+  // ===== Double-click practice =====
+  const dblTarget = document.getElementById('dblTarget');
+  const dblStatus = document.getElementById('dblStatus');
+  const dblReset = document.getElementById('dblReset');
+  dblTarget.addEventListener('dblclick',()=>{
+    dblTarget.style.background = 'var(--primary)';
+    dblTarget.textContent = 'できた！';
+    dblStatus.textContent = '🎉 ダブルクリック成功！この感覚で OK です。';
+    dblStatus.classList.add('success');
+  });
+  dblTarget.addEventListener('click',(e)=>{
+    if(e.detail === 1){
+      // Single click — let user know to try double
+      setTimeout(()=>{
+        if(dblStatus.classList.contains('success')) return;
+        dblStatus.textContent = '1回押しました。続けて もう1回 すばやく！';
+        dblStatus.classList.remove('success');
+      }, 250);
+    }
+  });
+  dblReset.addEventListener('click',()=>{
+    dblTarget.style.background = '';
+    dblTarget.innerHTML = 'ダブル<br>クリック';
+    dblStatus.textContent = 'そっと とんとん。間が空きすぎると反応しません。';
+    dblStatus.classList.remove('success');
+  });
+
+  // ===== Right-click practice =====
+  const ctxStage = document.getElementById('ctxStage');
+  const ctxMenu = document.getElementById('ctxMenu');
+  const ctxStatus = document.getElementById('ctxStatus');
+  ctxStage.addEventListener('contextmenu',(e)=>{
+    e.preventDefault();
+    const rect = ctxStage.getBoundingClientRect();
+    ctxMenu.style.left = (e.clientX - rect.left) + 'px';
+    ctxMenu.style.top = (e.clientY - rect.top) + 'px';
+    ctxMenu.classList.add('show');
+    ctxStatus.textContent = '🎉 メニューが出ました！どこか別の場所をクリックすれば消えます。';
+    ctxStatus.classList.add('success');
+  });
+  document.addEventListener('click',(e)=>{
+    if(!ctxMenu.contains(e.target)){
+      ctxMenu.classList.remove('show');
+    }
+  });
+  ctxMenu.querySelectorAll('.item').forEach(i=>{
+    i.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      ctxStatus.textContent = `「${i.textContent}」を選びました（練習なので、本当には何もしません）`;
+      ctxMenu.classList.remove('show');
+    });
+  });
+
+  // ===== Type practice =====
+  const typeInput = document.getElementById('typeInput');
+  const typeFeedback = document.getElementById('typeFeedback');
+  const target = 'こんにちは';
+  typeInput.addEventListener('input',()=>{
+    const v = typeInput.value;
+    if(v === target){
+      typeInput.classList.remove('partial');
+      typeInput.classList.add('ok');
+      typeFeedback.innerHTML = '🎉 <b>せいかい！</b> ばっちり 入力できました。';
+      typeFeedback.style.color = 'var(--primary)';
+    } else if(target.startsWith(v) && v.length > 0){
+      typeInput.classList.add('partial');
+      typeInput.classList.remove('ok');
+      typeFeedback.textContent = `あと ${target.length - v.length} 文字！ そのまま続けて。`;
+      typeFeedback.style.color = 'var(--secondary)';
+    } else if(v.length === 0){
+      typeInput.classList.remove('partial','ok');
+      typeFeedback.textContent = '日本語入力モードに切り替えてから打ちましょう。';
+      typeFeedback.style.color = 'var(--muted)';
+    } else {
+      typeInput.classList.remove('partial','ok');
+      typeFeedback.textContent = 'うまくいかない時は、Backspace で消して、もう一度。';
+      typeFeedback.style.color = 'var(--warn)';
+    }
+  });
+
+  // ===== Window demo =====
+  const winframe = document.getElementById('winframe');
+  const winRestore = document.getElementById('winRestore');
+  document.getElementById('winMin').addEventListener('click',()=>{
+    winframe.classList.add('minimized');
+    winRestore.classList.add('show');
+  });
+  document.getElementById('winMax').addEventListener('click',()=>{
+    winframe.classList.toggle('maximized');
+  });
+  document.getElementById('winClose').addEventListener('click',()=>{
+    if(confirm('ウィンドウを閉じますか？\n（練習なので、戻すボタンが出ます）')){
+      winframe.style.display = 'none';
+      winRestore.classList.add('show');
+      winRestore.querySelector('button').textContent = '⤴ 戻す（再表示）';
+    }
+  });
+  winRestore.addEventListener('click',()=>{
+    winframe.classList.remove('minimized');
+    winframe.style.display = '';
+    winRestore.classList.remove('show');
+    winRestore.querySelector('button').textContent = '⤴ 戻す（最小化を 元にもどす）';
+  });
+
+  // Help & keyboard
+  function showHelp(){
+    showInfo({
+      emoji:'⌨️',
+      title:'キーボードで 章を 移動',
+      bodyHTML:`
+        <div style="text-align:left;font-size:18px;line-height:2.2">
+          <div><b>↓ または スペース</b>　次の章へ</div>
+          <div><b>↑</b>　前の章へ</div>
+          <div><b>1 〜 ${targets.length}</b>　章番号で 直接ジャンプ</div>
+          <div><b>Esc</b>　このまどを とじる</div>
+        </div>`
+    });
+  }
+  document.getElementById('snav-help').addEventListener('click', showHelp);
+
+  document.addEventListener('keydown',(e)=>{
+    if(e.key === 'Escape'){ closeModal(); return; }
+    if(e.target.matches('input,button,select,textarea')) return;
+    if(mb.classList.contains('show')) return;
+    const cur = navLinks.findIndex(a=>a.classList.contains('active'));
+    const idx = cur < 0 ? 0 : cur;
+    const goto = (i)=>{ i = Math.max(0, Math.min(targets.length-1, i)); targets[i].scrollIntoView({behavior:'smooth', block:'start'}); };
+    if(e.key==='?' || (e.key==='/' && e.shiftKey)){ e.preventDefault(); showHelp(); return; }
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(i < targets.length){ e.preventDefault(); goto(i); return; }
+    }
+    if(e.key === 'Home'){ e.preventDefault(); goto(0); return; }
+    if(e.key === 'End'){ e.preventDefault(); goto(targets.length - 1); return; }
+    if(['ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); goto(idx+1); return; }
+    if(['ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); goto(idx-1); return; }
+  });
+</script>
+</body>
+</html>
