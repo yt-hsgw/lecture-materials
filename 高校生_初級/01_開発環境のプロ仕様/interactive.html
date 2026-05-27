@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・初級 第1回｜開発環境のプロ仕様</title>
+<style>
+  :root{
+    --primary:#475569; --secondary:#F97316; --accent:#10B981;
+    --warn:#DC2626; --dark:#1E293B; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B;
+    --border:rgba(30,41,59,.10); --shadow:0 4px 12px rgba(30,41,59,.10);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));z-index:100;transition:width .15s;}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;
+    background:rgba(255,255,255,.95);padding:8px 16px;border-radius:8px;
+    box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border);}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--secondary);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,41,59,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8;color:var(--dark)}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#475569 0%,#1E293B 60%,#0F172A 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:18px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFF7ED}
+
+  /* === Tool: Setup Time Race === */
+  .race{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .race-row{display:grid;grid-template-columns:140px 1fr 100px;gap:12px;align-items:center;margin-bottom:14px}
+  .race-row .name{font-weight:700;font-size:14px}
+  .race-row .bar{height:24px;background:#E2E8F0;border-radius:6px;overflow:hidden;position:relative}
+  .race-row .bar > span{display:block;height:100%;background:var(--muted);transition:width .3s;border-radius:6px}
+  .race-row.docker .bar > span{background:linear-gradient(90deg,var(--accent),#06B6D4)}
+  .race-row.dotfiles .bar > span{background:linear-gradient(90deg,var(--secondary),#F59E0B)}
+  .race-row.manual .bar > span{background:var(--warn)}
+  .race-row .val{font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;font-weight:700;text-align:right}
+  .race-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px dashed #E2E8F0}
+  .race-controls button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;
+    cursor:pointer;font-weight:600;font-size:13px}
+  .race-controls button:hover{background:var(--dark)}
+  .race-controls .scenario{margin-right:auto;display:flex;align-items:center;gap:8px;font-size:13px}
+  .race-controls select{padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:6px;background:white;font-size:13px}
+
+  /* === Tool: Docker Compose Builder === */
+  .compose{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .compose-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.compose-grid{grid-template-columns:1fr}}
+  .compose-services{display:flex;flex-direction:column;gap:8px}
+  .service-tile{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F8FAFC;border-radius:8px;
+    border:2px solid transparent;cursor:pointer;transition:all .15s}
+  .service-tile.on{background:#ECFDF5;border-color:var(--accent)}
+  .service-tile .ico{font-size:24px}
+  .service-tile .info{flex:1}
+  .service-tile .nm{font-weight:700;font-size:14px}
+  .service-tile .desc{color:var(--muted);font-size:12px}
+  .service-tile .chk{width:24px;height:24px;border:2px solid var(--muted);border-radius:4px;
+    display:flex;align-items:center;justify-content:center;color:white;font-weight:bold}
+  .service-tile.on .chk{background:var(--accent);border-color:var(--accent)}
+  .service-tile.on .chk::before{content:'✓'}
+  .compose-yaml{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px 16px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.7;overflow-x:auto;max-height:380px;overflow-y:auto;white-space:pre}
+  .compose-yaml .k{color:#C4B5FD} .compose-yaml .s{color:#FDBA74} .compose-yaml .n{color:#6EE7B7} .compose-yaml .c{color:#94A3B8;font-style:italic}
+  .compose-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .compose-actions button{background:var(--accent);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+
+  /* === Tool: dotfiles Builder === */
+  .dotfiles{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .df-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .df-chips button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:6px 12px;
+    border-radius:999px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
+  .df-chips button.on{background:var(--primary);color:white;border-color:var(--primary)}
+  .df-tree{background:#F8FAFC;border-radius:8px;padding:14px;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-size:13px;line-height:1.8;border:1px solid var(--border);white-space:pre}
+  .df-tree .dir{color:var(--primary);font-weight:700}
+  .df-tree .file{color:var(--dark)}
+  .df-tree .ext{color:var(--muted);font-size:11px}
+  .df-warn{margin-top:12px;padding:10px 14px;background:#FEF2F2;border-left:4px solid var(--warn);border-radius:6px;
+    font-size:13px;color:#7F1D1D;display:none}
+  .df-warn.show{display:block}
+
+  /* === Tool: Pre-commit Simulator === */
+  .hooks{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .hooks-input{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .hooks-input button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .hooks-input button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+  .hooks-code{width:100%;min-height:120px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:var(--dark);resize:vertical}
+  .hooks-code:focus{outline:none;border-color:var(--primary);background:white}
+  .hooks-results{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+  .hook-line{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#F8FAFC;border-radius:6px;font-size:13px;
+    border-left:4px solid #CBD5E1;font-family:'JetBrains Mono','SF Mono',monospace}
+  .hook-line.pass{border-color:var(--accent);background:#ECFDF5}
+  .hook-line.fail{border-color:var(--warn);background:#FEF2F2}
+  .hook-line .nm{flex:1;font-weight:600}
+  .hook-line .st{font-weight:700;text-transform:uppercase;font-size:11px}
+  .hook-line.pass .st{color:#065F46}
+  .hook-line.fail .st{color:#7F1D1D}
+  .hooks-summary{margin-top:10px;padding:10px 14px;border-radius:6px;font-weight:700;font-size:14px}
+  .hooks-summary.pass{background:#ECFDF5;color:#065F46}
+  .hooks-summary.fail{background:#FEF2F2;color:#7F1D1D}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:7px 14px;
+    border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:white;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){
+    .snav{display:none}
+    .top-status{left:12px;right:12px;text-align:center;top:14px}
+    .section{padding:56px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>初級 第1回</span> <b>開発環境のプロ仕様</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#race">2<span>環境構築タイム</span><span class="ic">⏱️</span></a>
+  <a href="#compose">3<span>Docker Compose</span><span class="ic">🐳</span></a>
+  <a href="#dotfiles">4<span>dotfiles</span><span class="ic">📁</span></a>
+  <a href="#hooks">5<span>pre-commit</span><span class="ic">🔒</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#wrap">7<span>まとめ</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 高校生プログラミング塾・初級</div>
+    <h1>開発環境の<br>プロ仕様</h1>
+    <p>環境を <b>コード化</b> して、 PC が 変わっても 30分で 再現！</p>
+    <div class="em">💻⚙️🐳</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. 環境構築タイム レース
+     ======================================================== -->
+<div class="divider" id="race" data-snav-target>
+  <div class="num">01.</div>
+  <h2>環境構築タイム 比較</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>「1日」 と 「30分」 の 差</h2>
+  <p class="lead">3つ の セットアップ 方式 で 同じ プロジェクト を 立ち上げ、 所要時間 を 比較してみよう。 シナリオ を 切り替えて トラブル発生時 も 見られる。</p>
+
+  <div class="race">
+    <div class="race-row manual" aria-label="手動セットアップ">
+      <div class="name">📜 手動</div>
+      <div class="bar"><span id="manualBar"></span></div>
+      <div class="val" id="manualVal">--</div>
+    </div>
+    <div class="race-row docker" aria-label="Docker Compose セットアップ">
+      <div class="name">🐳 Docker</div>
+      <div class="bar"><span id="dockerBar"></span></div>
+      <div class="val" id="dockerVal">--</div>
+    </div>
+    <div class="race-row dotfiles" aria-label="dotfiles + Docker セットアップ">
+      <div class="name">📁 dotfiles+Docker</div>
+      <div class="bar"><span id="dotBar"></span></div>
+      <div class="val" id="dotVal">--</div>
+    </div>
+
+    <div class="race-controls">
+      <div class="scenario">
+        <label for="raceScenario">シナリオ:</label>
+        <select id="raceScenario" aria-label="シナリオ選択">
+          <option value="normal">新人 初日（普通）</option>
+          <option value="trouble">Node バージョン不一致</option>
+          <option value="newpc">PC を 入れ替えた 翌日</option>
+        </select>
+      </div>
+      <button onclick="runRace()" aria-label="レース開始">▶ レース開始</button>
+      <button class="ghost" onclick="resetRace()" aria-label="リセット" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border)">リセット</button>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:14px">
+    <h3>💡 体感 ポイント</h3>
+    <p style="font-size:14px;color:var(--muted)">手動 は <b>各人の 環境差</b> で 倍以上 時間 が ブレる。 Docker は OS 差 を 吸収。 dotfiles を 重ねると <b>個人設定 まで 数分</b> で 復元。</p>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. Docker Compose ビルダー
+     ======================================================== -->
+<div class="divider" id="compose" data-snav-target>
+  <div class="num">02.</div>
+  <h2>Docker Compose を 組み立てる</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>サービス を 選んで YAML 生成</h2>
+  <p class="lead">必要 な サービス（DB / Redis / Worker など）を チェック すると、 対応 する <code>docker-compose.yml</code> を 即時生成。 ボタン で クリップボード コピー も 可能。</p>
+
+  <div class="compose">
+    <div class="compose-grid">
+      <div>
+        <h3 style="font-size:14px;color:var(--muted);margin-bottom:8px">サービス を 選択</h3>
+        <div class="compose-services" id="services"></div>
+      </div>
+      <div>
+        <h3 style="font-size:14px;color:var(--muted);margin-bottom:8px">生成 された YAML</h3>
+        <div class="compose-yaml" id="composeYaml" aria-label="生成されたYAML"></div>
+        <div class="compose-actions">
+          <button onclick="copyCompose()" aria-label="クリップボードへコピー">📋 コピー</button>
+          <button onclick="downloadCompose()" aria-label="ダウンロード" style="background:var(--secondary);color:var(--dark)">⬇️ ダウンロード</button>
+          <button onclick="info('🐳','docker compose up','<code>docker compose up</code> 1行 で 全 サービス が 起動！<br><br>停止 は <code>docker compose down</code>、<br>バックグラウンド は <code>-d</code> オプション。')" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border)" aria-label="使い方を見る">💡 使い方</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. dotfiles ビルダー
+     ======================================================== -->
+<div class="divider" id="dotfiles" data-snav-target>
+  <div class="num">03.</div>
+  <h2>dotfiles リポジトリ 設計</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>個人設定 を Git管理 する 構成</h2>
+  <p class="lead">含めたい 設定 を 選ぶ と ディレクトリ 構成 が 生成される。 <b>秘密情報</b> を 選択 すると 警告 が 出るので、 必ず 除外 を 学ぼう。</p>
+
+  <div class="dotfiles">
+    <div class="df-chips" id="dfChips" role="group" aria-label="dotfiles 項目選択"></div>
+    <div class="df-tree" id="dfTree" aria-label="生成された ディレクトリ ツリー"></div>
+    <div class="df-warn" id="dfWarn" role="alert">⚠️ <b>.ssh/id_rsa（秘密鍵）や .env（API キー）を 含めて は いけません</b>。 GitHub に push すると 即座 に 漏洩 します。 <code>.gitignore</code> で 必ず 除外。</div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. pre-commit シミュレータ
+     ======================================================== -->
+<div class="divider" id="hooks" data-snav-target>
+  <div class="num">04.</div>
+  <h2>pre-commit の 動き</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>コミット前 に 自動 チェック</h2>
+  <p class="lead">下 の コード に わざと エラー を 入れて 「コミット 実行」 ボタン を 押そう。 lint / format / 秘密情報検出 が 走る 様子 を 再現します。</p>
+
+  <div class="hooks">
+    <label for="hookCode" style="font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block">コミット する コード（編集可）</label>
+    <textarea id="hookCode" class="hooks-code" aria-label="コミットするコード">// example.js
+function greet(name){
+  console.log('Hello, ' + name)
+}
+const API_KEY = "sk-1234567890abcdef"  // ← 危険！
+greet('Alice')   </textarea>
+
+    <div class="hooks-input">
+      <button onclick="runHooks()" aria-label="コミット実行">▶ git commit -m "test"</button>
+      <button class="ghost" onclick="resetHook('clean')" aria-label="クリーンなコードを読み込み">😇 クリーンな例</button>
+      <button class="ghost" onclick="resetHook('messy')" aria-label="汚いコードを読み込み">😱 汚い例</button>
+      <button class="ghost" onclick="resetHook('secret')" aria-label="秘密情報入りのコードを読み込み">🔐 秘密情報入り</button>
+    </div>
+
+    <div class="hooks-results" id="hooksResults"></div>
+    <div id="hooksSummary"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="b">
+      <div class="q">Q1. 環境構築 が README ベース だと 起こりやすい 問題 は？</div>
+      <div class="opts">
+        <button data-c="a">README が 短すぎる</button>
+        <button data-c="b">暗黙 の 前提（OSバージョン 等）で つまづく</button>
+        <button data-c="c">README が 絵文字 不足</button>
+      </div>
+      <div class="ex">💡 Dockerfile に すると 暗黙の 前提 が 全部 明示され、 CI が 失敗 する ので 古く ならない。</div>
+    </div>
+    <div class="qrow" data-answer="c">
+      <div class="q">Q2. dotfiles リポジトリ に **含めて は いけない** ものは？</div>
+      <div class="opts">
+        <button data-c="a">.zshrc</button>
+        <button data-c="b">.gitconfig</button>
+        <button data-c="c">.ssh/id_rsa（秘密鍵）</button>
+        <button data-c="d">Brewfile</button>
+      </div>
+      <div class="ex">💡 秘密鍵・API キー・パスワード は 絶対 NG。 GitHub に push した 瞬間 に 世界中 に 公開。</div>
+    </div>
+    <div class="qrow" data-answer="a">
+      <div class="q">Q3. pre-commit が 走る タイミング は？</div>
+      <div class="opts">
+        <button data-c="a">git commit を 実行 した 直後</button>
+        <button data-c="b">git push を 実行 した 直後</button>
+        <button data-c="c">ファイル を 保存 した 瞬間</button>
+        <button data-c="d">ブラウザ を 開いた 時</button>
+      </div>
+      <div class="ex">💡 pre-commit ＝ commit の 「pre」（直前）。 lint / format / 秘密検出 を フックして、 通らなければ commit できない。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. まとめ
+     ======================================================== -->
+<div class="divider" id="wrap" data-snav-target>
+  <div class="num">06.</div>
+  <h2>きょうのまとめ</h2>
+</div>
+
+<section class="section">
+  <h2>おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>🐳 環境 を コード化</h3><p style="color:var(--muted);font-size:14px">Dockerfile / docker-compose / devcontainer.json で 再現可能。</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>📁 設定 を Git管理</h3><p style="color:var(--muted);font-size:14px">dotfiles リポジトリ で PC を 入れ替えても 同じ 環境（秘密情報 は 除外）。</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🔒 自動 ガード</h3><p style="color:var(--muted);font-size:14px">pre-commit で lint / format / 秘密検出 を コミット前 に 強制。</p></div></div>
+  </div>
+</section>
+
+<footer>高校生プログラミング塾 ／ 初級 第1回｜開発環境のプロ仕様</footer>
+
+<script>
+  /* === 共通: 進捗・snav・モーダル・トースト === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  /* === 1. Setup Time Race === */
+  const RACE_DATA = {
+    normal:   { manual: 480, docker: 30, dotfiles: 8  }, // 分
+    trouble:  { manual: 720, docker: 35, dotfiles: 10 },
+    newpc:    { manual: 600, docker: 60, dotfiles: 12 },
+  };
+  function runRace(){
+    const sc = document.getElementById('raceScenario').value;
+    const d = RACE_DATA[sc];
+    const max = d.manual;
+    function animate(id, valId, target, label){
+      const bar = document.getElementById(id);
+      const val = document.getElementById(valId);
+      bar.style.width = '0%';
+      val.textContent = '0' + label;
+      let cur = 0;
+      const step = target/40;
+      const timer = setInterval(()=>{
+        cur += step;
+        if(cur >= target){ cur = target; clearInterval(timer); }
+        bar.style.width = (cur/max*100) + '%';
+        val.textContent = Math.round(cur) + label;
+      }, 25);
+    }
+    animate('manualBar','manualVal', d.manual, '分');
+    animate('dockerBar','dockerVal', d.docker, '分');
+    animate('dotBar','dotVal',       d.dotfiles, '分');
+    setTimeout(()=>{
+      const ratio = Math.round(d.manual / d.dotfiles);
+      showToast(`📊 dotfiles+Docker は 手動 の 約 ${ratio}倍 速い！`);
+    }, 1200);
+  }
+  function resetRace(){
+    ['manualBar','dockerBar','dotBar'].forEach(id => document.getElementById(id).style.width = '0%');
+    ['manualVal','dockerVal','dotVal'].forEach(id => document.getElementById(id).textContent = '--');
+  }
+  runRace();
+
+  /* === 2. Docker Compose Builder === */
+  const SERVICES = [
+    { id:'app',    ico:'🟦', nm:'app (Next.js)',  desc:'Web アプリ本体',     enabled:true },
+    { id:'db',     ico:'🗄️', nm:'libsql / Turso', desc:'軽量 SQL DB',         enabled:true },
+    { id:'redis',  ico:'🔴', nm:'redis',          desc:'キャッシュ / セッション', enabled:false },
+    { id:'worker', ico:'⚙️', nm:'worker',         desc:'バッチ / キュー 処理',  enabled:false },
+    { id:'mail',   ico:'📧', nm:'mailhog',        desc:'開発用 メール サーバー', enabled:false },
+    { id:'minio',  ico:'📦', nm:'minio',          desc:'S3 互換 ストレージ',   enabled:false },
+  ];
+  function renderServices(){
+    const wrap = document.getElementById('services');
+    wrap.innerHTML = '';
+    SERVICES.forEach(s => {
+      const t = document.createElement('div');
+      t.className = 'service-tile' + (s.enabled ? ' on' : '');
+      t.setAttribute('role','checkbox');
+      t.setAttribute('aria-checked', s.enabled);
+      t.setAttribute('aria-label', s.nm);
+      t.innerHTML = `<span class="ico" aria-hidden="true">${s.ico}</span>
+        <div class="info"><div class="nm">${s.nm}</div><div class="desc">${s.desc}</div></div>
+        <div class="chk" aria-hidden="true"></div>`;
+      t.addEventListener('click', () => { s.enabled = !s.enabled; renderServices(); renderYaml(); });
+      wrap.appendChild(t);
+    });
+  }
+  function renderYaml(){
+    const enabled = SERVICES.filter(s => s.enabled);
+    let yaml = '<span class="c"># 自動生成 された docker-compose.yml</span>\n';
+    yaml += '<span class="k">services:</span>\n';
+    enabled.forEach(s => {
+      if(s.id === 'app') {
+        yaml += '  <span class="k">app:</span>\n';
+        yaml += '    <span class="k">build:</span> <span class="s">.</span>\n';
+        yaml += '    <span class="k">ports:</span> [<span class="s">"3000:3000"</span>]\n';
+        yaml += '    <span class="k">environment:</span>\n';
+        if(enabled.find(e=>e.id==='db'))    yaml += '      <span class="k">DATABASE_URL:</span> <span class="s">"libsql://db:8080"</span>\n';
+        if(enabled.find(e=>e.id==='redis')) yaml += '      <span class="k">REDIS_URL:</span> <span class="s">"redis://redis:6379"</span>\n';
+        const deps = enabled.filter(e => ['db','redis'].includes(e.id)).map(e => e.id);
+        if(deps.length) yaml += '    <span class="k">depends_on:</span> [' + deps.join(', ') + ']\n';
+      } else if(s.id === 'db') {
+        yaml += '  <span class="k">db:</span>\n';
+        yaml += '    <span class="k">image:</span> <span class="s">"ghcr.io/tursodatabase/libsql-server:latest"</span>\n';
+        yaml += '    <span class="k">ports:</span> [<span class="s">"8080:8080"</span>]\n';
+      } else if(s.id === 'redis') {
+        yaml += '  <span class="k">redis:</span>\n';
+        yaml += '    <span class="k">image:</span> redis:<span class="n">7</span>-alpine\n';
+        yaml += '    <span class="k">ports:</span> [<span class="s">"6379:6379"</span>]\n';
+      } else if(s.id === 'worker') {
+        yaml += '  <span class="k">worker:</span>\n';
+        yaml += '    <span class="k">build:</span> <span class="s">.</span>\n';
+        yaml += '    <span class="k">command:</span> <span class="s">"node dist/worker.js"</span>\n';
+        yaml += '    <span class="k">depends_on:</span> [redis]\n';
+      } else if(s.id === 'mail') {
+        yaml += '  <span class="k">mailhog:</span>\n';
+        yaml += '    <span class="k">image:</span> mailhog/mailhog\n';
+        yaml += '    <span class="k">ports:</span> [<span class="s">"1025:1025"</span>, <span class="s">"8025:8025"</span>]\n';
+      } else if(s.id === 'minio') {
+        yaml += '  <span class="k">minio:</span>\n';
+        yaml += '    <span class="k">image:</span> minio/minio\n';
+        yaml += '    <span class="k">command:</span> <span class="s">"server /data"</span>\n';
+        yaml += '    <span class="k">ports:</span> [<span class="s">"9000:9000"</span>]\n';
+      }
+    });
+    if(!enabled.length) yaml += '  <span class="c"># （サービス未選択）</span>\n';
+    document.getElementById('composeYaml').innerHTML = yaml;
+  }
+  function plainYaml(){
+    return document.getElementById('composeYaml').textContent;
+  }
+  function copyCompose(){
+    navigator.clipboard.writeText(plainYaml()).then(
+      () => showToast('📋 コピー しました'),
+      () => showToast('⚠️ コピー 失敗（手動 で 選択 してください）')
+    );
+  }
+  function downloadCompose(){
+    const blob = new Blob([plainYaml()], {type:'text/yaml'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'docker-compose.yml';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  renderServices(); renderYaml();
+
+  /* === 3. dotfiles Builder === */
+  const DF_ITEMS = [
+    { id:'zshrc',     nm:'.zshrc',         safe:true,  desc:'シェル設定' },
+    { id:'gitconfig', nm:'.gitconfig',     safe:true,  desc:'Git ユーザー設定' },
+    { id:'vimrc',     nm:'.vimrc',         safe:true,  desc:'Vim 設定' },
+    { id:'brewfile',  nm:'Brewfile',       safe:true,  desc:'インストール する アプリ' },
+    { id:'vscode',    nm:'vscode/',        safe:true,  desc:'VS Code 設定' },
+    { id:'starship',  nm:'starship.toml',  safe:true,  desc:'プロンプト' },
+    { id:'sshkey',    nm:'.ssh/id_rsa',    safe:false, desc:'⚠️ SSH 秘密鍵' },
+    { id:'env',       nm:'.env',           safe:false, desc:'⚠️ API キー' },
+    { id:'history',   nm:'.zsh_history',   safe:false, desc:'⚠️ コマンド履歴' },
+  ];
+  const dfState = {};
+  function renderDfChips(){
+    const wrap = document.getElementById('dfChips');
+    wrap.innerHTML = '';
+    DF_ITEMS.forEach(item => {
+      const b = document.createElement('button');
+      b.textContent = item.nm + (item.safe ? '' : ' ⚠️');
+      b.className = dfState[item.id] ? 'on' : '';
+      b.setAttribute('aria-pressed', !!dfState[item.id]);
+      b.setAttribute('aria-label', item.nm + ' を ' + (dfState[item.id] ? '除外' : '追加'));
+      b.title = item.desc;
+      b.addEventListener('click', () => {
+        dfState[item.id] = !dfState[item.id];
+        renderDfChips(); renderDfTree();
+      });
+      wrap.appendChild(b);
+    });
+    // デフォルトで安全な6個を初期選択
+    if(Object.keys(dfState).length === 0){
+      ['zshrc','gitconfig','vimrc','brewfile','vscode','starship'].forEach(id => dfState[id] = true);
+      renderDfChips(); renderDfTree();
+    }
+  }
+  function renderDfTree(){
+    const sel = DF_ITEMS.filter(i => dfState[i.id]);
+    const hasUnsafe = sel.some(i => !i.safe);
+    let tree = '<span class="dir">~/dotfiles/</span>\n';
+    tree += '├── <span class="file">README.md</span>            <span class="ext"># 使い方</span>\n';
+    tree += '├── <span class="file">install.sh</span>           <span class="ext"># セットアップ自動化</span>\n';
+    sel.forEach((item, i) => {
+      const last = i === sel.length - 1;
+      const branch = last ? '└── ' : '├── ';
+      const cls = item.safe ? 'file' : 'file" style="color:var(--warn)';
+      tree += branch + '<span class="' + cls + '">' + item.nm + '</span>\n';
+    });
+    document.getElementById('dfTree').innerHTML = tree;
+    document.getElementById('dfWarn').classList.toggle('show', hasUnsafe);
+  }
+  renderDfChips();
+
+  /* === 4. pre-commit Simulator === */
+  const HOOK_PRESETS = {
+    clean: `function greet(name){
+  return 'Hello, ' + name;
+}
+
+module.exports = { greet };
+`,
+    messy: `function   greet(name){
+console.log('Hello, '+name)
+   return name
+}
+const   x=1
+`,
+    secret: `const API_KEY = "sk-1234567890abcdef"
+const PASSWORD = "admin123"
+function login(){
+  return fetch('/api', { headers: { Authorization: API_KEY }})
+}
+`,
+  };
+  function resetHook(k){
+    document.getElementById('hookCode').value = HOOK_PRESETS[k];
+    document.getElementById('hooksResults').innerHTML = '';
+    document.getElementById('hooksSummary').innerHTML = '';
+  }
+  function runHooks(){
+    const code = document.getElementById('hookCode').value;
+    const checks = [
+      {
+        nm: 'trailing-whitespace',
+        run: () => /[ \t]+\n/.test(code) ? 'FAIL: 行末 に 空白 が ある' : null,
+      },
+      {
+        nm: 'end-of-file-fixer',
+        run: () => /\n$/.test(code) ? null : 'FAIL: ファイル末尾 に 改行 が ない',
+      },
+      {
+        nm: 'no-console',
+        run: () => /\bconsole\.(log|debug)\b/.test(code) ? 'FAIL: console.log を 削除 してください' : null,
+      },
+      {
+        nm: 'detect-private-key',
+        run: () => /sk-[a-zA-Z0-9]{6,}|BEGIN .+ PRIVATE KEY/.test(code) ? 'FAIL: API キー っぽい 文字列 を 検出！ .env に 移動' : null,
+      },
+      {
+        nm: 'no-hardcoded-password',
+        run: () => /\b(PASSWORD|SECRET|TOKEN)\s*=\s*["'][^"']+["']/i.test(code) ? 'FAIL: ハードコード された 秘密情報' : null,
+      },
+      {
+        nm: 'prettier-format',
+        run: () => {
+          if(/[a-zA-Z]\s{2,}=/.test(code) || /\(\s+[a-zA-Z]/.test(code)) return 'FAIL: フォーマット が 揃って いない（prettier --write で 修正）';
+          return null;
+        },
+      },
+    ];
+    const wrap = document.getElementById('hooksResults');
+    wrap.innerHTML = '';
+    let pass = 0, fail = 0;
+    checks.forEach(c => {
+      const err = c.run();
+      const line = document.createElement('div');
+      line.className = 'hook-line ' + (err ? 'fail' : 'pass');
+      line.innerHTML = `<span class="nm">${c.nm}</span><span class="st">${err ? 'fail' : 'pass'}</span>`;
+      if(err){
+        const detail = document.createElement('div');
+        detail.style.fontSize = '12px';
+        detail.style.color = 'var(--warn)';
+        detail.style.marginTop = '4px';
+        detail.style.paddingLeft = '14px';
+        detail.textContent = '→ ' + err;
+        line.appendChild(detail);
+        fail++;
+      } else { pass++; }
+      wrap.appendChild(line);
+    });
+    const sum = document.getElementById('hooksSummary');
+    if(fail === 0){
+      sum.innerHTML = '<div class="hooks-summary pass">✅ ' + pass + ' / ' + checks.length + ' PASS — git commit 成功！</div>';
+      showToast('✅ コミット 成功');
+    } else {
+      sum.innerHTML = '<div class="hooks-summary fail">❌ ' + fail + ' 件 失敗 — コミット は ブロック されました</div>';
+      showToast('❌ ' + fail + ' 件 修正 が 必要');
+    }
+  }
+  runHooks();
+
+  /* === 5. Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){
+          b.classList.add('right');
+          showToast('せいかい！ 🎉');
+        } else {
+          b.classList.add('wrong');
+          row.querySelector(`button[data-c="${ans}"]`).classList.add('right');
+        }
+        row.classList.add('answered');
+      });
+    });
+  });
+</script>
+</body>
+</html>

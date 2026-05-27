@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・初級 第2回｜型のある世界</title>
+<style>
+  :root{
+    --primary:#475569; --secondary:#F97316; --accent:#10B981;
+    --warn:#DC2626; --dark:#1E293B; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B;
+    --border:rgba(30,41,59,.10); --shadow:0 4px 12px rgba(30,41,59,.10);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --code-key:#C4B5FD; --code-str:#FDBA74; --code-num:#6EE7B7;
+    --code-com:#94A3B8; --code-type:#7DD3FC; --code-err:#FCA5A5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--secondary);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,41,59,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#475569 0%,#1E293B 60%,#0F172A 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:18px;margin-bottom:8px;font-weight:700}
+  .card.warn{border-left:5px solid var(--warn);background:#FEF2F2}
+  .card.ok{border-left:5px solid var(--accent);background:#ECFDF5}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFF7ED}
+
+  /* === Tool: TS Inference Playground === */
+  .infer{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .infer-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.infer-grid{grid-template-columns:1fr}}
+  .infer-input{display:flex;flex-direction:column}
+  .infer-input label{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .infer-input textarea{font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:var(--dark);
+    resize:vertical;min-height:200px}
+  .infer-input textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .infer-output{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px 16px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto;
+    min-height:200px;white-space:pre-wrap}
+  .infer-output .k{color:var(--code-key)} .infer-output .s{color:var(--code-str)}
+  .infer-output .n{color:var(--code-num)} .infer-output .c{color:var(--code-com);font-style:italic}
+  .infer-output .t{color:var(--code-type);font-weight:600}
+  .infer-output .e{color:var(--code-err)}
+  .infer-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .infer-presets button{background:#F1F5F9;border:1px solid var(--border);color:var(--primary);
+    padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+  .infer-presets button:hover{background:var(--primary);color:white}
+
+  /* === Tool: Zod Validator === */
+  .zod{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .zod-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.zod-grid{grid-template-columns:1fr}}
+  .zod-pane label{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block}
+  .zod-pane textarea{width:100%;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:var(--dark);
+    resize:vertical;min-height:200px}
+  .zod-pane textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .zod-status{margin-top:12px;padding:12px 16px;border-radius:8px;font-weight:600;font-size:14px}
+  .zod-status.ok{background:#ECFDF5;border-left:4px solid var(--accent);color:#065F46}
+  .zod-status.ng{background:#FEF2F2;border-left:4px solid var(--warn);color:#7F1D1D}
+  .zod-status ul{margin:8px 0 0 18px;font-weight:500;font-size:13px}
+
+  /* === Tool: any vs unknown === */
+  .auv{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .auv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.auv-grid{grid-template-columns:1fr}}
+  .auv-pane{padding:18px;border-radius:10px;border:2px solid var(--border)}
+  .auv-pane.any{background:#FEF2F2;border-color:#FECACA}
+  .auv-pane.unknown{background:#ECFDF5;border-color:#A7F3D0}
+  .auv-pane h3{font-size:16px;margin-bottom:8px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .auv-pane.any h3{color:var(--warn)}
+  .auv-pane.unknown h3{color:#065F46}
+  .auv-pane pre{background:var(--code-bg);color:var(--code-text);padding:12px;border-radius:6px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.7;overflow-x:auto;margin-top:8px}
+  .auv-result{margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px}
+  .auv-result.pass{background:#D1FAE5;color:#065F46}
+  .auv-result.crash{background:#FEE2E2;color:#7F1D1D}
+  .auv-input{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .auv-input label{font-weight:600;font-size:13px;color:var(--muted)}
+  .auv-input input{padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;font-family:'JetBrains Mono','SF Mono',monospace}
+  .auv-input input:focus{outline:none;border-color:var(--primary);background:white}
+
+  /* === Tool: Type Guard Trainer === */
+  .guard{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .guard-task{padding:12px 16px;background:#F8FAFC;border-radius:8px;margin-bottom:12px;border-left:4px solid var(--primary)}
+  .guard-task .q{font-weight:700;font-size:14px;margin-bottom:6px}
+  .guard-task .desc{font-size:13px;color:var(--muted)}
+  .guard textarea{width:100%;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:var(--dark);
+    resize:vertical;min-height:140px}
+  .guard textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .guard-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .guard-actions button{background:var(--primary);color:white;border:none;border-radius:6px;
+    padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .guard-actions button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+  .guard-result{margin-top:12px;padding:12px 16px;border-radius:8px;display:none;font-size:13px;line-height:1.7}
+  .guard-result.show{display:block}
+  .guard-result.pass{background:#ECFDF5;border-left:4px solid var(--accent);color:#065F46}
+  .guard-result.fail{background:#FEF2F2;border-left:4px solid var(--warn);color:#7F1D1D}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:white;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>初級 第2回</span> <b>型のある世界</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#infer">2<span>型推論</span><span class="ic">📐</span></a>
+  <a href="#zod">3<span>Zod 検証</span><span class="ic">🛡️</span></a>
+  <a href="#auv">4<span>any vs unknown</span><span class="ic">⚠️</span></a>
+  <a href="#guard">5<span>型ガード 練習</span><span class="ic">🎯</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#wrap">7<span>まとめ</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 高校生プログラミング塾・初級</div>
+    <h1>型のある<br>世界</h1>
+    <p>動的型 の 自由さ の 裏側 を 体感、 型 を <b>設計の 道具</b> に</p>
+    <div class="em">📐🛡️🎯</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. TS 型推論 Playground
+     ======================================================== -->
+<div class="divider" id="infer" data-snav-target>
+  <div class="num">01.</div>
+  <h2>TypeScript 型推論 Playground</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>変数 から TS が 推論 する 型</h2>
+  <p class="lead">左 に JS / TS コード を 書く と、 右 に **TypeScript が 推論 した 型** が 表示 されます。 「`let x = 1`」 と 書くだけ で `number` と 推論 される 様子 を 体感。</p>
+
+  <div class="infer">
+    <div class="infer-grid">
+      <div class="infer-input">
+        <label for="inferCode">📝 コード</label>
+        <textarea id="inferCode" spellcheck="false">const name = "Alice";
+const age = 17;
+const tags = ["js", "ts"];
+const user = { name, age };
+
+function greet(u) {
+  return "Hello, " + u.name;
+}
+
+const ok = age > 13;
+const nothing = null;
+</textarea>
+      </div>
+      <div>
+        <label for="inferOut" style="font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block">📊 推論 結果</label>
+        <div id="inferOut" class="infer-output" aria-label="推論された型一覧"></div>
+      </div>
+    </div>
+    <div class="infer-presets" role="group" aria-label="プリセット">
+      <span style="font-size:12px;color:var(--muted);align-self:center;margin-right:6px">プリセット:</span>
+      <button onclick="loadInfer('basic')" aria-label="基本的な型推論を読み込み">基本</button>
+      <button onclick="loadInfer('array')" aria-label="配列の型推論を読み込み">配列</button>
+      <button onclick="loadInfer('union')" aria-label="ユニオン型を読み込み">ユニオン</button>
+      <button onclick="loadInfer('any')" aria-label="any型の落とし穴を読み込み">any 落とし穴</button>
+    </div>
+  </div>
+
+  <div class="card tip" style="margin-top:14px">
+    <h3>💡 ポイント</h3>
+    <p style="font-size:14px;color:var(--muted)">
+      `const` で 宣言 すると **リテラル型**（`"Alice"`）に、 `let` だと より 広い 型（`string`）に なる。
+      関数 の 引数 に 型注釈 が ない と `any` 推論。
+    </p>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. Zod スキーマ ビジュアライザー
+     ======================================================== -->
+<div class="divider" id="zod" data-snav-target>
+  <div class="num">02.</div>
+  <h2>Zod で ランタイム 検証</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>外部入力 を スキーマ で ガード</h2>
+  <p class="lead">左 に **検証 する JSON**、 右 に **Zod スキーマ**。 「検証」 ボタン で 通過 / 失敗 と 不一致 の 詳細 が 表示。 API レスポンス や フォーム入力 を 安全 に 扱う 練習。</p>
+
+  <div class="zod">
+    <div class="zod-grid">
+      <div class="zod-pane">
+        <label for="zodJson">📦 検証 する JSON</label>
+        <textarea id="zodJson" spellcheck="false">{
+  "name": "Alice",
+  "age": 17,
+  "email": "alice@example.com",
+  "tags": ["js", "ts"]
+}</textarea>
+      </div>
+      <div class="zod-pane">
+        <label for="zodSchema">🛡️ スキーマ 仕様（簡易 DSL）</label>
+        <textarea id="zodSchema" spellcheck="false">name: string, min=1
+age: number, int, min=13
+email: string, email
+tags: array(string), min=1</textarea>
+      </div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="runZod()" style="background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px" aria-label="検証実行">▶ 検証 実行</button>
+      <button onclick="loadZod('bad')" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px" aria-label="壊れたデータを読み込み">😱 壊れた データ</button>
+      <button onclick="loadZod('ok')" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px" aria-label="正常データを読み込み">✅ OK データ</button>
+    </div>
+    <div id="zodStatus" class="zod-status" style="display:none" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. any vs unknown シミュレータ
+     ======================================================== -->
+<div class="divider" id="auv" data-snav-target>
+  <div class="num">03.</div>
+  <h2>any vs unknown</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>「型 OFF」 と 「型 ON」 の 差</h2>
+  <p class="lead">同じ 操作 を `any` と `unknown` で 試す と 結果 が 違う。 入力 を 変えて 「危ない 操作」 が `unknown` 側 で コンパイル エラー に なる 様子 を 体感。</p>
+
+  <div class="auv">
+    <div class="auv-input">
+      <label for="auvInput">JSON 文字列 を 入力（fetch レスポンス 想定）</label>
+      <input type="text" id="auvInput" value='{"name":"Alice","age":17}' aria-label="JSON 文字列">
+    </div>
+    <div class="auv-grid">
+      <div class="auv-pane any">
+        <h3>❌ any</h3>
+        <pre>const data: <span style="color:var(--code-err)">any</span> = JSON.parse(input);
+console.log(data.name.toUpperCase());
+//          ^^^^^^^^^^^^^^^^^^^^^^^
+//          コンパイル チェック なし
+//          実行 で 落ちる かも</pre>
+        <div id="auvAnyResult" class="auv-result pass">クリック で 検証</div>
+      </div>
+      <div class="auv-pane unknown">
+        <h3>✅ unknown</h3>
+        <pre>const data: <span style="color:var(--code-type)">unknown</span> = JSON.parse(input);
+if (typeof data === "object" && data &&
+    "name" in data && typeof data.name === "string") {
+  console.log(data.name.toUpperCase()); // ✅
+}</pre>
+        <div id="auvUnknownResult" class="auv-result pass">クリック で 検証</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="runAuv()" style="background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px" aria-label="検証実行">▶ 両方 実行</button>
+      <button onclick="loadAuv('bad')" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px" aria-label="壊れたデータ">{ Name: ... }（壊れた）</button>
+      <button onclick="loadAuv('null')" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px" aria-label="nullデータ">null</button>
+      <button onclick="loadAuv('ok')" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px" aria-label="正常データ">正常</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. 型ガード Trainer
+     ======================================================== -->
+<div class="divider" id="guard" data-snav-target>
+  <div class="num">04.</div>
+  <h2>型ガード 練習</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>Discriminated Union を 網羅</h2>
+  <p class="lead">下 の `Shape` 型 に 対し、 「面積 を 計算 する 関数」 を 完成 させよう。 全 ケース を 網羅 しないと 「未網羅」 警告 が 出ます。</p>
+
+  <div class="guard">
+    <div class="guard-task">
+      <div class="q">📋 課題</div>
+      <div class="desc">
+        以下 の `Shape` 型 に 対して、 `area(s: Shape): number` を 完成 させてください。<br>
+        全 3ケース（circle / rectangle / triangle）を switch で 網羅。
+      </div>
+    </div>
+
+    <label for="guardCode" style="font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block">あなたの 実装</label>
+    <textarea id="guardCode" spellcheck="false">type Shape =
+  | { kind: "circle"; radius: number }
+  | { kind: "rectangle"; w: number; h: number }
+  | { kind: "triangle"; base: number; height: number };
+
+function area(s: Shape): number {
+  switch (s.kind) {
+    case "circle":
+      return Math.PI * s.radius * s.radius;
+    // TODO: rectangle と triangle を 追加
+  }
+}
+</textarea>
+    <div class="guard-actions">
+      <button onclick="checkGuard()" aria-label="チェック実行">▶ チェック</button>
+      <button class="ghost" onclick="loadGuard('answer')" aria-label="模範解答を表示">💡 模範解答</button>
+      <button class="ghost" onclick="loadGuard('reset')" aria-label="初期状態に戻す">🔄 リセット</button>
+    </div>
+    <div id="guardResult" class="guard-result" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="b">
+      <div class="q">Q1. TypeScript の `type X = { id: string }` は **何時点** で 効く？</div>
+      <div class="opts">
+        <button data-c="a">実行時（ランタイム）</button>
+        <button data-c="b">コンパイル時 のみ</button>
+        <button data-c="c">両方</button>
+      </div>
+      <div class="ex">💡 TS の 型 は コンパイル時 に 消える。 ランタイム の バリデーション は **Zod / Pydantic** が 担当。</div>
+    </div>
+    <div class="qrow" data-answer="c">
+      <div class="q">Q2. `any` と `unknown` の **違い** は？</div>
+      <div class="opts">
+        <button data-c="a">どちらも 同じ</button>
+        <button data-c="b">unknown の 方が 緩い</button>
+        <button data-c="c">unknown は 触る前 に 型ガード が 必須</button>
+      </div>
+      <div class="ex">💡 `any` は チェック 全 OFF（バグ温床）、 `unknown` は 「未知 だから 触れない」 ＝ コンパイラ が 守ってくれる。</div>
+    </div>
+    <div class="qrow" data-answer="a">
+      <div class="q">Q3. Discriminated Union（識別共用体）の **メリット** は？</div>
+      <div class="opts">
+        <button data-c="a">未網羅 を コンパイル時 に 検出 できる</button>
+        <button data-c="b">実行 が 速くなる</button>
+        <button data-c="c">ファイル サイズ が 減る</button>
+      </div>
+      <div class="ex">💡 `kind` フィールド で 分岐 する と、 switch で 全 ケース 網羅 しない と 型エラー。 仕様変更 で ケース 追加 した 時 も 即発見。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. まとめ
+     ======================================================== -->
+<div class="divider" id="wrap" data-snav-target>
+  <div class="num">06.</div>
+  <h2>きょうのまとめ</h2>
+</div>
+
+<section class="section">
+  <h2>おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📐 型 ＝ 設計 と ドキュメント</h3><p style="color:var(--muted);font-size:14px">動く前 に バグ を 検出、 関数 の シグネチャ が 仕様 に なる。</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>🛡️ Zod / Pydantic で ランタイム 検証</h3><p style="color:var(--muted);font-size:14px">外部入力 は 信用 しない、 形 を ガード。</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🎯 型 を 設計 に</h3><p style="color:var(--muted);font-size:14px">Discriminated Union / branded types で 不正状態 を 表現不可能 に。</p></div></div>
+  </div>
+</section>
+
+<footer>高校生プログラミング塾 ／ 初級 第2回｜型のある世界</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  /* === 1. TS Inference Playground（簡易 静的 推論） === */
+  function inferType(value){
+    if(value === 'null') return 'null';
+    if(value === 'undefined') return 'undefined';
+    if(value === 'true' || value === 'false') return 'boolean';
+    if(/^"[^"]*"$/.test(value) || /^'[^']*'$/.test(value)) return 'string';
+    if(/^-?\d+(\.\d+)?$/.test(value)) return 'number';
+    if(/^\[.*\]$/.test(value)) {
+      // 配列要素 の 型 を 推測
+      const inner = value.slice(1,-1).split(',').map(s => s.trim()).filter(Boolean);
+      if(!inner.length) return 'any[]';
+      const types = [...new Set(inner.map(inferType))];
+      return types.length === 1 ? types[0] + '[]' : `(${types.join(' | ')})[]`;
+    }
+    if(/^\{.*\}$/.test(value)) return 'object';
+    return 'any';
+  }
+  function analyzeInfer(code){
+    const lines = code.split('\n');
+    const result = [];
+    for(const line of lines){
+      const trimmed = line.trim();
+      if(!trimmed || trimmed.startsWith('//')) continue;
+
+      // const X = ...; / let X = ...;
+      let m = trimmed.match(/^(const|let|var)\s+(\w+)\s*=\s*(.+?);?$/);
+      if(m){
+        const [, kind, name, expr] = m;
+        let type = inferType(expr.replace(/;$/, '').trim());
+        // const + リテラル の 場合 リテラル 型
+        if(kind === 'const' && /^"[^"]*"$/.test(expr.replace(/;$/, '').trim())){
+          type = expr.replace(/;$/, '').trim(); // リテラル 型
+        } else if(kind === 'const' && /^-?\d+$/.test(expr.replace(/;$/, '').trim())){
+          type = expr.replace(/;$/, '').trim();
+        } else if(/\{[^}]*\}/.test(expr)){
+          type = expr.replace(/;$/, '').trim().replace(/\{|\}/g, '').split(',').map(p => {
+            const pm = p.trim().split(':');
+            if(pm.length === 2) return `${pm[0].trim()}: ${inferType(pm[1].trim())}`;
+            return `${pm[0].trim()}: any`;
+          }).join('; ');
+          type = `{ ${type} }`;
+        }
+        result.push({ name, type, kind });
+        continue;
+      }
+      // function name(args){...}
+      m = trimmed.match(/^function\s+(\w+)\s*\(([^)]*)\)/);
+      if(m){
+        const [, name, args] = m;
+        const argList = args.split(',').map(a => {
+          const t = a.trim();
+          if(!t) return '';
+          if(t.includes(':')) return t;
+          return t + ': any';
+        }).filter(Boolean).join(', ');
+        result.push({ name, type: `(${argList}) => any`, kind: 'function' });
+      }
+    }
+    return result;
+  }
+  function renderInfer(){
+    const code = document.getElementById('inferCode').value;
+    const results = analyzeInfer(code);
+    const out = document.getElementById('inferOut');
+    if(!results.length){
+      out.innerHTML = '<span class="c">// コード を 入力 してください</span>';
+      return;
+    }
+    let html = '';
+    results.forEach(r => {
+      const kindClass = r.kind === 'function' ? 'k' : 'k';
+      html += `<span class="${kindClass}">${r.kind}</span> <span>${r.name}</span>: <span class="t">${r.type}</span>\n`;
+    });
+    out.innerHTML = html;
+  }
+  const INFER_PRESETS = {
+    basic: `const name = "Alice";
+const age = 17;
+const tags = ["js", "ts"];
+const user = { name, age };
+
+function greet(u) {
+  return "Hello, " + u.name;
+}
+
+const ok = age > 13;
+const nothing = null;`,
+    array: `const ids = [1, 2, 3];
+const mixed = [1, "two", true];
+const empty = [];
+const users = [{ name: "A" }, { name: "B" }];`,
+    union: `let status = "draft";
+status = "published";
+status = "archived";
+// → "draft" | "published" | "archived" として 扱いたい`,
+    any: `// any を 多用 する と …
+function process(x) {  // x: any
+  return x.foo.bar.baz; // 実行時 まで バグ に 気づけない
+}
+
+const data = JSON.parse("{}"); // any
+data.anything();               // ❌ 実行時 エラー`,
+  };
+  function loadInfer(k){
+    document.getElementById('inferCode').value = INFER_PRESETS[k];
+    renderInfer();
+    showToast('📚 プリセット を 読み込み');
+  }
+  document.getElementById('inferCode').addEventListener('input', renderInfer);
+  renderInfer();
+
+  /* === 2. Zod 検証（簡易 DSL パーサ） === */
+  function parseSchema(text){
+    const rules = {};
+    text.split('\n').forEach(line => {
+      line = line.trim();
+      if(!line || line.startsWith('//')) return;
+      const m = line.match(/^(\w+):\s*(.+)$/);
+      if(!m) return;
+      const [, name, rest] = m;
+      const parts = rest.split(',').map(s => s.trim());
+      const r = { type: parts[0], opts: {} };
+      parts.slice(1).forEach(p => {
+        const kv = p.split('=').map(s => s.trim());
+        if(kv.length === 2) r.opts[kv[0]] = isNaN(+kv[1]) ? kv[1] : +kv[1];
+        else r.opts[kv[0]] = true;
+      });
+      rules[name] = r;
+    });
+    return rules;
+  }
+  function validate(data, rules){
+    const errors = [];
+    for(const [name, rule] of Object.entries(rules)){
+      const val = data[name];
+      if(val === undefined || val === null){
+        errors.push(`${name}: 必須項目 が ない`);
+        continue;
+      }
+      // 型
+      if(rule.type === 'string' && typeof val !== 'string') errors.push(`${name}: string 型 が 期待 されますが ${typeof val} です`);
+      else if(rule.type === 'number' && typeof val !== 'number') errors.push(`${name}: number 型 が 期待 されますが ${typeof val} です`);
+      else if(rule.type.startsWith('array')){
+        if(!Array.isArray(val)) errors.push(`${name}: array が 期待 されますが ${typeof val} です`);
+      }
+      // オプション
+      if(rule.opts.int && typeof val === 'number' && !Number.isInteger(val)){
+        errors.push(`${name}: 整数 が 期待 されます（${val}）`);
+      }
+      if(rule.opts.email && typeof val === 'string' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val)){
+        errors.push(`${name}: 有効 な メールアドレス 形式 で は ありません`);
+      }
+      if(rule.opts.min !== undefined){
+        if(typeof val === 'string' && val.length < rule.opts.min) errors.push(`${name}: ${rule.opts.min}文字 以上 必要（現在 ${val.length}）`);
+        else if(typeof val === 'number' && val < rule.opts.min) errors.push(`${name}: ${rule.opts.min} 以上 が 期待（現在 ${val}）`);
+        else if(Array.isArray(val) && val.length < rule.opts.min) errors.push(`${name}: 要素 ${rule.opts.min}個 以上 必要（現在 ${val.length}）`);
+      }
+    }
+    return errors;
+  }
+  function runZod(){
+    const status = document.getElementById('zodStatus');
+    status.style.display = 'block';
+    let data;
+    try { data = JSON.parse(document.getElementById('zodJson').value); }
+    catch(e) {
+      status.className = 'zod-status ng';
+      status.innerHTML = '❌ <b>JSON パース エラー:</b> ' + e.message;
+      return;
+    }
+    const rules = parseSchema(document.getElementById('zodSchema').value);
+    const errors = validate(data, rules);
+    if(!errors.length){
+      status.className = 'zod-status ok';
+      status.innerHTML = '✅ <b>検証 通過！</b> 型推論結果: ' + Object.keys(rules).join(', ');
+      showToast('✅ 検証 通過');
+    } else {
+      status.className = 'zod-status ng';
+      status.innerHTML = '❌ <b>検証 失敗:</b><ul>' + errors.map(e => '<li>' + e + '</li>').join('') + '</ul>';
+      showToast('❌ ' + errors.length + ' 件 エラー');
+    }
+  }
+  const ZOD_PRESETS = {
+    ok: { json:'{\n  "name": "Alice",\n  "age": 17,\n  "email": "alice@example.com",\n  "tags": ["js", "ts"]\n}', schema:'name: string, min=1\nage: number, int, min=13\nemail: string, email\ntags: array(string), min=1' },
+    bad: { json:'{\n  "name": "",\n  "age": 12,\n  "email": "not-an-email",\n  "tags": []\n}', schema:'name: string, min=1\nage: number, int, min=13\nemail: string, email\ntags: array(string), min=1' },
+  };
+  function loadZod(k){
+    document.getElementById('zodJson').value = ZOD_PRESETS[k].json;
+    document.getElementById('zodSchema').value = ZOD_PRESETS[k].schema;
+    runZod();
+  }
+  runZod();
+
+  /* === 3. any vs unknown === */
+  function runAuv(){
+    const raw = document.getElementById('auvInput').value;
+    let data;
+    try { data = JSON.parse(raw); } catch(e) {
+      document.getElementById('auvAnyResult').textContent = '❌ JSON パース エラー';
+      document.getElementById('auvAnyResult').className = 'auv-result crash';
+      document.getElementById('auvUnknownResult').textContent = '❌ JSON パース エラー';
+      document.getElementById('auvUnknownResult').className = 'auv-result crash';
+      return;
+    }
+    // any 側: 何も チェック せず data.name.toUpperCase() を 試す
+    const anyEl = document.getElementById('auvAnyResult');
+    try {
+      const r = data.name.toUpperCase();
+      anyEl.textContent = '✅ ' + r + ' （たまたま 動いた）';
+      anyEl.className = 'auv-result pass';
+    } catch(e) {
+      anyEl.textContent = '💥 実行時 クラッシュ: ' + e.message;
+      anyEl.className = 'auv-result crash';
+    }
+    // unknown 側: 型ガード を 通る か どうか
+    const unkEl = document.getElementById('auvUnknownResult');
+    if(typeof data === 'object' && data && 'name' in data && typeof data.name === 'string'){
+      unkEl.textContent = '✅ ガード 通過 → ' + data.name.toUpperCase();
+      unkEl.className = 'auv-result pass';
+    } else {
+      unkEl.textContent = '🛡️ 型ガード で ブロック（実行時 エラー なし）';
+      unkEl.className = 'auv-result pass';
+    }
+  }
+  function loadAuv(k){
+    const inp = document.getElementById('auvInput');
+    if(k === 'ok') inp.value = '{"name":"Alice","age":17}';
+    else if(k === 'bad') inp.value = '{"Name":"Bob"}';
+    else if(k === 'null') inp.value = 'null';
+    runAuv();
+  }
+  runAuv();
+
+  /* === 4. 型ガード Trainer === */
+  function checkGuard(){
+    const code = document.getElementById('guardCode').value;
+    const result = document.getElementById('guardResult');
+    result.classList.remove('show');
+
+    const needs = [
+      { key: 'case "rectangle"', desc: 'rectangle ケース が ない' },
+      { key: 'case "triangle"',  desc: 'triangle ケース が ない' },
+      { key: 's.w',              desc: 'rectangle の w を 使ってない' },
+      { key: 's.h',              desc: 'rectangle の h を 使ってない' },
+      { key: 's.base',           desc: 'triangle の base を 使ってない' },
+      { key: 's.height',         desc: 'triangle の height を 使ってない' },
+    ];
+    const missing = needs.filter(n => !code.includes(n.key));
+
+    let html;
+    if(missing.length){
+      html = '⚠️ <b>あと もう少し！</b><ul style="margin-top:6px;margin-left:18px">' +
+        missing.map(m => '<li>' + m.desc + '</li>').join('') + '</ul>';
+      result.className = 'guard-result show fail';
+      showToast('⚠️ ' + missing.length + '個 不足');
+    } else {
+      html = '✅ <b>パーフェクト！</b> 全 ケース を 網羅 できました。<br>' +
+        'TypeScript で 同じ コード を 書く と、 case 漏れ を **コンパイル時** に 検出 してくれます。';
+      result.className = 'guard-result show pass';
+      showToast('🎉 全 ケース 網羅！');
+    }
+    result.innerHTML = html;
+  }
+  const GUARD_PRESETS = {
+    reset: `type Shape =
+  | { kind: "circle"; radius: number }
+  | { kind: "rectangle"; w: number; h: number }
+  | { kind: "triangle"; base: number; height: number };
+
+function area(s: Shape): number {
+  switch (s.kind) {
+    case "circle":
+      return Math.PI * s.radius * s.radius;
+    // TODO: rectangle と triangle を 追加
+  }
+}`,
+    answer: `type Shape =
+  | { kind: "circle"; radius: number }
+  | { kind: "rectangle"; w: number; h: number }
+  | { kind: "triangle"; base: number; height: number };
+
+function area(s: Shape): number {
+  switch (s.kind) {
+    case "circle":
+      return Math.PI * s.radius * s.radius;
+    case "rectangle":
+      return s.w * s.h;
+    case "triangle":
+      return s.base * s.height / 2;
+  }
+}`,
+  };
+  function loadGuard(k){
+    document.getElementById('guardCode').value = GUARD_PRESETS[k];
+    if(k === 'answer') checkGuard();
+    else document.getElementById('guardResult').classList.remove('show');
+  }
+
+  /* === 5. Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){
+          b.classList.add('right');
+          showToast('せいかい！ 🎉');
+        } else {
+          b.classList.add('wrong');
+          row.querySelector(`button[data-c="${ans}"]`).classList.add('right');
+        }
+        row.classList.add('answered');
+      });
+    });
+  });
+</script>
+</body>
+</html>
