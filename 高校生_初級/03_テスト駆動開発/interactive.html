@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・初級 第3回｜テスト駆動開発（TDD）実践</title>
+<style>
+  :root{
+    --primary:#475569; --secondary:#F97316; --accent:#10B981;
+    --warn:#DC2626; --dark:#1E293B; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B;
+    --border:rgba(30,41,59,.10); --shadow:0 4px 12px rgba(30,41,59,.10);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --red:#DC2626; --green:#10B981; --blue:#3B82F6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--red),var(--green),var(--blue));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--secondary);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,41,59,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#475569 0%,#1E293B 60%,#0F172A 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:18px;margin-bottom:8px;font-weight:700}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFF7ED}
+
+  /* === Tool 1: TDD Cycle Visualizer === */
+  .cycle{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px;text-align:center}
+  .cycle-steps{display:flex;justify-content:center;align-items:center;gap:14px;margin:18px 0;flex-wrap:wrap}
+  .cycle-step{width:140px;height:140px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:4px solid #E2E8F0;background:white;font-weight:bold;cursor:pointer;transition:all .25s;position:relative}
+  .cycle-step .ic{font-size:34px;margin-bottom:4px}
+  .cycle-step .nm{font-size:14px}
+  .cycle-step.active{transform:scale(1.1)}
+  .cycle-step.red.active{border-color:var(--red);background:#FEF2F2;color:var(--red);box-shadow:0 0 0 6px rgba(220,38,38,.15)}
+  .cycle-step.green.active{border-color:var(--green);background:#ECFDF5;color:var(--green);box-shadow:0 0 0 6px rgba(16,185,129,.15)}
+  .cycle-step.blue.active{border-color:var(--blue);background:#EFF6FF;color:var(--blue);box-shadow:0 0 0 6px rgba(59,130,246,.15)}
+  .cycle-arrow{font-size:24px;color:var(--muted)}
+  .cycle-explain{background:#F8FAFC;border-radius:8px;padding:16px 18px;text-align:left;font-size:14px;line-height:1.8;margin-top:14px;
+    border-left:4px solid var(--primary);transition:all .25s}
+  .cycle-explain.red{border-color:var(--red);background:#FEF2F2}
+  .cycle-explain.green{border-color:var(--green);background:#ECFDF5}
+  .cycle-explain.blue{border-color:var(--blue);background:#EFF6FF}
+  .cycle-explain h4{font-size:15px;margin-bottom:6px}
+  .cycle-explain code{background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px}
+  .cycle-ctrl{margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .cycle-ctrl button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-weight:600;font-size:13px}
+  .cycle-ctrl button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+
+  /* === Tool 2: In-browser Test Runner === */
+  .runner{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .runner-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.runner-grid{grid-template-columns:1fr}}
+  .runner-pane label{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block}
+  .runner-pane textarea{width:100%;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:var(--dark);
+    resize:vertical;min-height:200px}
+  .runner-pane textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .runner-out{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px 16px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.8;overflow-x:auto;
+    margin-top:14px;min-height:120px;white-space:pre-wrap}
+  .runner-out .pass{color:var(--green)}
+  .runner-out .fail{color:var(--red);font-weight:bold}
+  .runner-out .summary{color:var(--secondary);margin-top:8px;display:block;border-top:1px dashed #334155;padding-top:8px}
+  .runner-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .runner-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .runner-actions button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+
+  /* === Tool 3: Coverage Visualizer === */
+  .cov{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .cov-grid{display:grid;grid-template-columns:1fr 240px;gap:14px}
+  @media(max-width:780px){.cov-grid{grid-template-columns:1fr}}
+  .cov-code{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px 0;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.8;overflow-x:auto}
+  .cov-line{padding:0 18px;display:grid;grid-template-columns:30px 30px 1fr;gap:8px;align-items:center;border-left:4px solid transparent}
+  .cov-line .ln{color:#64748B;text-align:right}
+  .cov-line .ct{color:#64748B;font-size:11px;text-align:right}
+  .cov-line.hit{background:rgba(16,185,129,.10);border-left-color:var(--green)}
+  .cov-line.miss{background:rgba(220,38,38,.10);border-left-color:var(--red)}
+  .cov-line.hit .ct{color:#6EE7B7}
+  .cov-line.miss .ct{color:#FCA5A5}
+  .cov-stats{background:#F8FAFC;border-radius:8px;padding:16px;text-align:center}
+  .cov-stats .pct{font-size:48px;font-weight:800;line-height:1;color:var(--primary);font-family:'JetBrains Mono','SF Mono',monospace}
+  .cov-stats .pct.high{color:var(--green)}
+  .cov-stats .pct.mid{color:var(--secondary)}
+  .cov-stats .pct.low{color:var(--warn)}
+  .cov-stats .lbl{font-size:13px;color:var(--muted);margin-top:4px}
+  .cov-stats .bd{margin-top:14px;padding-top:14px;border-top:1px dashed #E2E8F0;font-size:13px;text-align:left}
+  .cov-tests{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .cov-test{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F8FAFC;border-radius:6px;cursor:pointer;font-size:13px;
+    border:2px solid transparent;transition:all .15s}
+  .cov-test.on{background:#ECFDF5;border-color:var(--green)}
+  .cov-test .chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:3px;
+    display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;background:white;font-size:12px;font-weight:bold}
+  .cov-test.on .chk{background:var(--green);border-color:var(--green)}
+  .cov-test.on .chk::before{content:'✓'}
+
+  /* === Tool 4: TDD Quest（FizzBuzz） === */
+  .quest{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .quest-progress{display:flex;gap:6px;margin-bottom:14px}
+  .quest-progress > div{flex:1;height:10px;background:#E2E8F0;border-radius:5px;position:relative;overflow:hidden}
+  .quest-progress > div.done{background:var(--green)}
+  .quest-progress > div.current{background:linear-gradient(90deg,var(--secondary),var(--red));animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+  .quest-task{padding:14px 18px;background:#F8FAFC;border-radius:8px;margin-bottom:12px;border-left:4px solid var(--primary)}
+  .quest-task .step{font-weight:700;font-size:13px;color:var(--secondary);font-family:'JetBrains Mono','SF Mono',monospace}
+  .quest-task .q{font-weight:700;font-size:16px;margin:4px 0 6px}
+  .quest-task .desc{font-size:13px;color:var(--muted);line-height:1.6}
+  .quest-area{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  @media(max-width:780px){.quest-area{grid-template-columns:1fr}}
+  .quest-pane label{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block}
+  .quest-pane textarea{width:100%;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:var(--dark);
+    resize:vertical;min-height:140px}
+  .quest-pane textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .quest-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .quest-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .quest-actions button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+  .quest-out{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:12px 14px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;margin-top:12px;min-height:80px;white-space:pre-wrap}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--green);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:white;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>初級 第3回</span> <b>TDD 実践</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#cycle">2<span>TDDサイクル</span><span class="ic">🔄</span></a>
+  <a href="#runner">3<span>テストランナー</span><span class="ic">▶</span></a>
+  <a href="#cov">4<span>カバレッジ</span><span class="ic">📊</span></a>
+  <a href="#quest">5<span>FizzBuzz Quest</span><span class="ic">🎯</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#wrap">7<span>まとめ</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 高校生プログラミング塾・初級</div>
+    <h1>テスト駆動開発<br>（TDD）実践</h1>
+    <p><b>赤 → 緑 → リファクタ</b> の リズム を 体得</p>
+    <div class="em">🔴🟢🔵</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. TDD サイクル ビジュアライザー
+     ======================================================== -->
+<div class="divider" id="cycle" data-snav-target>
+  <div class="num">01.</div>
+  <h2>TDD サイクル を 体感</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>赤 → 緑 → リファクタ</h2>
+  <p class="lead">3つ の フェーズ を 順番 に たどる と、 それぞれ で 「何 を やる か」 「やって は いけない こと」 が 見えます。 「次へ」 ボタン で 自動 進行、 各フェーズ を クリック して も 詳細 が 切り替わります。</p>
+
+  <div class="cycle">
+    <div class="cycle-steps" role="group" aria-label="TDD の 3フェーズ">
+      <div class="cycle-step red" data-phase="red" id="cs-red" tabindex="0" role="button" aria-label="RED フェーズ">
+        <span class="ic" aria-hidden="true">🔴</span><span class="nm">RED</span>
+      </div>
+      <span class="cycle-arrow" aria-hidden="true">→</span>
+      <div class="cycle-step green" data-phase="green" id="cs-green" tabindex="0" role="button" aria-label="GREEN フェーズ">
+        <span class="ic" aria-hidden="true">🟢</span><span class="nm">GREEN</span>
+      </div>
+      <span class="cycle-arrow" aria-hidden="true">→</span>
+      <div class="cycle-step blue" data-phase="blue" id="cs-blue" tabindex="0" role="button" aria-label="REFACTOR フェーズ">
+        <span class="ic" aria-hidden="true">🔵</span><span class="nm">REFACTOR</span>
+      </div>
+    </div>
+
+    <div class="cycle-explain" id="cycleExplain" aria-live="polite"></div>
+
+    <div class="cycle-ctrl">
+      <button onclick="cycleNext()" aria-label="次のフェーズへ">▶ 次へ</button>
+      <button class="ghost" onclick="cycleReset()" aria-label="最初に戻る">🔄 RED から</button>
+      <button class="ghost" onclick="cycleAuto()" aria-label="自動再生">⏯ 自動再生 (3秒)</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. テストランナー
+     ======================================================== -->
+<div class="divider" id="runner" data-snav-target>
+  <div class="num">02.</div>
+  <h2>in-browser テストランナー</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>関数 ＋ テスト を 書いて 実行</h2>
+  <p class="lead">jest-like な API（<code>test()</code> / <code>expect().toBe()</code>）。 ブラウザ で 完結。 「テスト 実行」 で 結果 が 下 に 出ます。</p>
+
+  <div id="runnerBrowserNote" role="status" aria-live="polite"
+       style="display:none;margin-bottom:12px;padding:10px 14px;background:#FFFBEB;
+              border-left:4px solid var(--secondary);border-radius:6px;font-size:13px">
+    ⚠️ このブラウザ で は ES2020+ 構文 が 動かない 可能性。 Chrome 91+ / Safari 14+ / Firefox 90+ 推奨。
+  </div>
+
+  <div class="runner">
+    <div class="runner-grid">
+      <div class="runner-pane">
+        <label for="runnerCode">📝 実装（関数）</label>
+        <textarea id="runnerCode" spellcheck="false">function add(a, b) {
+  return a + b;
+}
+
+function multiply(a, b) {
+  return a * b;
+}</textarea>
+      </div>
+      <div class="runner-pane">
+        <label for="runnerTests">🧪 テスト</label>
+        <textarea id="runnerTests" spellcheck="false">test('add: 2 + 3 = 5', () => {
+  expect(add(2, 3)).toBe(5);
+});
+
+test('add: マイナス', () => {
+  expect(add(-5, 5)).toBe(0);
+});
+
+test('multiply: 3 * 4 = 12', () => {
+  expect(multiply(3, 4)).toBe(12);
+});</textarea>
+      </div>
+    </div>
+    <div class="runner-actions">
+      <button onclick="runRunner()" aria-label="テスト実行">▶ テスト 実行</button>
+      <button class="ghost" onclick="loadRunner('green')" aria-label="緑なプリセット">😊 全パス</button>
+      <button class="ghost" onclick="loadRunner('red')" aria-label="赤いプリセット">😱 わざと 失敗</button>
+      <button class="ghost" onclick="loadRunner('refactor')" aria-label="リファクタ前のコード">🔵 リファクタ 練習</button>
+    </div>
+    <div class="runner-out" id="runnerOut" aria-label="テスト結果">▶ 「テスト 実行」 ボタン で 結果が ここに 表示</div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. カバレッジ Visualizer
+     ======================================================== -->
+<div class="divider" id="cov" data-snav-target>
+  <div class="num">03.</div>
+  <h2>カバレッジ Visualizer</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>どの 行 が テスト で 通った か</h2>
+  <p class="lead">3つ の テスト を ON / OFF する と、 該当 行 が 緑 / 赤 に 切り替わります。 「100% カバレッジ ＝ バグ ゼロ で は ない」 の 罠 も 体感。</p>
+
+  <div class="cov">
+    <div class="cov-grid">
+      <div class="cov-code" id="covCode" aria-label="ソースコード（カバレッジ ハイライト 付き）"></div>
+      <div>
+        <div class="cov-stats">
+          <div class="pct" id="covPct">0%</div>
+          <div class="lbl">Statement Coverage</div>
+          <div class="bd" id="covBd"></div>
+        </div>
+        <div class="cov-tests" role="group" aria-label="テスト ケース">
+          <div class="cov-test" data-t="0" id="covT0" role="checkbox" aria-checked="false" tabindex="0">
+            <div class="chk" aria-hidden="true"></div>
+            <div><b>test_positive</b><div style="color:var(--muted);font-size:11px">grade(85) === "B"</div></div>
+          </div>
+          <div class="cov-test" data-t="1" id="covT1" role="checkbox" aria-checked="false" tabindex="0">
+            <div class="chk" aria-hidden="true"></div>
+            <div><b>test_excellent</b><div style="color:var(--muted);font-size:11px">grade(95) === "A"</div></div>
+          </div>
+          <div class="cov-test" data-t="2" id="covT2" role="checkbox" aria-checked="false" tabindex="0">
+            <div class="chk" aria-hidden="true"></div>
+            <div><b>test_fail</b><div style="color:var(--muted);font-size:11px">grade(40) === "F"</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card tip" style="margin-top:14px">
+      <h3>💡 カバレッジ の 罠</h3>
+      <p style="font-size:13px;color:var(--muted)">
+        100% カバレッジ で も <b>境界値（grade(60) は B？ C？）</b> や <b>異常入力（負の値・null）</b> を 検証 してない と バグ は 通る。
+        カバレッジ ＝ 「行 を 通った」 だけ。 「正しい こと を 検証 した」 の 保証 は 別。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. FizzBuzz TDD Quest
+     ======================================================== -->
+<div class="divider" id="quest" data-snav-target>
+  <div class="num">04.</div>
+  <h2>FizzBuzz TDD Quest</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>5ステップ で TDD を 通す</h2>
+  <p class="lead">RED → GREEN → REFACTOR を 5回 繰り返して FizzBuzz を 完成 させよう。 各 ステップ で **テスト 1個 ずつ** 追加 して、 通した あと 次へ。</p>
+
+  <div class="quest">
+    <div class="quest-progress" id="questBar" role="progressbar" aria-label="進捗" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+      <div></div><div></div><div></div><div></div><div></div>
+    </div>
+
+    <div class="quest-task">
+      <div class="step" id="questStep">STEP 1 / 5</div>
+      <div class="q" id="questQ">テスト: fizzbuzz(1) === "1"</div>
+      <div class="desc" id="questDesc">最初 の テスト。 まずは ハードコード で 通せば OK。「return '1'」 でも 緑 に なる！</div>
+    </div>
+
+    <div class="quest-area">
+      <div class="quest-pane">
+        <label for="questCode">あなたの 実装</label>
+        <textarea id="questCode" spellcheck="false">function fizzbuzz(n) {
+  // ここ に 実装
+}</textarea>
+      </div>
+      <div class="quest-pane">
+        <label for="questTests">テスト（自動生成）</label>
+        <textarea id="questTests" readonly aria-label="このステップで走るテスト"></textarea>
+      </div>
+    </div>
+
+    <div class="quest-actions">
+      <button onclick="runQuest()" aria-label="テスト実行">▶ テスト 実行</button>
+      <button class="ghost" onclick="questHint()" aria-label="ヒントを見る">💡 ヒント</button>
+      <button class="ghost" onclick="questReset()" aria-label="STEP 1に戻る">🔄 最初から</button>
+    </div>
+    <div class="quest-out" id="questOut" aria-live="polite">▶ 「テスト 実行」 で 緑 / 赤 を 確認</div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="b">
+      <div class="q">Q1. TDD の **緑** フェーズ で やる べき こと は？</div>
+      <div class="opts">
+        <button data-c="a">完璧 な コード を 書く</button>
+        <button data-c="b">テスト を 通す **最小限** の コード を 書く</button>
+        <button data-c="c">全 テスト を 書き直す</button>
+      </div>
+      <div class="ex">💡 緑 は 「いま 失敗 してる テスト を 1個 通す」 だけ。 ハードコード でも OK。 美しさ は 次 の リファクタ で。</div>
+    </div>
+    <div class="qrow" data-answer="c">
+      <div class="q">Q2. カバレッジ 100% の **意味** は？</div>
+      <div class="opts">
+        <button data-c="a">バグ ゼロ が 保証 される</button>
+        <button data-c="b">テスト が 完璧</button>
+        <button data-c="c">**全 の 行 を 通っただけ**、 正しさ は 別問題</button>
+      </div>
+      <div class="ex">💡 行 を 通る ＝ 正しい こと を 検証 した、 で は ない。 境界値 / 異常入力 を 別途 テスト する 必要。</div>
+    </div>
+    <div class="qrow" data-answer="a">
+      <div class="q">Q3. テスト が 書き にくい コード の **原因** は？</div>
+      <div class="opts">
+        <button data-c="a">**外部依存** を 直接 触っている（DB / API / 時刻）</button>
+        <button data-c="b">関数 が 短すぎる</button>
+        <button data-c="c">変数 名 が 長い</button>
+      </div>
+      <div class="ex">💡 依存注入 で 外部依存 を **引数 で 渡す** と、 テスト では モック を 渡せる。 設計 が 良く なる シグナル。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. まとめ
+     ======================================================== -->
+<div class="divider" id="wrap" data-snav-target>
+  <div class="num">06.</div>
+  <h2>きょうのまとめ</h2>
+</div>
+
+<section class="section">
+  <h2>おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>🔴🟢🔵 赤 → 緑 → リファクタ</h3><p style="color:var(--muted);font-size:14px">テスト を 先 に 書き、 最小限 で 通し、 整える。 リズム を 体に。</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>▶ jest / pytest の 感覚</h3><p style="color:var(--muted);font-size:14px">expect().toBe() / fixture / モック を 1機能 通せる。</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>📊 カバレッジ ＝ 補助 指標</h3><p style="color:var(--muted);font-size:14px">100% は 目的 で は ない。 「変えやすさ」 が 真の 指標。</p></div></div>
+  </div>
+</section>
+
+<footer>高校生プログラミング塾 ／ 初級 第3回｜テスト駆動開発（TDD）実践</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  /* === 1. TDD Cycle === */
+  const PHASES = ['red','green','blue'];
+  const PHASE_INFO = {
+    red:  { e:'🔴', t:'RED — 失敗 する テスト を 書く',
+      b:'「これから 作る 機能」 の 期待 を <b>先 に コード化</b>。<br>' +
+        '<code>test("add: 2+3", () => expect(add(2,3)).toBe(5));</code><br>' +
+        'まだ <code>add</code> が ない から **import エラー** で 失敗。 これ が <b>赤</b>。' },
+    green:{ e:'🟢', t:'GREEN — 最小限 で 通す',
+      b:'**緑 を 出す** こと だけ が ゴール。<br>' +
+        '<code>function add(a,b) { return 5; }</code> でも OK！<br>' +
+        '美しさ・最適化 は 次 の リファクタ で やる。 まず は 動かす。' },
+    blue: { e:'🔵', t:'REFACTOR — 通った 状態 で 整える',
+      b:'全 テスト が **緑 の まま** リファクタ する。<br>' +
+        '<code>function add(a,b) { return a + b; }</code> に 改善。<br>' +
+        '失敗 が 1個 でも 出たら 「リファクタ 失敗」、 直す。' }
+  };
+  let curPhase = 0, cycleTimer = null;
+  function renderCycle(){
+    document.querySelectorAll('.cycle-step').forEach((el, i) => {
+      el.classList.toggle('active', i === curPhase);
+      el.setAttribute('aria-pressed', i === curPhase);
+    });
+    const ph = PHASES[curPhase];
+    const info = PHASE_INFO[ph];
+    const ex = document.getElementById('cycleExplain');
+    ex.className = 'cycle-explain ' + ph;
+    ex.innerHTML = `<h4>${info.e} ${info.t}</h4><p>${info.b}</p>`;
+  }
+  function cycleNext(){ curPhase = (curPhase + 1) % PHASES.length; renderCycle(); }
+  function cycleReset(){ curPhase = 0; renderCycle(); if(cycleTimer){ clearInterval(cycleTimer); cycleTimer=null; } showToast('🔄 RED から'); }
+  function cycleAuto(){
+    if(cycleTimer){ clearInterval(cycleTimer); cycleTimer = null; showToast('⏸ 停止'); return; }
+    cycleTimer = setInterval(cycleNext, 3000);
+    showToast('▶ 自動再生 開始 (Click で 停止)');
+  }
+  document.querySelectorAll('.cycle-step').forEach((el, i) => {
+    el.addEventListener('click', () => { curPhase = i; renderCycle(); });
+    el.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); curPhase = i; renderCycle(); } });
+  });
+  renderCycle();
+
+  /* === 2. Test Runner === */
+  function escapeHTML(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function runRunner(){
+    const code = document.getElementById('runnerCode').value;
+    const tests = document.getElementById('runnerTests').value;
+    const results = [];
+    const wrapper = `
+      const test = (name, fn) => {
+        try { fn(); results.push({name, status:'pass'}); }
+        catch(e) { results.push({name, status:'fail', err: e.message}); }
+      };
+      const expect = (actual) => ({
+        toBe: (e) => { if(actual !== e) throw new Error('expected ' + JSON.stringify(e) + ' but got ' + JSON.stringify(actual)); },
+        toEqual: (e) => { if(JSON.stringify(actual) !== JSON.stringify(e)) throw new Error('not equal'); },
+        toBeTruthy: () => { if(!actual) throw new Error('not truthy'); },
+        toBeGreaterThan: (n) => { if(!(actual > n)) throw new Error('not > ' + n); },
+        toContain: (i) => { if(!actual.includes(i)) throw new Error('does not contain ' + JSON.stringify(i)); },
+      });
+      ${code}
+      ${tests}
+    `;
+    try {
+      new Function('results', wrapper)(results);
+    } catch(e) {
+      const isSyn = e instanceof SyntaxError;
+      results.push({ name:'実行エラー', status:'fail', err: e.message + (isSyn ? ' / 古いブラウザ の 可能性' : '') });
+    }
+    const pass = results.filter(r => r.status === 'pass').length;
+    const fail = results.filter(r => r.status === 'fail').length;
+    let html = '';
+    results.forEach(r => {
+      if(r.status === 'pass'){
+        html += `<span class="pass">✓ PASS</span> ${escapeHTML(r.name)}\n`;
+      } else {
+        html += `<span class="fail">✗ FAIL</span> ${escapeHTML(r.name)}\n      → ${escapeHTML(r.err || '')}\n`;
+      }
+    });
+    html += `<span class="summary">Tests: ${pass} passed, ${fail} failed, ${results.length} total</span>`;
+    document.getElementById('runnerOut').innerHTML = html;
+    showToast(fail === 0 ? '✅ 全パス' : '❌ ' + fail + ' fail');
+  }
+  const RUNNER_PRESETS = {
+    green: {
+      code: 'function add(a, b) { return a + b; }\nfunction multiply(a, b) { return a * b; }',
+      tests: "test('add', () => expect(add(2, 3)).toBe(5));\ntest('mul', () => expect(multiply(3, 4)).toBe(12));"
+    },
+    red: {
+      code: 'function add(a, b) { return a - b; } // わざと バグ',
+      tests: "test('add: 2+3=5', () => expect(add(2, 3)).toBe(5));\ntest('add: -5+5=0', () => expect(add(-5, 5)).toBe(0));"
+    },
+    refactor: {
+      code: "function bmi(w, h) {\n  // h は cm。 m に 変換 して 計算\n  var hm = h / 100;\n  var result = w / hm / hm;\n  return result;\n}\n// → リファクタ してみよう（const / アロー / 1行 etc.）",
+      tests: "test('bmi 60kg/170cm', () => expect(Math.round(bmi(60, 170))).toBe(21));\ntest('bmi 80kg/180cm', () => expect(Math.round(bmi(80, 180))).toBe(25));"
+    },
+  };
+  function loadRunner(k){
+    document.getElementById('runnerCode').value = RUNNER_PRESETS[k].code;
+    document.getElementById('runnerTests').value = RUNNER_PRESETS[k].tests;
+    runRunner();
+  }
+  // 古いブラウザ 検出
+  (function(){
+    try { new Function('const a={}; return a?.b ?? "ok";')(); }
+    catch(e) { document.getElementById('runnerBrowserNote').style.display = 'block'; }
+  })();
+  runRunner();
+
+  /* === 3. Coverage === */
+  const COV_SRC = [
+    { ln:1,  txt:'function grade(score) {',                                        tests:[0,1,2] },
+    { ln:2,  txt:'  if (score >= 90) {',                                           tests:[0,1,2] },
+    { ln:3,  txt:'    return "A";',                                                tests:[1]     },
+    { ln:4,  txt:'  } else if (score >= 80) {',                                    tests:[0,2]   },
+    { ln:5,  txt:'    return "B";',                                                tests:[0]     },
+    { ln:6,  txt:'  } else if (score >= 70) {',                                    tests:[2]     },
+    { ln:7,  txt:'    return "C";',                                                tests:[]      },
+    { ln:8,  txt:'  } else if (score >= 60) {',                                    tests:[2]     },
+    { ln:9,  txt:'    return "D";',                                                tests:[]      },
+    { ln:10, txt:'  } else {',                                                     tests:[2]     },
+    { ln:11, txt:'    return "F";',                                                tests:[2]     },
+    { ln:12, txt:'  }',                                                            tests:[0,1,2] },
+    { ln:13, txt:'}',                                                              tests:[0,1,2] },
+  ];
+  const covState = { 0:false, 1:false, 2:false };
+  function renderCov(){
+    const active = Object.entries(covState).filter(([k,v]) => v).map(([k]) => +k);
+    const wrap = document.getElementById('covCode');
+    wrap.innerHTML = '';
+    let hits = 0;
+    COV_SRC.forEach(line => {
+      const hit = line.tests.some(t => active.includes(t));
+      const div = document.createElement('div');
+      div.className = 'cov-line ' + (line.tests.length === 0 ? '' : (hit ? 'hit' : 'miss'));
+      div.innerHTML = `<span class="ln">${line.ln}</span><span class="ct">${line.tests.length === 0 ? '-' : (hit ? '✓' : '✗')}</span><span>${escapeHTML(line.txt)}</span>`;
+      wrap.appendChild(div);
+      if(line.tests.length > 0 && hit) hits++;
+    });
+    const total = COV_SRC.filter(l => l.tests.length > 0).length;
+    const pct = Math.round(hits / total * 100);
+    const pctEl = document.getElementById('covPct');
+    pctEl.textContent = pct + '%';
+    pctEl.className = 'pct ' + (pct >= 80 ? 'high' : pct >= 50 ? 'mid' : 'low');
+    document.getElementById('covBd').innerHTML = `Covered: <b>${hits}</b> / ${total}<br>Tests: <b>${active.length}</b> / 3`;
+    document.querySelectorAll('.cov-test').forEach(t => {
+      const id = +t.dataset.t;
+      t.classList.toggle('on', covState[id]);
+      t.setAttribute('aria-checked', covState[id]);
+    });
+  }
+  document.querySelectorAll('.cov-test').forEach(t => {
+    const id = +t.dataset.t;
+    t.addEventListener('click', () => { covState[id] = !covState[id]; renderCov(); });
+    t.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); covState[id] = !covState[id]; renderCov(); } });
+  });
+  renderCov();
+
+  /* === 4. FizzBuzz Quest === */
+  const QUEST_STEPS = [
+    { q:'fizzbuzz(1) === "1"',  desc:'最初 の テスト。 まず 失敗 → 「return \'1\'」 でも 緑！', tests:'test("1", () => expect(fizzbuzz(1)).toBe("1"));', need:[{i:1,o:'1'}] },
+    { q:'fizzbuzz(2) === "2"',  desc:'次 の テスト。 「return String(n)」 で OK', tests:'test("1", () => expect(fizzbuzz(1)).toBe("1"));\ntest("2", () => expect(fizzbuzz(2)).toBe("2"));', need:[{i:1,o:'1'},{i:2,o:'2'}] },
+    { q:'fizzbuzz(3) === "Fizz"', desc:'3 の 倍数 で Fizz。 if 文 追加', tests:'test("1", () => expect(fizzbuzz(1)).toBe("1"));\ntest("2", () => expect(fizzbuzz(2)).toBe("2"));\ntest("3", () => expect(fizzbuzz(3)).toBe("Fizz"));', need:[{i:1,o:'1'},{i:2,o:'2'},{i:3,o:'Fizz'}] },
+    { q:'fizzbuzz(5) === "Buzz"', desc:'5 の 倍数 で Buzz。', tests:'test("3", () => expect(fizzbuzz(3)).toBe("Fizz"));\ntest("5", () => expect(fizzbuzz(5)).toBe("Buzz"));', need:[{i:3,o:'Fizz'},{i:5,o:'Buzz'}] },
+    { q:'fizzbuzz(15) === "FizzBuzz"', desc:'15 で FizzBuzz。 順番 注意！ 15 を 最初 に check', tests:'test("3", () => expect(fizzbuzz(3)).toBe("Fizz"));\ntest("5", () => expect(fizzbuzz(5)).toBe("Buzz"));\ntest("15", () => expect(fizzbuzz(15)).toBe("FizzBuzz"));\ntest("30", () => expect(fizzbuzz(30)).toBe("FizzBuzz"));', need:[{i:15,o:'FizzBuzz'},{i:30,o:'FizzBuzz'}] },
+  ];
+  let questStep = 0;
+  function renderQuest(){
+    const s = QUEST_STEPS[questStep];
+    document.getElementById('questStep').textContent = `STEP ${questStep + 1} / ${QUEST_STEPS.length}`;
+    document.getElementById('questQ').textContent = '🧪 ' + s.q;
+    document.getElementById('questDesc').textContent = s.desc;
+    document.getElementById('questTests').value = s.tests;
+    document.getElementById('questBar').setAttribute('aria-valuenow', questStep);
+    [...document.getElementById('questBar').children].forEach((el, i) => {
+      el.classList.remove('done','current');
+      if(i < questStep) el.classList.add('done');
+      else if(i === questStep) el.classList.add('current');
+    });
+  }
+  function runQuest(){
+    const code = document.getElementById('questCode').value;
+    const s = QUEST_STEPS[questStep];
+    let fn;
+    try {
+      fn = new Function(code + '\nreturn fizzbuzz;')();
+    } catch(e) {
+      document.getElementById('questOut').innerHTML = '<span class="fail">💥 構文 エラー: ' + escapeHTML(e.message) + '</span>';
+      return;
+    }
+    let pass = 0, fail = 0, html = '';
+    s.need.forEach(({i, o}) => {
+      try {
+        const r = fn(i);
+        if(r === o){ pass++; html += `<span class="pass">✓ fizzbuzz(${i}) === "${o}"</span>\n`; }
+        else      { fail++; html += `<span class="fail">✗ fizzbuzz(${i}) expected "${o}", got "${r}"</span>\n`; }
+      } catch(e) {
+        fail++; html += `<span class="fail">💥 fizzbuzz(${i}) threw: ${escapeHTML(e.message)}</span>\n`;
+      }
+    });
+    if(fail === 0){
+      html += `<span class="summary">✅ STEP ${questStep + 1} クリア！</span>`;
+      if(questStep < QUEST_STEPS.length - 1){
+        html += '\n<span class="summary">→ 次 の STEP へ 自動 進行</span>';
+        setTimeout(() => { questStep++; renderQuest(); document.getElementById('questOut').textContent = '▶ 次 の STEP の テスト を 通そう'; }, 1400);
+      } else {
+        html += '\n<span class="summary">🎉 FizzBuzz Quest 完全制覇！ 5サイクル 完走 です</span>';
+        showToast('🎉 完走 おめでとう！');
+      }
+    } else {
+      html += `<span class="summary">${pass} pass / ${fail} fail — 緑 にしてから 次へ</span>`;
+    }
+    document.getElementById('questOut').innerHTML = html;
+  }
+  function questHint(){
+    const hints = [
+      '最小限 で OK。 「return String(n)」 でも 通る！',
+      '「return String(n)」 で 2問 とも 通る',
+      'if (n % 3 === 0) return "Fizz"; else return String(n);',
+      'if (n % 5 === 0) return "Buzz"; を 追加。 if の 順番 注意',
+      '**15 を 最初 に**! if (n % 15 === 0) return "FizzBuzz";',
+    ];
+    info('💡','ヒント (STEP ' + (questStep + 1) + ')', hints[questStep]);
+  }
+  function questReset(){
+    questStep = 0;
+    document.getElementById('questCode').value = 'function fizzbuzz(n) {\n  // ここ に 実装\n}';
+    document.getElementById('questOut').textContent = '▶ 「テスト 実行」 で 緑 / 赤 を 確認';
+    renderQuest();
+    showToast('🔄 STEP 1 から');
+  }
+  renderQuest();
+
+  /* === Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){ b.classList.add('right'); showToast('せいかい！ 🎉'); }
+        else { b.classList.add('wrong'); row.querySelector(`button[data-c="${ans}"]`).classList.add('right'); }
+        row.classList.add('answered');
+      });
+    });
+  });
+</script>
+</body>
+</html>

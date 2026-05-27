@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・初級 第4回｜アジャイルとIssue駆動 ／ 修了</title>
+<style>
+  :root{
+    --primary:#475569; --secondary:#F97316; --accent:#10B981;
+    --warn:#DC2626; --dark:#1E293B; --light:#F8FAFC;
+    --panel:#FFFFFF; --muted:#64748B;
+    --border:rgba(30,41,59,.10); --shadow:0 4px 12px rgba(30,41,59,.10);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--secondary);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,41,59,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:10px;height:14px;top:-20px;border-radius:2px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#475569 0%,#1E293B 60%,#0F172A 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:18px;margin-bottom:8px;font-weight:700}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFF7ED}
+
+  /* === Tool 1: Kanban Board === */
+  .kb{background:white;border-radius:14px;padding:20px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .kb-head{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .kb-head input{flex:1;min-width:200px;padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:6px;background:#F8FAFC;font-size:13px}
+  .kb-head input:focus{outline:none;border-color:var(--primary);background:white}
+  .kb-head select{padding:8px 10px;border:1.5px solid #CBD5E1;border-radius:6px;background:white;font-size:13px}
+  .kb-head button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .kb-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:780px){.kb-cols{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.kb-cols{grid-template-columns:1fr}}
+  .kb-col{background:#F8FAFC;border-radius:8px;padding:10px;min-height:240px;border:2px dashed transparent;transition:all .15s}
+  .kb-col.over{border-color:var(--accent);background:#ECFDF5}
+  .kb-col > h4{font-size:13px;text-align:center;color:var(--primary);padding-bottom:6px;border-bottom:2px solid currentColor;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:4px}
+  .kb-col > h4 .cnt{background:white;color:var(--primary);padding:2px 8px;border-radius:999px;font-size:11px}
+  .kb-col[data-status="todo"]      > h4{color:#64748B}
+  .kb-col[data-status="progress"]  > h4{color:var(--secondary)}
+  .kb-col[data-status="review"]    > h4{color:var(--accent)}
+  .kb-col[data-status="done"]      > h4{color:#7C3AED}
+  .kb-card{background:white;border-radius:6px;padding:10px 12px;margin-bottom:6px;cursor:grab;font-size:13px;border-left:4px solid var(--primary);
+    box-shadow:0 1px 3px rgba(0,0,0,.06);user-select:none;display:flex;flex-direction:column;gap:4px}
+  .kb-card.dragging{opacity:.4}
+  .kb-card.bug    {border-left-color:var(--warn);background:#FEF2F2}
+  .kb-card.feat   {border-left-color:var(--accent);background:#ECFDF5}
+  .kb-card.chore  {border-left-color:#94A3B8}
+  .kb-card .meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted)}
+  .kb-card .id{font-family:'JetBrains Mono','SF Mono',monospace;font-weight:700;color:var(--primary)}
+  .kb-card .pt{background:var(--primary);color:white;border-radius:999px;padding:1px 8px;font-weight:700;font-family:'JetBrains Mono','SF Mono',monospace;font-size:10px}
+  .kb-card .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0;line-height:1}
+  .kb-card .del:hover{color:var(--warn)}
+
+  /* === Tool 2: Planning Poker === */
+  .pp{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .pp-issue{padding:12px 16px;background:#F8FAFC;border-radius:8px;margin-bottom:14px;border-left:4px solid var(--primary)}
+  .pp-issue .id{font-family:'JetBrains Mono','SF Mono',monospace;font-weight:700;color:var(--primary);font-size:13px}
+  .pp-issue .t{font-size:15px;font-weight:700;margin:4px 0}
+  .pp-issue .d{font-size:13px;color:var(--muted);line-height:1.6}
+  .pp-cards{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+  .pp-card{width:54px;height:78px;border-radius:8px;border:2px solid var(--primary);background:white;color:var(--primary);
+    font-size:22px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono','SF Mono',monospace;transition:all .2s;box-shadow:0 2px 4px rgba(0,0,0,.06)}
+  .pp-card:hover{transform:translateY(-4px)}
+  .pp-card.sel{background:var(--primary);color:white;transform:translateY(-6px) scale(1.05);box-shadow:0 6px 14px rgba(71,85,105,.3)}
+  .pp-votes{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:14px}
+  .pp-vote{background:#F8FAFC;border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border)}
+  .pp-vote .nm{font-size:12px;color:var(--muted)}
+  .pp-vote .v{font-size:28px;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--primary);min-height:36px}
+  .pp-vote .v.hidden{color:transparent;background:linear-gradient(135deg,#CBD5E1,#94A3B8);border-radius:4px;display:inline-block;width:32px}
+  .pp-result{margin-top:14px;padding:12px 16px;border-radius:8px;background:#ECFDF5;border-left:4px solid var(--accent);display:none}
+  .pp-result.show{display:block}
+  .pp-result .avg{font-size:20px;font-weight:800;color:#065F46}
+  .pp-result .summary{font-size:13px;color:var(--muted);margin-top:4px}
+  .pp-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .pp-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .pp-actions button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+
+  /* === Tool 3: Sprint Planning === */
+  .sp{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .sp-velocity{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+  .sp-vel{background:#F8FAFC;border-radius:8px;padding:14px;text-align:center;border:1px solid var(--border)}
+  .sp-vel .n{font-size:24px;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--primary)}
+  .sp-vel .l{font-size:11px;color:var(--muted);margin-top:2px}
+  .sp-bag{background:#F8FAFC;border-radius:8px;padding:14px;margin-bottom:14px}
+  .sp-bag h4{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .sp-bag .items{display:flex;flex-direction:column;gap:6px}
+  .sp-item{display:flex;align-items:center;gap:10px;background:white;padding:8px 12px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:all .15s}
+  .sp-item.on{background:#ECFDF5;border-color:var(--accent)}
+  .sp-item .chk{width:18px;height:18px;border:2px solid var(--muted);border-radius:3px;display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;background:white;font-size:12px;font-weight:bold}
+  .sp-item.on .chk{background:var(--accent);border-color:var(--accent)}
+  .sp-item.on .chk::before{content:'✓'}
+  .sp-item .info{flex:1;font-size:13px}
+  .sp-item .id{font-family:'JetBrains Mono','SF Mono',monospace;color:var(--primary);font-weight:700;font-size:11px}
+  .sp-item .pt{background:var(--primary);color:white;border-radius:999px;padding:2px 10px;font-weight:700;font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;flex-shrink:0}
+  .sp-meter{margin-top:14px}
+  .sp-meter-bar{height:24px;border-radius:6px;overflow:hidden;background:#E2E8F0;display:flex}
+  .sp-meter-bar > .fill{background:linear-gradient(90deg,var(--accent),var(--secondary));transition:width .25s}
+  .sp-meter-bar > .over{background:var(--warn);transition:width .25s}
+  .sp-meter .lbl{display:flex;justify-content:space-between;font-size:13px;margin-top:6px;font-weight:600}
+  .sp-meter .lbl.over{color:var(--warn)}
+  .sp-msg{margin-top:10px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600;display:none}
+  .sp-msg.show{display:block}
+  .sp-msg.ok{background:#ECFDF5;color:#065F46;border-left:4px solid var(--accent)}
+  .sp-msg.over{background:#FEF2F2;color:#7F1D1D;border-left:4px solid var(--warn)}
+  .sp-msg.under{background:#FFFBEB;color:#92400E;border-left:4px solid var(--secondary)}
+
+  /* === Tool 4: KPT Retro === */
+  .kpt{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .kpt-input{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .kpt-input input{flex:1;min-width:200px;padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:6px;background:#F8FAFC;font-size:13px}
+  .kpt-input input:focus{outline:none;border-color:var(--primary);background:white}
+  .kpt-input select{padding:8px 10px;border:1.5px solid #CBD5E1;border-radius:6px;background:white;font-size:13px;font-weight:600}
+  .kpt-input button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .kpt-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:780px){.kpt-cols{grid-template-columns:1fr}}
+  .kpt-col{background:#F8FAFC;border-radius:8px;padding:12px;min-height:180px}
+  .kpt-col h4{text-align:center;padding-bottom:6px;border-bottom:2px solid currentColor;margin-bottom:8px;font-size:14px}
+  .kpt-col.keep    {background:#ECFDF5} .kpt-col.keep    h4{color:#059669}
+  .kpt-col.problem {background:#FEF2F2} .kpt-col.problem h4{color:#DC2626}
+  .kpt-col.try     {background:#FFFBEB} .kpt-col.try     h4{color:#D97706}
+  .kpt-item{background:white;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:13px;
+    display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .kpt-item .txt{flex:1;line-height:1.5}
+  .kpt-item .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0;line-height:1}
+  .kpt-item .del:hover{color:var(--warn)}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  /* === Cert / Finale === */
+  .certbox{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .certform{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+  .certform label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .certform input{width:100%;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;font-size:14px}
+  .certform input:focus{outline:none;border-color:var(--primary);background:white}
+  .cert{background:linear-gradient(135deg,#F8FAFC,#ECFDF5,#FFF7ED);
+    border:6px double var(--primary);border-radius:18px;padding:40px 30px;text-align:center;position:relative;overflow:hidden}
+  .cert::before,.cert::after{content:'🎓';position:absolute;font-size:80px;opacity:.08;color:var(--primary)}
+  .cert::before{top:10px;left:20px} .cert::after{bottom:10px;right:20px}
+  .cert .badge{font-size:60px}
+  .cert h2{color:var(--primary);font-size:30px;margin:6px 0 14px;letter-spacing:8px;font-weight:800}
+  .cert .body{font-size:16px;line-height:1.9}
+  .cert .name{font-size:28px;font-weight:bold;color:var(--accent);margin:14px 0;padding:8px 0;
+    border-top:2px solid var(--primary);border-bottom:2px solid var(--primary);display:inline-block;min-width:260px}
+  .cert .footer{margin-top:14px;font-size:13px;color:var(--muted)}
+  .cert-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .cert-tools button{border:none;border-radius:10px;padding:12px 26px;font-weight:700;cursor:pointer;font-size:15px;
+    background:var(--primary);color:white;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+  .cert-tools button.celebrate{background:var(--secondary);color:white}
+
+  .finale{background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 50%,var(--accent) 100%);
+    color:white;text-align:center;padding:60px 24px;border-radius:14px;margin:32px 24px}
+  .finale .em{font-size:84px;line-height:1}
+  .finale h2{color:white;font-size:clamp(28px,5vw,40px);margin:14px 0}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,.confetti,
+    .hero,.divider,.section:not(#certSection),.finale,footer{display:none !important}
+    .certform,.cert-tools{display:none !important}
+    .certbox{box-shadow:none;border:none;padding:0}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>初級 第4回</span> <b>アジャイル ／ 修了</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#kb">2<span>カンバン</span><span class="ic">🎫</span></a>
+  <a href="#pp">3<span>プランニング</span><span class="ic">🃏</span></a>
+  <a href="#sp">4<span>スプリント計画</span><span class="ic">📊</span></a>
+  <a href="#kpt">5<span>KPT レトロ</span><span class="ic">🔁</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#sec-cert">7<span>修了証</span><span class="ic">🎓</span></a>
+  <a href="#wrap">8<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 高校生プログラミング塾・初級 ／ 最終回</div>
+    <h1>アジャイル と<br>Issue 駆動</h1>
+    <p>カンバン ／ 見積もり ／ レトロ で <b>チーム の 一員</b> として 動く</p>
+    <div class="em">🎫🃏📊🎓</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. Kanban Board
+     ======================================================== -->
+<div class="divider" id="kb" data-snav-target>
+  <div class="num">01.</div>
+  <h2>カンバン ボード</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>チケット を ドラッグ で 動かす</h2>
+  <p class="lead">カード を 列間 で ドラッグ。 新しい Issue を 追加 する とき は ラベル と ポイント を 指定。 In Progress が 増えすぎる と **WIP制限** を 思い出そう。</p>
+
+  <div class="kb">
+    <div class="kb-head">
+      <input id="kbTitle" placeholder="新しい Issue タイトル…" aria-label="新規 Issue タイトル">
+      <select id="kbLabel" aria-label="ラベル">
+        <option value="feat">feat</option>
+        <option value="bug">bug</option>
+        <option value="chore">chore</option>
+      </select>
+      <select id="kbPt" aria-label="ストーリーポイント">
+        <option value="1">1 pt</option>
+        <option value="2">2 pt</option>
+        <option value="3" selected>3 pt</option>
+        <option value="5">5 pt</option>
+        <option value="8">8 pt</option>
+        <option value="13">13 pt</option>
+      </select>
+      <button onclick="kbAdd()" aria-label="Issue を 追加">＋ 追加</button>
+    </div>
+    <div class="kb-cols" id="kbCols">
+      <div class="kb-col" data-status="todo">
+        <h4>📥 Backlog <span class="cnt" id="cntTodo">0</span></h4>
+        <div class="items" data-target="todo"></div>
+      </div>
+      <div class="kb-col" data-status="progress">
+        <h4>🚧 In Progress <span class="cnt" id="cntProgress">0</span></h4>
+        <div class="items" data-target="progress"></div>
+      </div>
+      <div class="kb-col" data-status="review">
+        <h4>👀 Review <span class="cnt" id="cntReview">0</span></h4>
+        <div class="items" data-target="review"></div>
+      </div>
+      <div class="kb-col" data-status="done">
+        <h4>✅ Done <span class="cnt" id="cntDone">0</span></h4>
+        <div class="items" data-target="done"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. Planning Poker
+     ======================================================== -->
+<div class="divider" id="pp" data-snav-target>
+  <div class="num">02.</div>
+  <h2>プランニング ポーカー</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>4人 で 見積もり を 投票</h2>
+  <p class="lead">あなた が 1人 投票 する と、 残り 3人 の メンバー（仮想）も 投票 します。 「公開」 を 押す と 全員 の カード が めくれる。 数字 が ばらける と 議論 が 必要！</p>
+
+  <div class="pp">
+    <div class="pp-issue">
+      <div class="id" id="ppId">#42</div>
+      <div class="t" id="ppT">ログイン 画面 の 認証 ロジック を 実装</div>
+      <div class="d" id="ppD">JWT トークン 発行、 メール／パスワード 検証、 エラー ハンドリング 込み。 既存 の DB スキーマ あり。</div>
+    </div>
+
+    <div class="pp-cards" role="group" aria-label="ストーリーポイント カード">
+      <button class="pp-card" data-v="1" aria-label="1 ポイント">1</button>
+      <button class="pp-card" data-v="2" aria-label="2 ポイント">2</button>
+      <button class="pp-card" data-v="3" aria-label="3 ポイント">3</button>
+      <button class="pp-card" data-v="5" aria-label="5 ポイント">5</button>
+      <button class="pp-card" data-v="8" aria-label="8 ポイント">8</button>
+      <button class="pp-card" data-v="13" aria-label="13 ポイント">13</button>
+      <button class="pp-card" data-v="21" aria-label="21 ポイント">21</button>
+      <button class="pp-card" data-v="?" aria-label="わからない">?</button>
+    </div>
+
+    <div class="pp-votes" id="ppVotes"></div>
+
+    <div class="pp-actions">
+      <button onclick="ppReveal()" aria-label="公開">🎴 公開</button>
+      <button class="ghost" onclick="ppReset()" aria-label="リセット">🔄 リセット</button>
+      <button class="ghost" onclick="ppNext()" aria-label="次の Issue">➡ 次の Issue</button>
+    </div>
+
+    <div class="pp-result" id="ppResult" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. Sprint Planning
+     ======================================================== -->
+<div class="divider" id="sp" data-snav-target>
+  <div class="num">03.</div>
+  <h2>スプリント 計画</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>ベロシティ を 元 に コミット</h2>
+  <p class="lead">過去 3スプリント の 完了 ポイント から **平均 ベロシティ** を 計算。 今週 やる Issue を 選び、 合計 が ベロシティ を 超えない か メーター で 確認。</p>
+
+  <div class="sp">
+    <div class="sp-velocity">
+      <div class="sp-vel"><div class="n">18</div><div class="l">Sprint 1</div></div>
+      <div class="sp-vel"><div class="n">22</div><div class="l">Sprint 2</div></div>
+      <div class="sp-vel"><div class="n">20</div><div class="l">Sprint 3</div></div>
+      <div class="sp-vel" style="background:var(--primary);color:white"><div class="n" style="color:var(--secondary)">20</div><div class="l" style="color:rgba(255,255,255,.8)">平均（目標）</div></div>
+    </div>
+
+    <div class="sp-bag">
+      <h4>📥 バックログ（クリック で 選択）</h4>
+      <div class="items" id="spItems"></div>
+    </div>
+
+    <div class="sp-meter">
+      <div class="sp-meter-bar" aria-label="スプリント容量 メーター">
+        <div class="fill" id="spFill" style="width:0%"></div>
+        <div class="over" id="spOver" style="width:0%"></div>
+      </div>
+      <div class="lbl" id="spLbl"><span>選択中: 0 pt</span><span>容量: 20 pt</span></div>
+    </div>
+    <div class="sp-msg" id="spMsg" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. KPT Retro
+     ======================================================== -->
+<div class="divider" id="kpt" data-snav-target>
+  <div class="num">04.</div>
+  <h2>KPT レトロ ボード</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>Keep / Problem / Try</h2>
+  <p class="lead">スプリント の 終わり に みんな で 振り返り。 続けたい こと（Keep）、 困った こと（Problem）、 次 試したい こと（Try）を 言語化。 **人 ではなく 仕組み を 改善** が 鉄則。</p>
+
+  <div class="kpt">
+    <div class="kpt-input">
+      <select id="kptKind" aria-label="カテゴリ">
+        <option value="keep">🟢 Keep</option>
+        <option value="problem">🔴 Problem</option>
+        <option value="try">🟡 Try</option>
+      </select>
+      <input id="kptText" placeholder="例: レビュー 専任 ローテ を 試したい" aria-label="KPT 内容">
+      <button onclick="kptAdd()" aria-label="追加">＋ 追加</button>
+    </div>
+    <div class="kpt-cols">
+      <div class="kpt-col keep"><h4>🟢 Keep（続けたい）</h4><div class="items" id="kptKeep"></div></div>
+      <div class="kpt-col problem"><h4>🔴 Problem（問題）</h4><div class="items" id="kptProblem"></div></div>
+      <div class="kpt-col try"><h4>🟡 Try（試したい）</h4><div class="items" id="kptTry"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="d">
+      <div class="q">Q1. スクラム の **デイリースタンドアップ** で NG な のは？</div>
+      <div class="opts">
+        <button data-c="a">昨日 やった こと を 報告</button>
+        <button data-c="b">今日 やる こと を 報告</button>
+        <button data-c="c">ブロッカー を 共有</button>
+        <button data-c="d">その場 で バグ調査 を 始める</button>
+      </div>
+      <div class="ex">💡 デイリー は 15分 の 同期 イベント。 詳細 議論 は 別 ミーティング に 切り出す。</div>
+    </div>
+    <div class="qrow" data-answer="b">
+      <div class="q">Q2. ストーリーポイント を **時間** で 見積もらない 理由 は？</div>
+      <div class="opts">
+        <button data-c="a">数字 が 大きく なる から</button>
+        <button data-c="b">個人差 / 中断 / 見積もり責任 で ブレる から</button>
+        <button data-c="c">フィボナッチ の 方 が かっこいい から</button>
+      </div>
+      <div class="ex">💡 ポイント は **相対的 な 大きさ**。 人 ごと の 速度差 を 吸収 し、 個人 評価 に 使わない。</div>
+    </div>
+    <div class="qrow" data-answer="c">
+      <div class="q">Q3. レトロ の **鉄則** は？</div>
+      <div class="opts">
+        <button data-c="a">問題 を 隠す</button>
+        <button data-c="b">原因 の 人 を 特定 する</button>
+        <button data-c="c">**人 ではなく 仕組み** を 改善 する</button>
+      </div>
+      <div class="ex">💡 個人攻撃 を する と 心理的安全性 が 失われ、 問題 が 出てこなくなる。 「事象 で 語り、 仕組み で 解決」。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. 修了証
+     ======================================================== -->
+<div class="divider" id="sec-cert" data-snav-target>
+  <div class="num">06.</div>
+  <h2>修了証</h2>
+</div>
+
+<section class="section" id="certSection">
+  <h2>あなた への 修了証</h2>
+  <p class="lead">お名前 を 入力 する と あなたの 修了証 が 完成 します。 「印刷」 で 紙 に も。</p>
+
+  <div class="certbox">
+    <div class="certform">
+      <div><label for="certName">お名前</label><input id="certName" placeholder="Yamada Taro" aria-label="お名前"></div>
+      <div><label for="certDate">日付</label><input id="certDate" placeholder="2026年5月26日" aria-label="日付"></div>
+    </div>
+    <div class="cert" id="cert">
+      <div class="badge" aria-hidden="true">🎓</div>
+      <h2>CERTIFICATE</h2>
+      <div class="body">
+        <div class="name" id="certShowName">あなたの お名前</div>
+        <p>あなたは 高校生プログラミング塾・初級 コース（全4回） を<br>
+        最後まで やり遂げました。<br><br>
+        <b>プロ仕様の 開発環境</b> ・ <b>型</b> ・ <b>TDD</b> ・ <b>Issue 駆動</b> を<br>
+        身につけ、 <b>実務に近い 開発スキル</b> の 第一歩 を 踏み出しました。</p>
+        <div class="footer" id="certShowDate">2026年5月26日 ／ 高校生プログラミング塾</div>
+      </div>
+    </div>
+    <div class="cert-tools">
+      <button onclick="window.print()" aria-label="印刷">🖨️ 印刷</button>
+      <button class="celebrate" onclick="celebrate()" aria-label="お祝いの紙吹雪">🎊 おめでとう！</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     7. 修了
+     ======================================================== -->
+<div id="wrap" data-snav-target></div>
+
+<div class="finale">
+  <div class="em">🎓✨🎉</div>
+  <h2>高校生・初級 コース 修了 おめでとう！</h2>
+  <p style="font-size:16px;margin-top:8px">「環境 → 型 → TDD → Issue 駆動」 の <b>1サイクル</b> を 制覇！<br>
+  次は <b>中級</b>「チーム で 本格 Web サービス」 へ 進もう 🚀</p>
+  <button onclick="celebrate()" style="margin-top:20px;background:white;color:var(--primary);
+    border:none;padding:14px 32px;border-radius:10px;font-family:inherit;font-size:15px;
+    font-weight:700;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18)">🎊 おめでとう ボタン</button>
+</div>
+
+<footer>高校生プログラミング塾 ／ 初級 第4回｜アジャイル と Issue 駆動 ／ コース修了</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1600);
+  }
+
+  const confettiBox = document.getElementById('confetti');
+  function celebrate(){
+    confettiBox.innerHTML = '';
+    confettiBox.classList.add('on');
+    const colors = ['#F97316','#10B981','#DC2626','#475569','#FACC15','#EAB308'];
+    for(let i = 0; i < 80; i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[Math.floor(Math.random() * colors.length)];
+      s.style.animationDuration = (1.6 + Math.random() * 1.4) + 's';
+      s.style.animationDelay = (Math.random() * 0.5) + 's';
+      confettiBox.appendChild(s);
+    }
+    showToast('🎉 おめでとう！');
+    setTimeout(()=>confettiBox.classList.remove('on'), 3000);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* === 1. Kanban === */
+  let kbNextId = 42;
+  const kbCards = [
+    { id: 38, title: '認証 API の リファクタ',       label: 'feat',  pt: 5,  status: 'progress' },
+    { id: 39, title: 'README に セットアップ手順',    label: 'chore', pt: 1,  status: 'todo' },
+    { id: 40, title: 'ヘッダー の レスポンシブ崩れ',   label: 'bug',   pt: 3,  status: 'review' },
+    { id: 41, title: 'パスワード リセット 画面',      label: 'feat',  pt: 8,  status: 'todo' },
+    { id: 35, title: 'CI に lint 追加',              label: 'chore', pt: 2,  status: 'done' },
+    { id: 36, title: 'ロゴ画像 の 差し替え',          label: 'chore', pt: 1,  status: 'done' },
+  ];
+  function renderKb(){
+    ['todo','progress','review','done'].forEach(st => {
+      const wrap = document.querySelector(`.items[data-target="${st}"]`);
+      wrap.innerHTML = '';
+      kbCards.filter(c => c.status === st).forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'kb-card ' + c.label;
+        el.draggable = true;
+        el.dataset.id = c.id;
+        el.setAttribute('aria-label', `Issue #${c.id} ${c.title} (${c.pt}pt)`);
+        el.innerHTML = `<div style="font-weight:600">${escapeHTML(c.title)}</div>
+          <div class="meta"><span class="id">#${c.id} · ${c.label}</span>
+          <span style="display:flex;gap:6px;align-items:center"><span class="pt">${c.pt}</span>
+          <button class="del" aria-label="削除">✕</button></span></div>`;
+        el.querySelector('.del').addEventListener('click', e => {
+          e.stopPropagation();
+          const idx = kbCards.findIndex(x => x.id === c.id);
+          if(idx >= 0){ kbCards.splice(idx, 1); renderKb(); }
+        });
+        el.addEventListener('dragstart', e => { el.classList.add('dragging'); e.dataTransfer.setData('text/plain', c.id); });
+        el.addEventListener('dragend', () => el.classList.remove('dragging'));
+        wrap.appendChild(el);
+      });
+      const cnt = document.getElementById('cnt' + st.charAt(0).toUpperCase() + st.slice(1));
+      if(cnt) cnt.textContent = kbCards.filter(c => c.status === st).length;
+    });
+  }
+  document.querySelectorAll('.kb-col').forEach(col => {
+    col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('over'));
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('over');
+      const id = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      const card = kbCards.find(c => c.id === id);
+      if(card){
+        card.status = col.dataset.status;
+        renderKb();
+        if(card.status === 'progress'){
+          const wip = kbCards.filter(c => c.status === 'progress').length;
+          if(wip > 3) showToast('⚠️ WIP制限 超過（' + wip + '件）— 完了 を 優先！');
+        }
+        if(card.status === 'done') showToast('✅ ' + card.title + ' を Done に！');
+      }
+    });
+  });
+  function kbAdd(){
+    const t = document.getElementById('kbTitle').value.trim();
+    if(!t) return;
+    const label = document.getElementById('kbLabel').value;
+    const pt = parseInt(document.getElementById('kbPt').value, 10);
+    kbCards.push({ id: kbNextId++, title: t, label, pt, status: 'todo' });
+    document.getElementById('kbTitle').value = '';
+    renderKb();
+    showToast('📥 #' + (kbNextId - 1) + ' を Backlog に 追加');
+  }
+  document.getElementById('kbTitle').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); kbAdd(); } });
+  renderKb();
+
+  /* === 2. Planning Poker === */
+  const PP_ISSUES = [
+    { id: 42, t: 'ログイン 画面 の 認証 ロジック を 実装', d: 'JWT トークン 発行、 メール／パスワード 検証、 エラー ハンドリング 込み。 既存 の DB スキーマ あり。', avg: 5 },
+    { id: 43, t: 'ヘッダー の ダーク モード 対応',   d: 'Tailwind の dark: クラス 追加。 既存 デザイン トークン あり。', avg: 2 },
+    { id: 44, t: '通知 機能 を 一から 実装',         d: 'Web Push API / Service Worker / 設定画面 / DB スキーマ 全部 新規。', avg: 13 },
+    { id: 45, t: 'タイポ 修正 (README)',            d: '見つけた 誤字 1箇所 を 直す。', avg: 1 },
+  ];
+  let ppIdx = 0;
+  let ppMy = null;
+  const PP_MEMBERS = ['Alice','Bob','Carol','You'];
+  let ppVotes = {};
+  function renderPp(){
+    const iss = PP_ISSUES[ppIdx];
+    document.getElementById('ppId').textContent = '#' + iss.id;
+    document.getElementById('ppT').textContent = iss.t;
+    document.getElementById('ppD').textContent = iss.d;
+    document.querySelectorAll('.pp-card').forEach(c => c.classList.toggle('sel', c.dataset.v === ppMy));
+    const wrap = document.getElementById('ppVotes');
+    wrap.innerHTML = '';
+    PP_MEMBERS.forEach(m => {
+      const v = ppVotes[m];
+      const el = document.createElement('div');
+      el.className = 'pp-vote';
+      el.innerHTML = `<div class="nm">${m}</div><div class="v ${v && !ppVotes._revealed ? 'hidden' : ''}">${v && ppVotes._revealed ? v : (v ? '✓' : '...')}</div>`;
+      wrap.appendChild(el);
+    });
+    document.getElementById('ppResult').classList.remove('show');
+  }
+  document.querySelectorAll('.pp-card').forEach(b => {
+    b.addEventListener('click', () => {
+      ppMy = b.dataset.v;
+      ppVotes['You'] = ppMy;
+      // ライバル 3人 が 投票（仮想 / 1秒 ラグ）
+      const iss = PP_ISSUES[ppIdx];
+      ['Alice','Bob','Carol'].forEach((m, i) => {
+        setTimeout(() => {
+          // 平均 を 中心 に ばらつかせる
+          const opts = ['1','2','3','5','8','13','21'];
+          const cand = opts.filter(o => Math.abs(+o - iss.avg) <= 5);
+          ppVotes[m] = cand[Math.floor(Math.random() * cand.length)];
+          renderPp();
+        }, 400 + i * 300);
+      });
+      renderPp();
+      showToast('🃏 ' + ppMy + ' pt を 選択');
+    });
+  });
+  function ppReveal(){
+    if(Object.keys(ppVotes).filter(k => k !== '_revealed').length < 4){
+      showToast('⏳ まだ 全員 が 投票 してません');
+      return;
+    }
+    ppVotes._revealed = true;
+    renderPp();
+    const nums = PP_MEMBERS.map(m => ppVotes[m]).filter(v => v && v !== '?' && !isNaN(+v)).map(Number);
+    const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+    const min = Math.min(...nums);
+    const max = Math.max(...nums);
+    const result = document.getElementById('ppResult');
+    result.classList.add('show');
+    let msg;
+    if(max - min >= 5){
+      msg = `<div class="avg">⚠️ 意見 が 大きく ばらけ ました（${min}〜${max}）</div>
+        <div class="summary">最大 と 最小 の 人 が 理由 を 説明 → もう一度 投票</div>`;
+    } else {
+      msg = `<div class="avg">合意！ 平均: ${avg.toFixed(1)} pt</div>
+        <div class="summary">範囲 ${min}〜${max} 内 で 収束、 Issue に ${Math.round(avg)} pt を 記録</div>`;
+    }
+    result.innerHTML = msg;
+  }
+  function ppReset(){
+    ppMy = null;
+    ppVotes = {};
+    renderPp();
+  }
+  function ppNext(){
+    ppIdx = (ppIdx + 1) % PP_ISSUES.length;
+    ppReset();
+    showToast('➡ #' + PP_ISSUES[ppIdx].id);
+  }
+  renderPp();
+
+  /* === 3. Sprint Planning === */
+  const SP_BACKLOG = [
+    { id: 50, title: 'ログイン API',       pt: 5,  label: 'feat'  },
+    { id: 51, title: 'ヘッダー dark mode', pt: 2,  label: 'feat'  },
+    { id: 52, title: 'バグ: 500 on /me',   pt: 3,  label: 'bug'   },
+    { id: 53, title: 'README 更新',        pt: 1,  label: 'chore' },
+    { id: 54, title: 'パスワード reset',   pt: 8,  label: 'feat'  },
+    { id: 55, title: 'CI に test 追加',    pt: 3,  label: 'chore' },
+    { id: 56, title: '画像 圧縮',          pt: 2,  label: 'chore' },
+    { id: 57, title: '通知 機能',          pt: 13, label: 'feat'  },
+  ];
+  const spState = {};
+  const SP_CAPACITY = 20;
+  function renderSp(){
+    const wrap = document.getElementById('spItems');
+    wrap.innerHTML = '';
+    SP_BACKLOG.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'sp-item' + (spState[item.id] ? ' on' : '');
+      el.setAttribute('role','checkbox');
+      el.setAttribute('aria-checked', !!spState[item.id]);
+      el.setAttribute('tabindex','0');
+      el.setAttribute('aria-label', `${item.title} ${item.pt}ポイント`);
+      el.innerHTML = `<div class="chk" aria-hidden="true"></div>
+        <div class="info"><div class="id">#${item.id} · ${item.label}</div><div>${escapeHTML(item.title)}</div></div>
+        <div class="pt">${item.pt}</div>`;
+      el.addEventListener('click', () => { spState[item.id] = !spState[item.id]; renderSp(); });
+      el.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); spState[item.id] = !spState[item.id]; renderSp(); } });
+      wrap.appendChild(el);
+    });
+    const total = SP_BACKLOG.filter(i => spState[i.id]).reduce((s, i) => s + i.pt, 0);
+    const pct = Math.min(100, total / SP_CAPACITY * 100);
+    const overPct = total > SP_CAPACITY ? Math.min(100, (total - SP_CAPACITY) / SP_CAPACITY * 100) : 0;
+    document.getElementById('spFill').style.width = pct + '%';
+    document.getElementById('spOver').style.width = overPct + '%';
+    const lbl = document.getElementById('spLbl');
+    lbl.innerHTML = `<span>選択中: <b>${total} pt</b></span><span>容量: ${SP_CAPACITY} pt</span>`;
+    lbl.classList.toggle('over', total > SP_CAPACITY);
+    const msg = document.getElementById('spMsg');
+    msg.classList.add('show');
+    if(total === 0){
+      msg.className = 'sp-msg show under';
+      msg.innerHTML = '👆 バックログ から 今週 やる Issue を 選んで ください。';
+    } else if(total > SP_CAPACITY){
+      msg.className = 'sp-msg show over';
+      msg.innerHTML = `⚠️ <b>容量 超過 (${total - SP_CAPACITY} pt オーバー)</b> — 1〜2件 削るか、 大きい Issue を 分割 しよう。`;
+    } else if(total < SP_CAPACITY * 0.6){
+      msg.className = 'sp-msg show under';
+      msg.innerHTML = `🌱 <b>もう少し 入る (${SP_CAPACITY - total} pt 余裕)</b> — 小さい バグ修正 や リファクタ を 入れる チャンス。`;
+    } else {
+      msg.className = 'sp-msg show ok';
+      msg.innerHTML = `✅ <b>ちょうど良い (${total}/${SP_CAPACITY} pt)</b> — このまま スプリント 計画 を 確定 しよう。`;
+    }
+  }
+  renderSp();
+
+  /* === 4. KPT === */
+  const kptItems = {
+    keep:    [{ id: 1, txt: 'ペアプロ で バグ を 早く 発見' }],
+    problem: [{ id: 2, txt: 'レビュー 待ち 時間 が 長い' }],
+    try:     [{ id: 3, txt: 'レビュー 専任 ローテーション を 試す' }],
+  };
+  let kptNextId = 4;
+  function renderKpt(){
+    ['keep','problem','try'].forEach(k => {
+      const wrap = document.getElementById('kpt' + k.charAt(0).toUpperCase() + k.slice(1));
+      wrap.innerHTML = '';
+      kptItems[k].forEach(it => {
+        const el = document.createElement('div');
+        el.className = 'kpt-item';
+        el.innerHTML = `<span class="txt">${escapeHTML(it.txt)}</span><button class="del" aria-label="削除">✕</button>`;
+        el.querySelector('.del').addEventListener('click', () => {
+          kptItems[k] = kptItems[k].filter(x => x.id !== it.id);
+          renderKpt();
+        });
+        wrap.appendChild(el);
+      });
+    });
+  }
+  function kptAdd(){
+    const kind = document.getElementById('kptKind').value;
+    const txt = document.getElementById('kptText').value.trim();
+    if(!txt) return;
+    kptItems[kind].push({ id: kptNextId++, txt });
+    document.getElementById('kptText').value = '';
+    renderKpt();
+    showToast('➕ 追加');
+  }
+  document.getElementById('kptText').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); kptAdd(); } });
+  renderKpt();
+
+  /* === Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){ b.classList.add('right'); showToast('せいかい！ 🎉'); }
+        else { b.classList.add('wrong'); row.querySelector(`button[data-c="${ans}"]`).classList.add('right'); }
+        row.classList.add('answered');
+      });
+    });
+  });
+
+  /* === Certificate ライブ更新 === */
+  const cName = document.getElementById('certName');
+  const cDate = document.getElementById('certDate');
+  const cShowName = document.getElementById('certShowName');
+  const cShowDate = document.getElementById('certShowDate');
+  // 日付 デフォルト = 今日
+  const today = new Date();
+  cDate.value = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  cShowDate.textContent = cDate.value + ' ／ 高校生プログラミング塾';
+  cName.addEventListener('input', () => { cShowName.textContent = cName.value || 'あなたの お名前'; });
+  cDate.addEventListener('input', () => { cShowDate.textContent = (cDate.value || '日付') + ' ／ 高校生プログラミング塾'; });
+</script>
+</body>
+</html>
