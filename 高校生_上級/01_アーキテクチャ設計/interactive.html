@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・上級 第1回｜アーキテクチャ設計</title>
+<style>
+  :root{
+    --primary:#1E40AF; --secondary:#EAB308; --accent:#CA8A04;
+    --warn:#DC2626; --dark:#0C0A09; --light:#FAFAF9;
+    --panel:#FFFFFF; --muted:#78716C;
+    --border:rgba(12,10,9,.10); --shadow:0 4px 12px rgba(12,10,9,.10);
+    --code-bg:#0C0A09; --code-text:#FAFAF9;
+    --gold:#EAB308; --navy:#1E40AF; --black:#0C0A09;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--navy),var(--gold),var(--accent));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--gold);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(12,10,9,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#0C0A09 0%,#1E40AF 60%,#0C0A09 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(234,179,8,.2);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px;color:var(--gold);border:1px solid rgba(234,179,8,.4)}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.4);font-weight:800;
+    background:linear-gradient(135deg,#FAFAF9 0%,#EAB308 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--gold);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--gold);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card.tip{border-left:5px solid var(--gold);background:#FFFBEB}
+
+  /* === Tool 1: Architecture Tradeoff === */
+  .arch{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .arch-ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;padding:14px;background:#FAFAF9;border-radius:8px}
+  .arch-ctrl > div{display:flex;flex-direction:column;gap:4px}
+  .arch-ctrl label{font-weight:600;font-size:12px;color:var(--muted)}
+  .arch-ctrl input[type=range]{width:100%}
+  .arch-ctrl .val{font-family:'JetBrains Mono','SF Mono',monospace;font-weight:700;color:var(--primary);text-align:center;font-size:13px}
+  .arch-result{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  @media(max-width:780px){.arch-result{grid-template-columns:1fr}}
+  .arch-opt{background:#FAFAF9;border-radius:10px;padding:14px;text-align:center;border:2px solid var(--border);transition:all .25s}
+  .arch-opt.best{border-color:var(--gold);background:linear-gradient(135deg,#FFFBEB,#FEF3C7);box-shadow:0 4px 12px rgba(234,179,8,.25)}
+  .arch-opt .nm{font-weight:700;font-size:15px;margin-bottom:4px}
+  .arch-opt .score{font-size:32px;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--primary);line-height:1}
+  .arch-opt .lbl{font-size:11px;color:var(--muted);margin-top:2px}
+  .arch-opt .crown{font-size:20px;margin-top:4px;display:none}
+  .arch-opt.best .crown{display:block}
+  .arch-msg{padding:14px 16px;border-radius:8px;background:#FFFBEB;border-left:4px solid var(--gold);font-size:14px;line-height:1.7}
+
+  /* === Tool 2: DDD Aggregate Designer === */
+  .ddd{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .ddd-area{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.ddd-area{grid-template-columns:1fr}}
+  .ddd-bag{background:#FAFAF9;border-radius:8px;padding:14px;min-height:200px}
+  .ddd-bag h4{font-size:13px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:2px dashed var(--border)}
+  .ddd-bag .items{display:flex;flex-wrap:wrap;gap:6px}
+  .ddd-entity{padding:6px 12px;border-radius:999px;background:white;border:1.5px solid var(--primary);color:var(--primary);
+    cursor:grab;font-size:12px;font-weight:600;user-select:none;font-family:inherit}
+  .ddd-entity.value{border-color:var(--accent);color:var(--accent);background:#FFFBEB}
+  .ddd-entity.dragging{opacity:.4}
+  .ddd-agg{background:white;border-radius:8px;padding:12px;border:2px solid var(--primary);min-height:80px;margin-bottom:8px}
+  .ddd-agg.root{border-style:solid}
+  .ddd-agg .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700;font-size:13px;color:var(--primary)}
+  .ddd-agg .head .root-mark{font-size:11px;padding:2px 8px;border-radius:3px;background:var(--gold);color:var(--dark);font-family:'JetBrains Mono','SF Mono',monospace}
+  .ddd-agg.over{background:#FFFBEB;border-color:var(--gold)}
+  .ddd-inv{margin-top:14px}
+  .ddd-inv label{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block}
+  .ddd-inv textarea{width:100%;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #D6D3D1;border-radius:8px;background:#FAFAF9;color:var(--dark);
+    resize:vertical;min-height:90px}
+  .ddd-inv textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .ddd-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .ddd-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+  .ddd-actions button.ghost{background:#FAFAF9;color:var(--primary);border:1px solid var(--border)}
+
+  /* === Tool 3: Hexagonal Architecture === */
+  .hex{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .hex-svg{background:#FAFAF9;border-radius:8px;padding:14px;border:1px solid var(--border);text-align:center}
+  .hex-svg svg{display:block;width:100%;max-width:680px;height:auto;margin:0 auto}
+  .hex-info{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:780px){.hex-info{grid-template-columns:1fr}}
+  .hex-side{padding:14px;border-radius:8px;background:#FAFAF9}
+  .hex-side h4{font-size:13px;color:var(--primary);margin-bottom:6px}
+  .hex-side ul{margin-left:18px;font-size:13px;line-height:1.7;color:var(--dark)}
+  .hex-ctrl{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .hex-ctrl button{background:white;color:var(--primary);border:1.5px solid var(--primary);border-radius:6px;
+    padding:6px 14px;cursor:pointer;font-weight:600;font-size:13px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .hex-ctrl button.on{background:var(--primary);color:white}
+  .hex-ctrl button:hover{background:var(--primary);color:white}
+
+  /* === Tool 4: C4 Context Editor === */
+  .c4{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .c4-ctrl{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .c4-ctrl input{flex:1;min-width:140px;padding:8px 12px;border:1.5px solid #D6D3D1;border-radius:6px;background:#FAFAF9;font-size:13px}
+  .c4-ctrl input:focus{outline:none;border-color:var(--primary);background:white}
+  .c4-ctrl select{padding:8px 10px;border:1.5px solid #D6D3D1;border-radius:6px;background:white;font-size:13px}
+  .c4-ctrl button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+  .c4-canvas{background:#FAFAF9;border-radius:8px;padding:14px;border:1px solid var(--border);min-height:340px}
+  .c4-canvas svg{display:block;width:100%;max-width:880px;height:auto;margin:0 auto}
+  .c4-list{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media(max-width:780px){.c4-list{grid-template-columns:1fr}}
+  .c4-list .nodes, .c4-list .rels{background:#FAFAF9;border-radius:8px;padding:10px}
+  .c4-list h4{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .c4-list .row{display:flex;align-items:center;gap:6px;padding:6px 10px;background:white;border-radius:4px;margin-bottom:4px;font-size:12px}
+  .c4-list .row .lbl{flex:1}
+  .c4-list .row .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px}
+  .c4-list .row .del:hover{color:var(--warn)}
+  .c4-list .row .kind{padding:1px 8px;border-radius:3px;font-size:10px;font-weight:700;font-family:'JetBrains Mono','SF Mono',monospace}
+  .c4-list .row .kind.person{background:#DBEAFE;color:#1E3A8A}
+  .c4-list .row .kind.system{background:#FEF3C7;color:#92400E}
+  .c4-list .row .kind.ext{background:#E2E8F0;color:#475569}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #D6D3D1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#FEF3C7;border-color:var(--gold);color:#92400E}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#FAFAF9;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:var(--gold);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第1回</span> <b>アーキテクチャ設計</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#arch">2<span>モノリス vs マイクロ</span><span class="ic">🏛️</span></a>
+  <a href="#ddd">3<span>DDD 集約設計</span><span class="ic">📐</span></a>
+  <a href="#hex">4<span>ヘキサゴナル</span><span class="ic">🧱</span></a>
+  <a href="#c4">5<span>C4 図エディタ</span><span class="ic">🗺️</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#wrap">7<span>まとめ</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 高校生プログラミング塾・上級</div>
+    <h1>アーキテクチャ<br>設計</h1>
+    <p>モノリス / マイクロ / DDD / ヘキサゴナル — <b>設計可能 な エンジニア</b> へ</p>
+    <div class="em">🏛️📐🧱</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. Architecture Tradeoff
+     ======================================================== -->
+<div class="divider" id="arch" data-snav-target>
+  <div class="num">01.</div>
+  <h2>モノリス vs マイクロ トレードオフ</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>状況 を 入力 → 最適 を 判定</h2>
+  <p class="lead">チーム規模 / ユーザー数 / リリース頻度 / 運用力 を スライダー で 変える と、 **モノリス / モジュラーモノリス / マイクロサービス** の 各 スコア が 計算 され、 最適 が 王冠 付きで 提示 されます。</p>
+
+  <div class="arch">
+    <div class="arch-ctrl">
+      <div>
+        <label for="archTeam">チーム規模（人）</label>
+        <input id="archTeam" type="range" min="1" max="200" value="5" aria-label="チーム規模">
+        <div class="val" id="archTeamV">5 人</div>
+      </div>
+      <div>
+        <label for="archUsers">想定 ユーザー数</label>
+        <input id="archUsers" type="range" min="3" max="9" step="0.1" value="3" aria-label="ユーザー数（log10）">
+        <div class="val" id="archUsersV">1,000</div>
+      </div>
+      <div>
+        <label for="archRelease">リリース頻度</label>
+        <input id="archRelease" type="range" min="1" max="5" value="2" aria-label="リリース頻度">
+        <div class="val" id="archReleaseV">週1回</div>
+      </div>
+      <div>
+        <label for="archOps">運用 経験 値</label>
+        <input id="archOps" type="range" min="1" max="5" value="2" aria-label="運用経験">
+        <div class="val" id="archOpsV">普通</div>
+      </div>
+    </div>
+
+    <div class="arch-result">
+      <div class="arch-opt" id="archMono">
+        <div class="nm">🏛️ モノリス</div>
+        <div class="score" id="archMonoS">--</div>
+        <div class="lbl">適性スコア / 100</div>
+        <div class="crown" aria-hidden="true">👑</div>
+      </div>
+      <div class="arch-opt" id="archModular">
+        <div class="nm">📦 モジュラー モノリス</div>
+        <div class="score" id="archModularS">--</div>
+        <div class="lbl">適性スコア / 100</div>
+        <div class="crown" aria-hidden="true">👑</div>
+      </div>
+      <div class="arch-opt" id="archMicro">
+        <div class="nm">🧩 マイクロサービス</div>
+        <div class="score" id="archMicroS">--</div>
+        <div class="lbl">適性スコア / 100</div>
+        <div class="crown" aria-hidden="true">👑</div>
+      </div>
+    </div>
+
+    <div class="arch-msg" id="archMsg" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. DDD Aggregate Designer
+     ======================================================== -->
+<div class="divider" id="ddd" data-snav-target>
+  <div class="num">02.</div>
+  <h2>DDD 集約 設計</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>エンティティ を 集約 に ドラッグ</h2>
+  <p class="lead">「注文ドメイン」 の エンティティ を **集約** に ドラッグ。 集約 ＝ <b>整合性 を 保つ 単位</b>、 1トランザクション で 変更 する 範囲。 **集約ルート** を 1つ 指定 する のが ルール。</p>
+
+  <div class="ddd">
+    <div class="ddd-area">
+      <div class="ddd-bag" aria-label="未配置 エンティティ">
+        <h4>📦 エンティティ ／ 値オブジェクト（ドラッグ で 配置）</h4>
+        <div class="items" id="dddPool" data-target="pool"></div>
+      </div>
+
+      <div>
+        <h4 style="font-size:13px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:2px dashed var(--border)">🎯 Order 集約（root: Order）</h4>
+        <div class="ddd-agg root" data-agg="order">
+          <div class="head">📦 Order 集約 <span class="root-mark">ROOT</span></div>
+          <div class="items" data-target="order"></div>
+        </div>
+
+        <h4 style="font-size:13px;color:var(--muted);margin:14px 0 8px;padding-bottom:6px;border-bottom:2px dashed var(--border)">🎯 別 集約（必要 なら）</h4>
+        <div class="ddd-agg" data-agg="other">
+          <div class="head">📦 別 集約（任意）</div>
+          <div class="items" data-target="other"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ddd-inv">
+      <label for="dddInv">📋 不変条件 を 言語化（必須）</label>
+      <textarea id="dddInv" placeholder="例: 注文明細 は 最大 100件、 合計金額 は 0以上、 confirmed 状態 から cancel は できない…">注文明細 は 最大 100件
+合計金額 ＝ Σ(明細 の subtotal)
+confirmed 状態 → shipped or cancelled のみ 遷移可</textarea>
+    </div>
+
+    <div class="ddd-actions">
+      <button onclick="dddValidate()" aria-label="検証">▶ 設計 を 検証</button>
+      <button class="ghost" onclick="dddReset()" aria-label="リセット">🔄 リセット</button>
+      <button class="ghost" onclick="info('💡','DDD ヒント','<b>集約 の 設計 ヒント</b>:<br><br>' +
+        '① 集約 は <b>1 トランザクション 範囲</b> ＝ 同時 に 変更 する もの<br>' +
+        '② <b>大きすぎる 集約</b> は 競合 で 衝突 が 増える<br>' +
+        '③ <b>小さすぎる 集約</b> は 整合性 が 取れない<br>' +
+        '④ 集約間 の 参照 は <b>ID のみ</b>（オブジェクト 直参照 NG）<br>' +
+        '⑤ <b>不変条件</b> を 集約ルート の メソッド で 強制')" aria-label="ヒント">💡 ヒント</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. Hexagonal Architecture
+     ======================================================== -->
+<div class="divider" id="hex" data-snav-target>
+  <div class="num">03.</div>
+  <h2>ヘキサゴナル（ポート＆アダプタ）</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>「外側 が 内側 に 依存」 を 可視化</h2>
+  <p class="lead">中心 ＝ Domain、 外側 ＝ Adapter（API / DB / Mail）。 アダプタ を 切替 ボタン で 変えても **Domain は 変わらない**。 これ が ヘキサゴナル の 力。</p>
+
+  <div class="hex">
+    <div class="hex-ctrl" role="group" aria-label="アダプタ 切替">
+      <span style="font-size:12px;color:var(--muted);align-self:center;margin-right:4px">DB:</span>
+      <button class="on" data-hex="db-pg" onclick="hexSwitch('db','postgres')" aria-label="PostgreSQL">PostgreSQL</button>
+      <button data-hex="db-tu" onclick="hexSwitch('db','turso')" aria-label="Turso">Turso</button>
+      <button data-hex="db-mem" onclick="hexSwitch('db','memory')" aria-label="InMemory（テスト用）">InMemory</button>
+      <span style="font-size:12px;color:var(--muted);align-self:center;margin:0 4px 0 12px">Mail:</span>
+      <button class="on" data-hex="mail-sg" onclick="hexSwitch('mail','sendgrid')" aria-label="SendGrid">SendGrid</button>
+      <button data-hex="mail-ses" onclick="hexSwitch('mail','ses')" aria-label="AWS SES">AWS SES</button>
+      <button data-hex="mail-fake" onclick="hexSwitch('mail','fake')" aria-label="FakeMailer（テスト用）">FakeMailer</button>
+    </div>
+
+    <div class="hex-svg" id="hexSvg" aria-label="ヘキサゴナル 図"></div>
+
+    <div class="hex-info">
+      <div class="hex-side">
+        <h4>⚓ Ports（Domain が 定義 する Interface）</h4>
+        <ul>
+          <li><code>interface UserRepository</code></li>
+          <li><code>interface Mailer</code></li>
+          <li><code>interface PaymentGateway</code></li>
+        </ul>
+      </div>
+      <div class="hex-side">
+        <h4>🔌 Adapters（Port を 実装 する 具象 class）</h4>
+        <ul id="hexAdapters"></ul>
+      </div>
+    </div>
+
+    <div class="card tip" style="margin-top:14px">
+      <h3>💡 ヘキサゴナル の メリット</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">
+        Domain は <b>どこ にも 依存 しない</b> → テスト で InMemory / FakeMailer を 渡せる →
+        **DB なし で ビジネスロジック が 検証可能**。 技術選定 を 後から 変えても Domain は 不変。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. C4 Context Editor
+     ======================================================== -->
+<div class="divider" id="c4" data-snav-target>
+  <div class="num">04.</div>
+  <h2>C4 Context 図 エディタ</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>システム を 1枚 で 描く</h2>
+  <p class="lead">ノード（人 / システム / 外部）と 関係 を 追加 して、 自分の 卒業 プロジェクト の **C4 Context 図** を 1枚 作成。 SVG で 出力 されるので 印刷 / コピー も OK。</p>
+
+  <div class="c4">
+    <div class="c4-ctrl">
+      <input id="c4Name" placeholder="名前（例: User / WebApp / Stripe）" aria-label="ノード名">
+      <select id="c4Kind" aria-label="種別">
+        <option value="person">👤 人</option>
+        <option value="system" selected>🏢 自システム</option>
+        <option value="ext">🔌 外部システム</option>
+      </select>
+      <button onclick="c4AddNode()" aria-label="ノード追加">＋ ノード</button>
+      <button onclick="c4AddRel()" style="background:var(--gold);color:var(--dark)" aria-label="関係追加">→ 関係</button>
+      <button onclick="c4Reset()" style="background:#FAFAF9;color:var(--primary);border:1px solid var(--border)" aria-label="リセット">🔄</button>
+    </div>
+
+    <div class="c4-canvas" id="c4Canvas" aria-label="C4 Context 図"></div>
+
+    <div class="c4-list">
+      <div class="nodes">
+        <h4>📦 ノード <span id="c4NodeCount" style="float:right;color:var(--primary);font-weight:700">0</span></h4>
+        <div id="c4NodeList"></div>
+      </div>
+      <div class="rels">
+        <h4>🔗 関係 <span id="c4RelCount" style="float:right;color:var(--primary);font-weight:700">0</span></h4>
+        <div id="c4RelList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="d">
+      <div class="q">Q1. 5人 / 100ユーザー / 立ち上げ3ヶ月 の Web サービス に **おすすめ** は？</div>
+      <div class="opts">
+        <button data-c="a">モノリス</button>
+        <button data-c="b">モジュラー モノリス</button>
+        <button data-c="c">マイクロ（5サービス）</button>
+        <button data-c="d">A または B</button>
+      </div>
+      <div class="ex">💡 小規模 / 初期段階 では モノリス（or モジュラー）が 王道。 マイクロ は 20人以上 から 検討。 Sam Newman 「まず モノリス で 作って 切り出せ」。</div>
+    </div>
+    <div class="qrow" data-answer="b">
+      <div class="q">Q2. **DDD の 集約**（Aggregate）の 主な 役割 は？</div>
+      <div class="opts">
+        <button data-c="a">DB の テーブル を 表す</button>
+        <button data-c="b">整合性 を 保つ 単位（1 トランザクション 範囲）</button>
+        <button data-c="c">API の エンドポイント を 定義する</button>
+      </div>
+      <div class="ex">💡 集約 は 「同時 に 変更 する もの」 ＝ 不変条件 を 守る 範囲。 集約ルート の メソッド を 通してしか 変更 できない。</div>
+    </div>
+    <div class="qrow" data-answer="a">
+      <div class="q">Q3. **ヘキサゴナル アーキテクチャ** の 核心 は？</div>
+      <div class="opts">
+        <button data-c="a">外側（API/DB/UI）が 内側（Domain）に 依存（依存逆転）</button>
+        <button data-c="b">6角形 の 図 を 描くこと</button>
+        <button data-c="c">マイクロサービス を 6個 作ること</button>
+      </div>
+      <div class="ex">💡 Domain は どこにも 依存 しない → テスト で 別 アダプタ（InMemory 等）を 渡せる → DB なし で ロジック検証可能。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. まとめ
+     ======================================================== -->
+<div class="divider" id="wrap" data-snav-target>
+  <div class="num">06.</div>
+  <h2>きょうのまとめ</h2>
+</div>
+
+<section class="section">
+  <h2>おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>🏛️ アーキ選定 ＝ トレードオフ</h3><p style="color:var(--muted);font-size:14px">モノリス / モジュラー / マイクロ — 状況 で 選ぶ。 「流行 で 選ぶ」 が 最悪。</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>📐 DDD ＝ 共通言語 ＋ 集約</h3><p style="color:var(--muted);font-size:14px">ユビキタス言語 / 集約 / 境界づけられたコンテキスト で 大規模 ドメイン を 切る。</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🧱 ヘキサゴナル ＝ 依存逆転</h3><p style="color:var(--muted);font-size:14px">外側 が 内側 に 依存。 ポート＆アダプタ で 技術 を 後から 変えられる。</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🗺️ C4 で 1枚図</h3><p style="color:var(--muted);font-size:14px">Context → Container → Component → Code。 Context だけ で 9割 説明可。</p></div></div>
+  </div>
+</section>
+
+<footer>高校生プログラミング塾 ／ 上級 第1回｜アーキテクチャ設計</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* === 1. Architecture Tradeoff === */
+  const RELEASE_LABELS = { 1:'月1回', 2:'週1回', 3:'毎日', 4:'1日複数', 5:'数十回/日' };
+  const OPS_LABELS     = { 1:'未経験', 2:'普通', 3:'経験あり', 4:'プロ', 5:'プラチナ' };
+  function archRender(){
+    const t = +document.getElementById('archTeam').value;
+    const u = Math.round(Math.pow(10, +document.getElementById('archUsers').value));
+    const r = +document.getElementById('archRelease').value;
+    const o = +document.getElementById('archOps').value;
+    document.getElementById('archTeamV').textContent = t + ' 人';
+    document.getElementById('archUsersV').textContent = u.toLocaleString();
+    document.getElementById('archReleaseV').textContent = RELEASE_LABELS[r];
+    document.getElementById('archOpsV').textContent = OPS_LABELS[o];
+
+    // スコア計算
+    // モノリス: 小チーム / 小ユーザー / 低リリース頻度 / 低運用力 で 高
+    let mono = 100;
+    if(t > 5)  mono -= (t - 5) * 2;
+    if(u > 10000) mono -= Math.log10(u / 10000) * 12;
+    if(r > 3)  mono -= (r - 3) * 8;
+    mono = Math.max(5, Math.min(100, mono));
+
+    // モジュラー: 中規模 で ピーク
+    let modu = 80;
+    if(t < 3) modu -= (3 - t) * 8;
+    if(t > 20) modu -= (t - 20) * 1.5;
+    if(u > 1000000) modu -= 10;
+    modu = Math.max(20, Math.min(95, modu));
+
+    // マイクロ: 大規模 で 高、 運用力 必須
+    let micro = 5;
+    if(t >= 10) micro += (t - 10) * 1.2;
+    if(u >= 100000) micro += Math.log10(u / 100000) * 10;
+    if(r >= 4) micro += (r - 3) * 8;
+    if(o < 3) micro -= (3 - o) * 15; // 運用力 不足 で 大幅減点
+    if(o >= 4) micro += (o - 3) * 5;
+    micro = Math.max(0, Math.min(95, micro));
+
+    document.getElementById('archMonoS').textContent = Math.round(mono);
+    document.getElementById('archModularS').textContent = Math.round(modu);
+    document.getElementById('archMicroS').textContent = Math.round(micro);
+
+    const scores = [['archMono',mono,'モノリス'],['archModular',modu,'モジュラー モノリス'],['archMicro',micro,'マイクロサービス']];
+    scores.sort((a,b) => b[1] - a[1]);
+    document.querySelectorAll('.arch-opt').forEach(el => el.classList.remove('best'));
+    document.getElementById(scores[0][0]).classList.add('best');
+
+    let msg = '';
+    if(scores[0][1] - scores[1][1] < 10){
+      msg = `🤔 **僅差** で <b>${scores[0][2]}</b> 推奨 ですが、 <b>${scores[1][2]}</b> も 検討余地 あり。 チームの 文化 / 既存資産 で 決めましょう。`;
+    } else {
+      msg = `✅ **${scores[0][2]}** が 圧勝（スコア ${Math.round(scores[0][1])}）。 「流行 ではなく 状況 で 選ぶ」 の 原則 を 守れて います。`;
+    }
+    if(micro >= scores[0][1] && o < 3){
+      msg += `<br>⚠️ ただし 運用経験 が ${OPS_LABELS[o]} の 段階 で マイクロ は **オーバースペック**。 まず モジュラー モノリス で 練習 を。`;
+    }
+    document.getElementById('archMsg').innerHTML = msg;
+  }
+  ['archTeam','archUsers','archRelease','archOps'].forEach(id => document.getElementById(id).addEventListener('input', archRender));
+  archRender();
+
+  /* === 2. DDD Aggregate Designer === */
+  const DDD_ENTITIES = [
+    { id:'order',     name:'Order',       kind:'entity' },
+    { id:'item',      name:'OrderItem',   kind:'entity' },
+    { id:'addr',      name:'ShipAddress', kind:'value' },
+    { id:'money',     name:'Money',       kind:'value' },
+    { id:'cust',      name:'Customer',    kind:'entity' },
+    { id:'product',   name:'Product',     kind:'entity' },
+    { id:'inv',       name:'Inventory',   kind:'entity' },
+    { id:'cat',       name:'Category',    kind:'value' },
+  ];
+  // 配置: pool / order / other
+  let dddPlace = {};
+  DDD_ENTITIES.forEach(e => { dddPlace[e.id] = 'pool'; });
+  // デフォルト: Order/OrderItem/ShipAddress/Money は Order 集約
+  ['order','item','addr','money'].forEach(id => { dddPlace[id] = 'order'; });
+
+  function renderDdd(){
+    document.querySelectorAll('[data-target]').forEach(wrap => {
+      const t = wrap.dataset.target;
+      wrap.innerHTML = '';
+      DDD_ENTITIES.filter(e => dddPlace[e.id] === t).forEach(e => {
+        const el = document.createElement('div');
+        el.className = 'ddd-entity' + (e.kind === 'value' ? ' value' : '');
+        el.draggable = true;
+        el.dataset.id = e.id;
+        el.setAttribute('aria-label', e.name + ' (' + e.kind + ')');
+        el.textContent = (e.kind === 'value' ? '◇ ' : '◆ ') + e.name;
+        el.addEventListener('dragstart', ev => { el.classList.add('dragging'); ev.dataTransfer.setData('text/plain', e.id); });
+        el.addEventListener('dragend', () => el.classList.remove('dragging'));
+        wrap.appendChild(el);
+      });
+    });
+  }
+  document.querySelectorAll('.ddd-bag, .ddd-agg').forEach(zone => {
+    const t = zone.querySelector('[data-target]') || zone;
+    const target = t.dataset.target;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('over');
+      const id = e.dataTransfer.getData('text/plain');
+      if(id && dddPlace[id] !== undefined){
+        dddPlace[id] = target;
+        renderDdd();
+      }
+    });
+  });
+  function dddValidate(){
+    const orderEnts = DDD_ENTITIES.filter(e => dddPlace[e.id] === 'order');
+    const inv = document.getElementById('dddInv').value.trim();
+    const lines = inv.split('\n').filter(l => l.trim()).length;
+    let html = '';
+    let warns = [];
+    if(orderEnts.length === 0){
+      html += '<b>❌ Order 集約 が 空</b>。 少なくとも root（Order）を 配置 してください。';
+    } else if(orderEnts.length === 1 && orderEnts[0].id !== 'order'){
+      html += '<b>⚠️ root（Order）が ない 集約</b>。 集約 は root を 通してしか 触れない ルール。';
+    } else if(orderEnts.length > 5){
+      html += '<b>⚠️ 集約 が 大きすぎ（' + orderEnts.length + '個）</b>。 同時 変更 で 競合 リスク。 分割 を 検討。';
+    } else {
+      html += '<b>✅ Order 集約 (' + orderEnts.length + '個) ＝ 適切 サイズ</b>。';
+    }
+    if(lines < 2){
+      warns.push('不変条件 が ' + lines + '個 — 最低 3つ 言語化 を 推奨');
+    } else {
+      html += '<br>✅ 不変条件 ' + lines + '件 — Good。';
+    }
+    // Customer/Product/Inventory が Order 集約 に いる と 大きすぎ
+    if(orderEnts.some(e => ['cust','product','inv'].includes(e.id))){
+      warns.push('Customer / Product / Inventory は **別 集約**（ID 参照 のみ）が 推奨');
+    }
+    if(warns.length) html += '<br>⚠️ ' + warns.join('<br>⚠️ ');
+    info('📋','設計 検証 結果', html);
+  }
+  function dddReset(){
+    DDD_ENTITIES.forEach(e => { dddPlace[e.id] = 'pool'; });
+    ['order','item','addr','money'].forEach(id => { dddPlace[id] = 'order'; });
+    renderDdd();
+    showToast('🔄 リセット');
+  }
+  renderDdd();
+
+  /* === 3. Hexagonal === */
+  const HEX_ADAPTERS = {
+    db:   { postgres: { nm:'PostgresUserRepository', desc:'本番 用、 JDBC 経由' },
+            turso:    { nm:'TursoUserRepository',    desc:'エッジ 用、 libSQL 経由' },
+            memory:   { nm:'InMemoryUserRepository', desc:'テスト 用、 Map で 保持' }, },
+    mail: { sendgrid: { nm:'SendGridMailer',         desc:'本番 用、 SendGrid API' },
+            ses:      { nm:'AWSSESMailer',           desc:'本番 用、 AWS SES' },
+            fake:     { nm:'FakeMailer',             desc:'テスト 用、 メモリ に 記録' }, },
+  };
+  let hexState = { db: 'postgres', mail: 'sendgrid' };
+  function hexRender(){
+    const dbA = HEX_ADAPTERS.db[hexState.db];
+    const mA  = HEX_ADAPTERS.mail[hexState.mail];
+    const svg = `<svg viewBox="0 0 660 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ヘキサゴナル アーキテクチャ 図">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#1E40AF"/></marker></defs>
+      <!-- 六角形 中央 -->
+      <polygon points="330,80 460,150 460,250 330,320 200,250 200,150" fill="#1E40AF" stroke="#0C0A09" stroke-width="3"/>
+      <text x="330" y="180" font-size="24" fill="#EAB308" text-anchor="middle" font-weight="bold" font-family="Inter,sans-serif">Domain</text>
+      <text x="330" y="210" font-size="12" fill="white" text-anchor="middle" font-family="JetBrains Mono,monospace">User / Order / Payment</text>
+      <text x="330" y="232" font-size="11" fill="#FACC15" text-anchor="middle" font-family="JetBrains Mono,monospace">Ports（Interface）</text>
+      <!-- 左: API -->
+      <rect x="20" y="40" width="140" height="60" rx="8" fill="#FAFAF9" stroke="#1E40AF" stroke-width="2"/>
+      <text x="90" y="65" font-size="13" fill="#0C0A09" text-anchor="middle" font-weight="bold">REST API</text>
+      <text x="90" y="83" font-size="10" fill="#78716C" text-anchor="middle" font-family="JetBrains Mono,monospace">HttpAdapter</text>
+      <line x1="160" y1="70" x2="200" y2="150" stroke="#1E40AF" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- 左: CLI -->
+      <rect x="20" y="300" width="140" height="60" rx="8" fill="#FAFAF9" stroke="#1E40AF" stroke-width="2"/>
+      <text x="90" y="325" font-size="13" fill="#0C0A09" text-anchor="middle" font-weight="bold">CLI / Job</text>
+      <text x="90" y="343" font-size="10" fill="#78716C" text-anchor="middle" font-family="JetBrains Mono,monospace">CliAdapter</text>
+      <line x1="160" y1="330" x2="200" y2="260" stroke="#1E40AF" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- 右: DB -->
+      <rect x="500" y="40" width="140" height="60" rx="8" fill="#FFFBEB" stroke="#EAB308" stroke-width="2"/>
+      <text x="570" y="60" font-size="13" fill="#0C0A09" text-anchor="middle" font-weight="bold">DB</text>
+      <text x="570" y="78" font-size="9" fill="#92400E" text-anchor="middle" font-family="JetBrains Mono,monospace">${escapeHTML(dbA.nm)}</text>
+      <text x="570" y="92" font-size="9" fill="#78716C" text-anchor="middle">${escapeHTML(dbA.desc)}</text>
+      <line x1="460" y1="160" x2="500" y2="70" stroke="#EAB308" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- 右: Mail -->
+      <rect x="500" y="300" width="140" height="60" rx="8" fill="#FFFBEB" stroke="#EAB308" stroke-width="2"/>
+      <text x="570" y="320" font-size="13" fill="#0C0A09" text-anchor="middle" font-weight="bold">Mail</text>
+      <text x="570" y="338" font-size="9" fill="#92400E" text-anchor="middle" font-family="JetBrains Mono,monospace">${escapeHTML(mA.nm)}</text>
+      <text x="570" y="352" font-size="9" fill="#78716C" text-anchor="middle">${escapeHTML(mA.desc)}</text>
+      <line x1="460" y1="240" x2="500" y2="330" stroke="#EAB308" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- ラベル -->
+      <text x="90" y="20" font-size="11" fill="#1E40AF" text-anchor="middle" font-weight="bold">Driving Adapters →</text>
+      <text x="570" y="20" font-size="11" fill="#92400E" text-anchor="middle" font-weight="bold">← Driven Adapters</text>
+    </svg>`;
+    document.getElementById('hexSvg').innerHTML = svg;
+    document.getElementById('hexAdapters').innerHTML = `
+      <li><code>UserRepository</code> → <b>${escapeHTML(dbA.nm)}</b></li>
+      <li><code>Mailer</code> → <b>${escapeHTML(mA.nm)}</b></li>
+      <li><code>PaymentGateway</code> → <b>StripeGateway</b></li>`;
+    document.querySelectorAll('.hex-ctrl button').forEach(b => {
+      const [type, val] = b.dataset.hex.split('-');
+      const cur = type === 'db' ? hexState.db : hexState.mail;
+      const match = (type === 'db' && cur === 'postgres' && val === 'pg') ||
+                    (type === 'db' && cur === 'turso' && val === 'tu') ||
+                    (type === 'db' && cur === 'memory' && val === 'mem') ||
+                    (type === 'mail' && cur === 'sendgrid' && val === 'sg') ||
+                    (type === 'mail' && cur === 'ses' && val === 'ses') ||
+                    (type === 'mail' && cur === 'fake' && val === 'fake');
+      b.classList.toggle('on', match);
+    });
+  }
+  function hexSwitch(type, val){
+    hexState[type] = val;
+    hexRender();
+    showToast('🔌 ' + type.toUpperCase() + ' を ' + val + ' に 切替（Domain は 変更不要！）');
+  }
+  hexRender();
+
+  /* === 4. C4 Context Editor === */
+  let c4Nodes = [
+    { id:1, name:'受講者',   kind:'person' },
+    { id:2, name:'講師',     kind:'person' },
+    { id:3, name:'学習プラットフォーム', kind:'system' },
+    { id:4, name:'Stripe',   kind:'ext' },
+    { id:5, name:'SendGrid', kind:'ext' },
+  ];
+  let c4Rels = [
+    { from:1, to:3, label:'受講・進捗確認' },
+    { from:2, to:3, label:'教材アップロード' },
+    { from:3, to:4, label:'決済' },
+    { from:3, to:5, label:'通知メール送信' },
+  ];
+  let c4NextId = 6;
+  function c4AddNode(){
+    const nm = document.getElementById('c4Name').value.trim();
+    if(!nm){ showToast('名前 を 入力'); return; }
+    const kind = document.getElementById('c4Kind').value;
+    c4Nodes.push({ id: c4NextId++, name: nm, kind });
+    document.getElementById('c4Name').value = '';
+    renderC4();
+  }
+  function c4AddRel(){
+    if(c4Nodes.length < 2){ showToast('ノード が 2つ 必要'); return; }
+    const fromName = prompt('From ノード名:', c4Nodes[0].name);
+    if(!fromName) return;
+    const toName = prompt('To ノード名:', c4Nodes[1].name);
+    if(!toName) return;
+    const label = prompt('関係 ラベル（例: 受講, 決済）:', '');
+    const from = c4Nodes.find(n => n.name === fromName);
+    const to = c4Nodes.find(n => n.name === toName);
+    if(!from || !to){ showToast('ノード が 見つからない'); return; }
+    c4Rels.push({ from: from.id, to: to.id, label: label || '' });
+    renderC4();
+  }
+  function c4Reset(){
+    c4Nodes = [{ id:1, name:'User', kind:'person' }, { id:2, name:'WebApp', kind:'system' }];
+    c4Rels = [{ from:1, to:2, label:'使用' }];
+    c4NextId = 3;
+    renderC4();
+  }
+  function renderC4(){
+    // 配置: 自システム を 中心、 周囲 に person/ext を 円形配置
+    const center = c4Nodes.find(n => n.kind === 'system') || c4Nodes[0];
+    const others = c4Nodes.filter(n => n.id !== (center && center.id));
+    const W = 800, H = 380;
+    const cx = W/2, cy = H/2;
+    const positions = { [center && center.id]: { x: cx, y: cy } };
+    others.forEach((n, i) => {
+      const angle = (i / others.length) * Math.PI * 2 - Math.PI/2;
+      const r = Math.min(W, H) * 0.36;
+      positions[n.id] = { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
+    });
+    function colorFor(kind){
+      if(kind === 'person') return { fill:'#DBEAFE', stroke:'#1E3A8A', text:'#1E3A8A', ic:'👤' };
+      if(kind === 'system') return { fill:'#1E40AF', stroke:'#0C0A09', text:'#EAB308', ic:'🏢' };
+      return { fill:'#E7E5E4', stroke:'#78716C', text:'#0C0A09', ic:'🔌' };
+    }
+    let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="C4 Context 図">
+      <defs><marker id="c4ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#78716C"/></marker></defs>`;
+    // 関係（線）
+    c4Rels.forEach(r => {
+      const a = positions[r.from], b = positions[r.to];
+      if(!a || !b) return;
+      // ノード周辺で少し短縮
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      const x1 = a.x + dx/len * 50;
+      const y1 = a.y + dy/len * 32;
+      const x2 = b.x - dx/len * 50;
+      const y2 = b.y - dy/len * 32;
+      svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#78716C" stroke-width="1.5" marker-end="url(#c4ar)"/>`;
+      if(r.label){
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        svg += `<text x="${mx}" y="${my - 4}" font-size="11" fill="#78716C" text-anchor="middle" font-family="Inter,sans-serif">${escapeHTML(r.label)}</text>`;
+      }
+    });
+    // ノード（矩形）
+    c4Nodes.forEach(n => {
+      const p = positions[n.id];
+      if(!p) return;
+      const c = colorFor(n.kind);
+      svg += `<rect x="${p.x - 50}" y="${p.y - 30}" width="100" height="60" rx="8" fill="${c.fill}" stroke="${c.stroke}" stroke-width="2"/>`;
+      svg += `<text x="${p.x}" y="${p.y - 6}" font-size="20" text-anchor="middle">${c.ic}</text>`;
+      svg += `<text x="${p.x}" y="${p.y + 18}" font-size="12" fill="${c.text}" text-anchor="middle" font-weight="bold" font-family="Inter,sans-serif">${escapeHTML(n.name)}</text>`;
+    });
+    svg += '</svg>';
+    document.getElementById('c4Canvas').innerHTML = svg;
+    // リスト
+    document.getElementById('c4NodeCount').textContent = c4Nodes.length;
+    document.getElementById('c4RelCount').textContent = c4Rels.length;
+    const nl = document.getElementById('c4NodeList');
+    nl.innerHTML = '';
+    c4Nodes.forEach(n => {
+      const r = document.createElement('div');
+      r.className = 'row';
+      r.innerHTML = `<span class="kind ${n.kind}">${n.kind}</span><span class="lbl">${escapeHTML(n.name)}</span><button class="del" aria-label="削除">×</button>`;
+      r.querySelector('.del').addEventListener('click', () => {
+        c4Nodes = c4Nodes.filter(x => x.id !== n.id);
+        c4Rels = c4Rels.filter(x => x.from !== n.id && x.to !== n.id);
+        renderC4();
+      });
+      nl.appendChild(r);
+    });
+    const rl = document.getElementById('c4RelList');
+    rl.innerHTML = '';
+    c4Rels.forEach((rel, idx) => {
+      const f = c4Nodes.find(n => n.id === rel.from);
+      const t = c4Nodes.find(n => n.id === rel.to);
+      if(!f || !t) return;
+      const r = document.createElement('div');
+      r.className = 'row';
+      r.innerHTML = `<span class="lbl">${escapeHTML(f.name)} → ${escapeHTML(t.name)}<br><span style="color:var(--muted);font-size:11px">「${escapeHTML(rel.label || '(なし)')}」</span></span><button class="del" aria-label="削除">×</button>`;
+      r.querySelector('.del').addEventListener('click', () => {
+        c4Rels.splice(idx, 1);
+        renderC4();
+      });
+      rl.appendChild(r);
+    });
+  }
+  renderC4();
+
+  /* === Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){ b.classList.add('right'); showToast('せいかい！ 🎉'); }
+        else { b.classList.add('wrong'); row.querySelector(`button[data-c="${ans}"]`).classList.add('right'); }
+        row.classList.add('answered');
+      });
+    });
+  });
+</script>
+</body>
+</html>
