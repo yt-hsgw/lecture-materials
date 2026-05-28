@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・中級 第4回｜DevOps と 監視 ／ 修了</title>
+<style>
+  :root{
+    --primary:#1E3A8A; --secondary:#FACC15; --accent:#14B8A6;
+    --warn:#DC2626; --dark:#0F172A; --light:#F0F9FF;
+    --panel:#FFFFFF; --muted:#64748B;
+    --border:rgba(15,23,42,.10); --shadow:0 4px 12px rgba(15,23,42,.10);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--accent),var(--secondary));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--secondary);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:10px;height:14px;top:-20px;border-radius:2px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#1E3A8A 0%,#0F172A 60%,#020617 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFFBEB}
+
+  /* === Tool 1: CI/CD Pipeline === */
+  .cicd{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .cicd-ctrl{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .cicd-ctrl button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .cicd-ctrl button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+  .cicd-pipe{display:flex;align-items:stretch;gap:14px;background:#F8FAFC;border-radius:8px;padding:18px;overflow-x:auto}
+  .cicd-stage{display:flex;flex-direction:column;gap:8px;min-width:140px}
+  .cicd-stage > .lbl{font-weight:700;color:var(--primary);font-size:13px;text-align:center;padding:4px 8px;background:white;border-radius:6px}
+  .cicd-job{background:white;border:2px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;position:relative;transition:all .2s}
+  .cicd-job.queued{background:#F8FAFC;color:var(--muted)}
+  .cicd-job.running{background:#FEF3C7;border-color:#FBBF24;color:#92400E;animation:pulseY 1s infinite}
+  @keyframes pulseY{0%,100%{opacity:1}50%{opacity:.7}}
+  .cicd-job.success{background:#ECFDF5;border-color:var(--accent);color:#065F46}
+  .cicd-job.fail{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .cicd-job .nm{font-weight:700;margin-bottom:4px}
+  .cicd-job .t{font-size:11px;opacity:.8}
+  .cicd-arrow{align-self:center;font-size:24px;color:var(--muted)}
+  .cicd-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}
+  .cicd-stat{background:#F8FAFC;border-radius:8px;padding:12px;text-align:center}
+  .cicd-stat .n{font-size:22px;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--primary)}
+  .cicd-stat .l{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* === Tool 2: SLO Error Budget === */
+  .slo{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .slo-ctrl{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;background:#F8FAFC;border-radius:8px}
+  .slo-ctrl label{font-weight:600;font-size:13px;color:var(--muted)}
+  .slo-ctrl input{width:80px;padding:6px 10px;border:1.5px solid #CBD5E1;border-radius:6px;background:white;font-size:13px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .slo-ctrl input:focus{outline:none;border-color:var(--primary)}
+  .slo-ctrl button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+  .slo-ctrl button.danger{background:var(--warn)}
+  .slo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  @media(max-width:780px){.slo-grid{grid-template-columns:1fr}}
+  .slo-card{background:#F8FAFC;border-radius:10px;padding:18px;text-align:center;border:2px solid var(--border)}
+  .slo-card .n{font-size:42px;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace;line-height:1}
+  .slo-card .n.ok{color:var(--accent)} .slo-card .n.warn{color:var(--secondary)} .slo-card .n.danger{color:var(--warn)}
+  .slo-card .l{font-size:12px;color:var(--muted);margin-top:6px}
+  .slo-budget-bar{height:30px;border-radius:8px;background:#E2E8F0;overflow:hidden;display:flex;position:relative}
+  .slo-budget-bar > .used{background:var(--warn);transition:width .4s}
+  .slo-budget-bar > .left{background:linear-gradient(90deg,var(--accent),var(--secondary));transition:width .4s}
+  .slo-budget-bar .label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--dark);text-shadow:0 1px 0 white,1px 0 0 white,-1px 0 0 white,0 -1px 0 white}
+  .slo-msg{margin-top:12px;padding:12px 16px;border-radius:8px;font-weight:600;font-size:14px}
+  .slo-msg.ok{background:#ECFDF5;border-left:4px solid var(--accent);color:#065F46}
+  .slo-msg.warn{background:#FFFBEB;border-left:4px solid var(--secondary);color:#92400E}
+  .slo-msg.danger{background:#FEF2F2;border-left:4px solid var(--warn);color:#7F1D1D}
+
+  /* === Tool 3: Alert Trainer === */
+  .alrt{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .alrt-q{padding:14px 16px;background:#F8FAFC;border-radius:8px;margin-bottom:14px;border-left:4px solid var(--primary)}
+  .alrt-q .ctx{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .alrt-q .scn{font-weight:700;font-size:15px}
+  .alrt-opts{display:grid;gap:8px}
+  .alrt-opt{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;background:white;border-radius:8px;
+    border:2px solid var(--border);cursor:pointer;font-family:inherit;font-size:13px;line-height:1.6;text-align:left}
+  .alrt-opt:hover{border-color:var(--primary)}
+  .alrt-opt.right{background:#ECFDF5;border-color:var(--accent)}
+  .alrt-opt.wrong{background:#FEF2F2;border-color:var(--warn);opacity:.7}
+  .alrt-opt .badge{padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0}
+  .alrt-opt .badge.metric{background:#E0E7FF;color:#3730A3}
+  .alrt-opt .badge.symptom{background:#D1FAE5;color:#065F46}
+  .alrt-opt .badge.impact{background:#FEE2E2;color:#991B1B}
+  .alrt-result{margin-top:12px;padding:12px 16px;border-radius:8px;display:none;font-size:13px;line-height:1.6}
+  .alrt-result.show{display:block}
+  .alrt-result.ok{background:#ECFDF5;border-left:4px solid var(--accent);color:#065F46}
+  .alrt-result.ng{background:#FEF2F2;border-left:4px solid var(--warn);color:#7F1D1D}
+  .alrt-actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px}
+  .alrt-actions .score{font-size:13px;color:var(--muted)}
+  .alrt-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+
+  /* === Tool 4: Log Viewer === */
+  .log{background:white;border-radius:14px;padding:0;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px;overflow:hidden}
+  .log-head{background:var(--dark);color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .log-head .title{font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;color:var(--secondary);font-weight:600}
+  .log-filter{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+  .log-filter input{padding:4px 10px;border:1px solid #334155;border-radius:4px;background:#1E293B;color:white;font-size:12px;font-family:'JetBrains Mono','SF Mono',monospace;width:120px}
+  .log-filter input::placeholder{color:#64748B}
+  .log-filter button{background:#1E293B;color:#94A3B8;border:1px solid #334155;border-radius:4px;
+    padding:4px 10px;cursor:pointer;font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;font-weight:600}
+  .log-filter button.on.info{background:#7DD3FC;color:var(--dark);border-color:#7DD3FC}
+  .log-filter button.on.warn{background:#FCD34D;color:var(--dark);border-color:#FCD34D}
+  .log-filter button.on.error{background:#FCA5A5;color:var(--dark);border-color:#FCA5A5}
+  .log-body{background:#0F172A;color:#E2E8F0;padding:14px 18px;font-family:'JetBrains Mono','SF Mono',monospace;
+    font-size:12px;line-height:1.8;max-height:380px;overflow-y:auto}
+  .log-line{display:grid;grid-template-columns:140px 60px 1fr 70px;gap:10px;padding:3px 6px;border-radius:4px;align-items:start}
+  .log-line.INFO .lvl{color:#7DD3FC}
+  .log-line.WARN{background:rgba(252,211,77,.05)}
+  .log-line.WARN .lvl{color:#FCD34D;font-weight:bold}
+  .log-line.ERROR{background:rgba(252,165,165,.08)}
+  .log-line.ERROR .lvl{color:#FCA5A5;font-weight:bold}
+  .log-line .ts{color:#64748B}
+  .log-line .lvl{font-weight:600}
+  .log-line .msg{word-break:break-word}
+  .log-line .st{color:#94A3B8;text-align:right}
+  .log-line.hidden{display:none}
+  .log-stats{background:#1E293B;padding:10px 18px;display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#94A3B8;border-top:1px solid #334155}
+  .log-stats b{font-family:'JetBrains Mono','SF Mono',monospace}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:white;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  /* === Cert / Finale === */
+  .certbox{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .certform{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+  .certform label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .certform input{width:100%;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;font-size:14px}
+  .certform input:focus{outline:none;border-color:var(--primary);background:white}
+  .cert{background:linear-gradient(135deg,#F0F9FF,#ECFEFF,#FFFBEB);
+    border:6px double var(--primary);border-radius:18px;padding:40px 30px;text-align:center;position:relative;overflow:hidden}
+  .cert::before,.cert::after{content:'🎓';position:absolute;font-size:80px;opacity:.08;color:var(--primary)}
+  .cert::before{top:10px;left:20px} .cert::after{bottom:10px;right:20px}
+  .cert .badge{font-size:60px}
+  .cert h2{color:var(--primary);font-size:30px;margin:6px 0 14px;letter-spacing:8px;font-weight:800}
+  .cert .body{font-size:16px;line-height:1.9}
+  .cert .name{font-size:28px;font-weight:bold;color:var(--accent);margin:14px 0;padding:8px 0;
+    border-top:2px solid var(--primary);border-bottom:2px solid var(--primary);display:inline-block;min-width:260px}
+  .cert .footer{margin-top:14px;font-size:13px;color:var(--muted)}
+  .cert-tools{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .cert-tools button{border:none;border-radius:10px;padding:12px 26px;font-weight:700;cursor:pointer;font-size:15px;
+    background:var(--primary);color:white;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+  .cert-tools button.celebrate{background:var(--secondary);color:var(--dark)}
+
+  .finale{background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 50%,var(--secondary) 100%);
+    color:white;text-align:center;padding:60px 24px;border-radius:14px;margin:32px 24px}
+  .finale .em{font-size:84px;line-height:1}
+  .finale h2{color:white;font-size:clamp(28px,5vw,40px);margin:14px 0}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,.confetti,
+    .hero,.divider,.section:not(#certSection),.finale,footer{display:none !important}
+    .certform,.cert-tools{display:none !important}
+    .certbox{box-shadow:none;border:none;padding:0}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第4回</span> <b>DevOps と 監視 ／ 修了</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#cicd">2<span>CI/CD パイプ</span><span class="ic">🚀</span></a>
+  <a href="#slo">3<span>SLO ダッシュ</span><span class="ic">📊</span></a>
+  <a href="#alrt">4<span>アラート設計</span><span class="ic">🔔</span></a>
+  <a href="#logs">5<span>構造化ログ</span><span class="ic">📋</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#sec-cert">7<span>修了証</span><span class="ic">🎓</span></a>
+  <a href="#wrap">8<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 高校生プログラミング塾・中級 ／ 最終回</div>
+    <h1>DevOps と<br>監視</h1>
+    <p>CI/CD ／ SLO ／ アラート ／ ログ で <b>動き続ける</b></p>
+    <div class="em">🚀📈🔔🎓</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. CI/CD Pipeline
+     ======================================================== -->
+<div class="divider" id="cicd" data-snav-target>
+  <div class="num">01.</div>
+  <h2>CI/CD パイプライン Visualizer</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>「並列 化 した CI」 の 速さ</h2>
+  <p class="lead">push を トリガー に、 lint / type / test / build が **並列** で 走り、 全部 通れば deploy。 一部 を 故意 に 失敗 させて 「赤 が 出る」 様子 も 体感。</p>
+
+  <div class="cicd">
+    <div class="cicd-ctrl">
+      <button onclick="cicdRun(false)" aria-label="正常実行">▶ git push（全て pass）</button>
+      <button onclick="cicdRun(true)" aria-label="失敗あり" style="background:var(--warn)">❌ 失敗 入り</button>
+      <button class="ghost" onclick="cicdReset()" aria-label="リセット">🔄 リセット</button>
+    </div>
+
+    <div class="cicd-pipe" id="cicdPipe" role="status" aria-live="polite"></div>
+
+    <div class="cicd-stats">
+      <div class="cicd-stat"><div class="n" id="cicdTotal">--</div><div class="l">全 ジョブ</div></div>
+      <div class="cicd-stat"><div class="n" id="cicdPass" style="color:var(--accent)">--</div><div class="l">成功</div></div>
+      <div class="cicd-stat"><div class="n" id="cicdFail" style="color:var(--warn)">--</div><div class="l">失敗</div></div>
+      <div class="cicd-stat"><div class="n" id="cicdSer">--</div><div class="l">逐次実行 (秒)</div></div>
+      <div class="cicd-stat"><div class="n" id="cicdPar" style="color:var(--accent)">--</div><div class="l">並列実行 (秒)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. SLO Error Budget
+     ======================================================== -->
+<div class="divider" id="slo" data-snav-target>
+  <div class="num">02.</div>
+  <h2>SLO エラー予算 ダッシュボード</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>「99.9% で 月 43分」 を 体感</h2>
+  <p class="lead">SLO 目標 と 月間 リクエスト数 を 入力 する と、 **エラー予算**（許容 ダウン時間 / 許容 エラー数）が 自動 計算。 実際 の エラー数 を 増やして 「残り予算」 を 観察。</p>
+
+  <div class="slo">
+    <div class="slo-ctrl">
+      <label for="sloPct">SLO 目標:</label>
+      <input id="sloPct" type="number" value="99.9" min="90" max="100" step="0.01" aria-label="SLO 目標 %">
+      <span style="font-size:13px;color:var(--muted)">%</span>
+      <label for="sloReq">月間 リクエスト:</label>
+      <input id="sloReq" type="number" value="1000000" min="1000" step="10000" aria-label="月間リクエスト数">
+      <label for="sloErr">実際 の エラー:</label>
+      <input id="sloErr" type="number" value="0" min="0" step="100" aria-label="実際のエラー数">
+      <button onclick="sloAdd(100)" aria-label="エラーを100追加">＋100 エラー</button>
+      <button onclick="sloAdd(1000)" class="danger" aria-label="エラーを1000追加">＋1000 エラー</button>
+    </div>
+
+    <div class="slo-grid">
+      <div class="slo-card">
+        <div class="n" id="sloBudgetN">--</div>
+        <div class="l">エラー予算（許容 失敗数 / 月）</div>
+      </div>
+      <div class="slo-card">
+        <div class="n" id="sloDownN">--</div>
+        <div class="l">ダウン時間 予算 / 月</div>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="margin-bottom:8px;font-size:14px;color:var(--muted)">📊 予算 消費 状況</h3>
+      <div class="slo-budget-bar">
+        <div class="used" id="sloUsed" style="width:0%"></div>
+        <div class="left" id="sloLeft" style="width:100%"></div>
+        <div class="label" id="sloLabel">--</div>
+      </div>
+    </div>
+
+    <div class="slo-msg" id="sloMsg" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. Alert Trainer
+     ======================================================== -->
+<div class="divider" id="alrt" data-snav-target>
+  <div class="num">03.</div>
+  <h2>アラート 設計 Trainer</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>「症状 vs 影響」 で 鳴らす</h2>
+  <p class="lead">5シナリオ で 「アラート に **適切** な 条件」 を 選んでください。 CPU や メモリ 等 の **症状** に 鳴らす と オオカミ 少年化、 **ユーザー影響** に 鳴らす と SN 比 が 上がる。</p>
+
+  <div class="alrt">
+    <div class="alrt-q" id="alrtQ"></div>
+    <div class="alrt-opts" id="alrtOpts" role="radiogroup" aria-label="アラート条件 候補"></div>
+    <div class="alrt-result" id="alrtResult" role="status" aria-live="polite"></div>
+    <div class="alrt-actions">
+      <div class="score">問題 <b id="alrtIdx">1</b> / 5 — スコア: <b id="alrtScore">0</b></div>
+      <button onclick="alrtNext()" aria-label="次の問題">▶ 次へ</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. Structured Log Viewer
+     ======================================================== -->
+<div class="divider" id="logs" data-snav-target>
+  <div class="num">04.</div>
+  <h2>構造化 ログ Viewer</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>本物 の 運用画面 を 体感</h2>
+  <p class="lead">サンプル 100行 の 構造化 ログ。 上 の フィルタ で <b>INFO / WARN / ERROR</b> を 切替、 キーワード で 検索。 エラー が 何件 か パッと わかる！</p>
+
+  <div class="log">
+    <div class="log-head">
+      <span class="title">📋 production-logs / api-server</span>
+      <div class="log-filter">
+        <input type="text" id="logSearch" placeholder="検索…" aria-label="ログ検索">
+        <button class="on info" data-lvl="INFO" onclick="logFilter('INFO')" aria-label="INFOフィルタ">INFO</button>
+        <button class="on warn" data-lvl="WARN" onclick="logFilter('WARN')" aria-label="WARNフィルタ">WARN</button>
+        <button class="on error" data-lvl="ERROR" onclick="logFilter('ERROR')" aria-label="ERRORフィルタ">ERROR</button>
+      </div>
+    </div>
+    <div class="log-body" id="logBody"></div>
+    <div class="log-stats" id="logStats"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="b">
+      <div class="q">Q1. CI を 「lint と test と build を 同じ ジョブ」 に まとめる **デメリット** は？</div>
+      <div class="opts">
+        <button data-c="a">ジョブ名 が ださい</button>
+        <button data-c="b">失敗箇所 が わかりにくい / 全体時間 が 長い</button>
+        <button data-c="c">YAML が 短くなる</button>
+      </div>
+      <div class="ex">💡 分けると どの ジョブ が 失敗 か UI で 一目、 並列 で 短時間、 失敗 だけ 再実行 可。</div>
+    </div>
+    <div class="qrow" data-answer="c">
+      <div class="q">Q2. **アラート 疲れ** を 防ぐ ベスト プラクティス は？</div>
+      <div class="opts">
+        <button data-c="a">アラート を 全部 ミュート</button>
+        <button data-c="b">CPU 使用率 90% で 鳴らす</button>
+        <button data-c="c">ユーザー体験 への 影響（エラー率 / レイテンシ）に 鳴らす</button>
+      </div>
+      <div class="ex">💡 症状 ではなく **影響** に 鳴らす。 「CPU 高い」 だけ では ユーザー に 問題 が 出ているか 不明。</div>
+    </div>
+    <div class="qrow" data-answer="b">
+      <div class="q">Q3. ログ を 「文字列 連結」 で 書く **問題** は？</div>
+      <div class="opts">
+        <button data-c="a">遅い</button>
+        <button data-c="b">**検索 / 集計 / アラート** が 不可能 / 一貫性 が ない</button>
+        <button data-c="c">日本語 が 使えない</button>
+      </div>
+      <div class="ex">💡 構造化 ログ（JSON）で {userId, event, level} を 持つ と Datadog / CloudWatch で 集計 / アラート / トレース 可能。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. 修了証
+     ======================================================== -->
+<div class="divider" id="sec-cert" data-snav-target>
+  <div class="num">06.</div>
+  <h2>修了証</h2>
+</div>
+
+<section class="section" id="certSection">
+  <h2>あなた への 修了証</h2>
+  <p class="lead">お名前 を 入力 する と あなたの 修了証 が 完成 します。 「印刷」 で 紙 に も。</p>
+
+  <div class="certbox">
+    <div class="certform">
+      <div><label for="certName">お名前</label><input id="certName" placeholder="Yamada Taro" aria-label="お名前"></div>
+      <div><label for="certDate">日付</label><input id="certDate" placeholder="2026年5月26日" aria-label="日付"></div>
+    </div>
+    <div class="cert" id="cert">
+      <div class="badge" aria-hidden="true">🎓</div>
+      <h2>CERTIFICATE</h2>
+      <div class="body">
+        <div class="name" id="certShowName">あなたの お名前</div>
+        <p>あなたは 高校生プログラミング塾・中級 コース（全4回） を<br>
+        最後まで やり遂げました。<br><br>
+        <b>チーム開発</b> ・ <b>モダンFE / BE</b> ・ <b>DevOps / 監視</b> を<br>
+        身につけ、 <b>スタートアップ初日 から 戦力</b> に なれる レベルへ。</p>
+        <div class="footer" id="certShowDate">2026年5月26日 ／ 高校生プログラミング塾</div>
+      </div>
+    </div>
+    <div class="cert-tools">
+      <button onclick="window.print()" aria-label="印刷">🖨️ 印刷</button>
+      <button class="celebrate" onclick="celebrate()" aria-label="お祝いの紙吹雪">🎊 おめでとう！</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     7. 修了
+     ======================================================== -->
+<div id="wrap" data-snav-target></div>
+
+<div class="finale">
+  <div class="em">🎓✨🎉</div>
+  <h2>高校生・中級 コース 修了 おめでとう！</h2>
+  <p style="font-size:16px;margin-top:8px">「動く」 から 「動き続ける」 へ。 中級 4回 を 完走！<br>
+  次は <b>上級</b>「アーキ → AI/ML → キャリア → 卒業発表」 へ 進もう 🚀</p>
+  <button onclick="celebrate()" style="margin-top:20px;background:white;color:var(--primary);
+    border:none;padding:14px 32px;border-radius:10px;font-family:inherit;font-size:15px;
+    font-weight:700;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18)">🎊 おめでとう ボタン</button>
+</div>
+
+<footer>高校生プログラミング塾 ／ 中級 第4回｜DevOps と 監視 ／ コース修了</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  const confettiBox = document.getElementById('confetti');
+  function celebrate(){
+    confettiBox.innerHTML = '';
+    confettiBox.classList.add('on');
+    const colors = ['#1E3A8A','#FACC15','#14B8A6','#3B82F6','#F59E0B','#10B981'];
+    for(let i = 0; i < 80; i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[Math.floor(Math.random() * colors.length)];
+      s.style.animationDuration = (1.6 + Math.random() * 1.4) + 's';
+      s.style.animationDelay = (Math.random() * 0.5) + 's';
+      confettiBox.appendChild(s);
+    }
+    showToast('🎉 おめでとう！');
+    setTimeout(()=>confettiBox.classList.remove('on'), 3000);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* === 1. CI/CD Pipeline === */
+  const CICD_STAGES = [
+    { lbl:'Test (parallel)', jobs:[
+      { nm:'lint',      t:18 },
+      { nm:'type',      t:24 },
+      { nm:'unit-test', t:42 },
+      { nm:'e2e-test',  t:96 },
+    ]},
+    { lbl:'Build',           jobs:[
+      { nm:'build',     t:54 },
+    ]},
+    { lbl:'Deploy',          jobs:[
+      { nm:'deploy',    t:32 },
+    ]},
+  ];
+  function cicdRender(allStatus){
+    const pipe = document.getElementById('cicdPipe');
+    pipe.innerHTML = '';
+    CICD_STAGES.forEach((stg, si) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'cicd-stage';
+      const lbl = document.createElement('div');
+      lbl.className = 'lbl';
+      lbl.textContent = stg.lbl;
+      wrap.appendChild(lbl);
+      stg.jobs.forEach((j, ji) => {
+        const el = document.createElement('div');
+        el.className = 'cicd-job ' + (allStatus[si][ji] || 'queued');
+        el.innerHTML = `<div class="nm">${j.nm}</div><div class="t">${j.t}s</div>`;
+        wrap.appendChild(el);
+      });
+      pipe.appendChild(wrap);
+      if(si < CICD_STAGES.length - 1){
+        const arr = document.createElement('div');
+        arr.className = 'cicd-arrow';
+        arr.setAttribute('aria-hidden', 'true');
+        arr.textContent = '→';
+        pipe.appendChild(arr);
+      }
+    });
+  }
+  function cicdReset(){
+    const init = CICD_STAGES.map(s => s.jobs.map(() => 'queued'));
+    cicdRender(init);
+    document.getElementById('cicdTotal').textContent = '--';
+    document.getElementById('cicdPass').textContent = '--';
+    document.getElementById('cicdFail').textContent = '--';
+    document.getElementById('cicdSer').textContent = '--';
+    document.getElementById('cicdPar').textContent = '--';
+  }
+  async function cicdRun(withFail){
+    const status = CICD_STAGES.map(s => s.jobs.map(() => 'queued'));
+    cicdRender(status);
+    let totalSer = 0, totalPar = 0;
+    let pass = 0, fail = 0, total = 0;
+    let failedStage = -1;
+    for(let si = 0; si < CICD_STAGES.length; si++){
+      const stg = CICD_STAGES[si];
+      // 全 ジョブ を running に
+      stg.jobs.forEach((_, ji) => { status[si][ji] = 'running'; });
+      cicdRender(status);
+      // 並列実行 ＝ 最も 長い 時間 で 完了
+      const maxT = Math.max(...stg.jobs.map(j => j.t));
+      totalPar += maxT;
+      totalSer += stg.jobs.reduce((s, j) => s + j.t, 0);
+      // ステージ 失敗 判定（withFail かつ Test stage）
+      const willFailIdx = (withFail && si === 0) ? 2 : -1; // unit-test を 失敗 に
+      const stepTime = Math.min(800, maxT * 12); // ms 短縮 で 体感
+      await new Promise(r => setTimeout(r, stepTime));
+      stg.jobs.forEach((_, ji) => {
+        if(ji === willFailIdx){
+          status[si][ji] = 'fail';
+          fail++;
+          if(failedStage < 0) failedStage = si;
+        } else {
+          status[si][ji] = 'success';
+          pass++;
+        }
+        total++;
+      });
+      cicdRender(status);
+      // 失敗 ステージ で 後続 を queued の まま 終了
+      if(failedStage >= 0){
+        for(let s2 = si + 1; s2 < CICD_STAGES.length; s2++){
+          CICD_STAGES[s2].jobs.forEach((_, ji) => { status[s2][ji] = 'queued'; total++; });
+        }
+        break;
+      }
+    }
+    document.getElementById('cicdTotal').textContent = total;
+    document.getElementById('cicdPass').textContent = pass;
+    document.getElementById('cicdFail').textContent = fail;
+    document.getElementById('cicdSer').textContent = totalSer;
+    document.getElementById('cicdPar').textContent = totalPar;
+    if(failedStage >= 0){
+      showToast('❌ ' + CICD_STAGES[failedStage].lbl + ' で 失敗 — Deploy 中止');
+    } else {
+      showToast('✅ パイプライン 全 グリーン — Deploy 完了');
+    }
+  }
+  cicdReset();
+
+  /* === 2. SLO Error Budget === */
+  function sloRun(){
+    const pct = Math.max(90, Math.min(100, parseFloat(document.getElementById('sloPct').value || '99.9')));
+    const req = Math.max(1, parseFloat(document.getElementById('sloReq').value || '1000000'));
+    const err = Math.max(0, parseFloat(document.getElementById('sloErr').value || '0'));
+    // 許容 エラー
+    const budget = Math.floor(req * (1 - pct/100));
+    document.getElementById('sloBudgetN').textContent = budget.toLocaleString();
+    // 月 (30日) の ダウン時間 予算 = (100 - pct) % × 30 × 24 × 60 分
+    const downMin = (1 - pct/100) * 30 * 24 * 60;
+    let downText;
+    if(downMin < 60) downText = downMin.toFixed(1) + ' 分';
+    else if(downMin < 1440) downText = (downMin/60).toFixed(1) + ' 時間';
+    else downText = (downMin/1440).toFixed(1) + ' 日';
+    document.getElementById('sloDownN').textContent = downText;
+    // 消費 状況
+    const used = budget > 0 ? Math.min(150, err / budget * 100) : 0;
+    document.getElementById('sloUsed').style.width = Math.min(100, used) + '%';
+    document.getElementById('sloLeft').style.width = Math.max(0, 100 - Math.min(100, used)) + '%';
+    document.getElementById('sloLabel').textContent = `${err.toLocaleString()} / ${budget.toLocaleString()} 使用（${used.toFixed(1)}%）`;
+    // 評価
+    const budgetN = document.getElementById('sloBudgetN');
+    const downN = document.getElementById('sloDownN');
+    budgetN.className = 'n ' + (used > 100 ? 'danger' : used > 70 ? 'warn' : 'ok');
+    downN.className = 'n ' + (used > 100 ? 'danger' : used > 70 ? 'warn' : 'ok');
+
+    const msg = document.getElementById('sloMsg');
+    if(used > 100){
+      msg.className = 'slo-msg danger';
+      msg.innerHTML = `🚨 <b>SLO 違反！</b> エラー予算 ${(used - 100).toFixed(1)}% オーバー。 機能 追加 を 止めて **安定化 に 全集中** が ルール`;
+    } else if(used > 70){
+      msg.className = 'slo-msg warn';
+      msg.innerHTML = `⚠️ <b>残り 予算 ${(100 - used).toFixed(1)}%</b> — リスク 高い 機能 デプロイ は 月後半 に 延期 推奨`;
+    } else {
+      msg.className = 'slo-msg ok';
+      msg.innerHTML = `✅ <b>余裕 あり（${(100 - used).toFixed(1)}% 残）</b> — 新機能 を 積極的 に リリース 可能`;
+    }
+  }
+  function sloAdd(n){
+    const inp = document.getElementById('sloErr');
+    inp.value = Math.max(0, +(inp.value || 0) + n);
+    sloRun();
+  }
+  ['sloPct','sloReq','sloErr'].forEach(id => document.getElementById(id).addEventListener('input', sloRun));
+  sloRun();
+
+  /* === 3. Alert Trainer === */
+  const ALRT_Q = [
+    {
+      ctx: 'ユーザー が ログイン できなくなった',
+      scn: 'ログイン サービス で エラー が 起きている — どの 条件 で アラート？',
+      opts: [
+        { lvl:'metric',  txt:'CPU 使用率 が 80% 超', correct:false, why:'症状（CPU）に 鳴らすと ユーザー に 影響 ない 状況 でも 鳴る' },
+        { lvl:'impact',  txt:'ログイン API の エラー率 が 5分間 5% 超', correct:true, why:'影響（ユーザー が ログインできない）に 直結。 SN 比 が 高い' },
+        { lvl:'symptom', txt:'プロセス が 再起動 した', correct:false, why:'再起動 自体 は 異常 ではない（オートヒーリング）' },
+      ],
+    },
+    {
+      ctx: 'API 応答 が 遅く なってきた',
+      scn: 'p99 レイテンシ が 増えている — どの しきい値 で？',
+      opts: [
+        { lvl:'metric',  txt:'p99 が 100ms 超', correct:false, why:'通常 p99 = 200ms など、 SLO に 合った しきい値 が 必要' },
+        { lvl:'impact',  txt:'p99 が SLO（1秒）の 80% を 5分継続', correct:true, why:'SLO ベース で **早期警告**（違反前 に 気づく）' },
+        { lvl:'symptom', txt:'DB クエリ が 1個 遅い', correct:false, why:'個別 クエリ に 鳴らすと ノイズ。 全体 の p99 で 判断' },
+      ],
+    },
+    {
+      ctx: '夜中 に 何度も アラート が 来て チーム が 疲弊',
+      scn: 'アラート 疲れ を 解消 する 方法 として 適切 なのは？',
+      opts: [
+        { lvl:'metric',  txt:'全部 ミュート する', correct:false, why:'本物 の 障害 を 見逃す — 解決 ではなく 放棄' },
+        { lvl:'impact',  txt:'Severity 分け（即起こす / 営業時間 / 翌日対応）+ ノイズ アラート の 定期 削減', correct:true, why:'仕組み で 解決。 重要度別 ルーティング + 月次 レビュー' },
+        { lvl:'symptom', txt:'しきい値 を ゆるくする', correct:false, why:'感度 が 下がる だけ で 根本解決 ではない' },
+      ],
+    },
+    {
+      ctx: 'デプロイ 直後 に エラー率 が 急上昇',
+      scn: '何 を 鳴らす べき？',
+      opts: [
+        { lvl:'impact',  txt:'エラー率 が ベースライン 比 3× を 1分継続 → 即 オンコール', correct:true, why:'デプロイ起因 の リグレッション を 即検知、 ロールバック 判断' },
+        { lvl:'metric',  txt:'コード行数 が 増えた → アラート', correct:false, why:'コード量 は 障害 と 無関係' },
+        { lvl:'symptom', txt:'コミット が 新しい → アラート', correct:false, why:'デプロイ するたび に 鳴る、 オオカミ少年化' },
+      ],
+    },
+    {
+      ctx: '本番 ディスク 容量 が 増え続けている',
+      scn: 'ディスク に 関する アラート 設定',
+      opts: [
+        { lvl:'symptom', txt:'使用率 が 50% 超', correct:false, why:'早すぎ。 ノイズ になる' },
+        { lvl:'impact',  txt:'残量 < 24時間分（増加 ペース から 計算）に なったら 警告', correct:true, why:'**残り時間** で 鳴らす と 対処 時間 が 確保 できる' },
+        { lvl:'metric',  txt:'使用率 が 99% で 通知', correct:false, why:'手遅れ。 サービス停止 まで 数分' },
+      ],
+    },
+  ];
+  let alrtIdx = 0;
+  let alrtScore = 0;
+  let alrtAnswered = false;
+  function renderAlrt(){
+    const q = ALRT_Q[alrtIdx];
+    document.getElementById('alrtIdx').textContent = alrtIdx + 1;
+    document.getElementById('alrtScore').textContent = alrtScore;
+    document.getElementById('alrtQ').innerHTML = `<div class="ctx">📋 ${escapeHTML(q.ctx)}</div><div class="scn">🔔 ${escapeHTML(q.scn)}</div>`;
+    const optsWrap = document.getElementById('alrtOpts');
+    optsWrap.innerHTML = '';
+    const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+    shuffled.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'alrt-opt';
+      b.type = 'button';
+      b.setAttribute('role','radio');
+      b.setAttribute('aria-checked','false');
+      b.innerHTML = `<span class="badge ${o.lvl}">${o.lvl}</span><span>${escapeHTML(o.txt)}</span>`;
+      b.addEventListener('click', () => alrtAnswer(b, o));
+      optsWrap.appendChild(b);
+    });
+    document.getElementById('alrtResult').classList.remove('show');
+    alrtAnswered = false;
+  }
+  function alrtAnswer(btn, opt){
+    if(alrtAnswered) return;
+    alrtAnswered = true;
+    btn.classList.add(opt.correct ? 'right' : 'wrong');
+    btn.setAttribute('aria-checked','true');
+    if(opt.correct) alrtScore++;
+    document.getElementById('alrtScore').textContent = alrtScore;
+    const r = document.getElementById('alrtResult');
+    r.classList.add('show', opt.correct ? 'ok' : 'ng');
+    r.classList.remove(opt.correct ? 'ng' : 'ok');
+    r.innerHTML = (opt.correct ? '✅ 正解！ ' : '❌ 残念… ') + escapeHTML(opt.why);
+  }
+  function alrtNext(){
+    alrtIdx = (alrtIdx + 1) % ALRT_Q.length;
+    if(alrtIdx === 0) showToast('🎉 全 5問 完走！ スコア ' + alrtScore + ' / 5');
+    renderAlrt();
+  }
+  renderAlrt();
+
+  /* === 4. Log Viewer === */
+  function genLogs(){
+    const logs = [];
+    const paths = ['/api/users','/api/posts','/api/auth/login','/api/orders','/'];
+    const errMsgs = [
+      'KeyError: rating missing',
+      'invalid credentials',
+      'DB connection timeout',
+      'JSONDecodeError: Expecting value',
+      'Permission denied',
+    ];
+    let h = 9, m = 0;
+    for(let i = 0; i < 100; i++){
+      m += Math.floor(Math.random() * 4) + 1;
+      if(m >= 60){ m -= 60; h++; }
+      if(h >= 24) h = 0;
+      const ts = `2026-05-26 ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}`;
+      const r = Math.random();
+      const p = paths[Math.floor(Math.random() * paths.length)];
+      const meth = ['GET','POST','GET','GET','PUT','DELETE'][Math.floor(Math.random() * 6)];
+      if(r < 0.07){
+        logs.push({ ts, lvl:'ERROR', meth, p, st: 500, msg: errMsgs[Math.floor(Math.random()*errMsgs.length)], ms: Math.floor(Math.random()*1500)+500 });
+      } else if(r < 0.18){
+        const code = Math.random() < 0.5 ? 404 : 429;
+        logs.push({ ts, lvl:'WARN', meth, p, st: code, msg: code === 404 ? 'not found' : 'rate limit exceeded', ms: Math.floor(Math.random()*100) });
+      } else {
+        const codes = [200,200,200,201,204];
+        logs.push({ ts, lvl:'INFO', meth, p, st: codes[Math.floor(Math.random()*codes.length)], msg: '', ms: Math.floor(Math.random()*200) });
+      }
+    }
+    return logs;
+  }
+  const ALL_LOGS = genLogs();
+  const logFilters = { INFO: true, WARN: true, ERROR: true };
+  let logQ = '';
+  function renderLogs(){
+    const body = document.getElementById('logBody');
+    body.innerHTML = '';
+    let counts = { INFO: 0, WARN: 0, ERROR: 0 };
+    let shown = 0;
+    ALL_LOGS.forEach(l => {
+      counts[l.lvl]++;
+      const matched = (logFilters[l.lvl]) && (logQ === '' || (l.p + l.msg).toLowerCase().includes(logQ.toLowerCase()));
+      if(matched){
+        const line = document.createElement('div');
+        line.className = 'log-line ' + l.lvl;
+        line.innerHTML = `<span class="ts">${escapeHTML(l.ts)}</span>
+          <span class="lvl">${l.lvl}</span>
+          <span class="msg">${escapeHTML(l.meth + ' ' + l.p)}${l.msg ? ' → ' + escapeHTML(l.msg) : ''}</span>
+          <span class="st">${l.st} ${l.ms}ms</span>`;
+        body.appendChild(line);
+        shown++;
+      }
+    });
+    document.getElementById('logStats').innerHTML =
+      `<span>表示中: <b>${shown}</b> / ${ALL_LOGS.length}</span>
+       <span>INFO: <b>${counts.INFO}</b></span>
+       <span style="color:#FCD34D">WARN: <b>${counts.WARN}</b></span>
+       <span style="color:#FCA5A5">ERROR: <b>${counts.ERROR}</b></span>
+       <span>エラー率: <b>${(counts.ERROR/ALL_LOGS.length*100).toFixed(1)}%</b></span>`;
+  }
+  function logFilter(lvl){
+    logFilters[lvl] = !logFilters[lvl];
+    document.querySelector(`.log-filter button[data-lvl="${lvl}"]`).classList.toggle('on', logFilters[lvl]);
+    renderLogs();
+  }
+  document.getElementById('logSearch').addEventListener('input', (e) => { logQ = e.target.value; renderLogs(); });
+  renderLogs();
+
+  /* === Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){ b.classList.add('right'); showToast('せいかい！ 🎉'); }
+        else { b.classList.add('wrong'); row.querySelector(`button[data-c="${ans}"]`).classList.add('right'); }
+        row.classList.add('answered');
+      });
+    });
+  });
+
+  /* === Certificate ライブ更新 === */
+  const cName = document.getElementById('certName');
+  const cDate = document.getElementById('certDate');
+  const cShowName = document.getElementById('certShowName');
+  const cShowDate = document.getElementById('certShowDate');
+  const today = new Date();
+  cDate.value = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  cShowDate.textContent = cDate.value + ' ／ 高校生プログラミング塾';
+  cName.addEventListener('input', () => { cShowName.textContent = cName.value || 'あなたの お名前'; });
+  cDate.addEventListener('input', () => { cShowDate.textContent = (cDate.value || '日付') + ' ／ 高校生プログラミング塾'; });
+</script>
+</body>
+</html>
