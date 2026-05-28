@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・中級 第2回｜フロントエンドフレームワーク</title>
+<style>
+  :root{
+    --primary:#1E3A8A; --secondary:#FACC15; --accent:#14B8A6;
+    --warn:#DC2626; --dark:#0F172A; --light:#F0F9FF;
+    --panel:#FFFFFF; --muted:#64748B;
+    --border:rgba(15,23,42,.10); --shadow:0 4px 12px rgba(15,23,42,.10);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+    --server-c:#1E3A8A; --client-c:#FACC15;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--accent),var(--secondary));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--secondary);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#1E3A8A 0%,#0F172A 60%,#020617 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+
+  /* === Tool 1: useState Live === */
+  .use{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .use-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.use-grid{grid-template-columns:1fr}}
+  .use-pane label{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:6px;display:block}
+  .use-pane textarea{width:100%;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;
+    padding:12px 14px;border:1.5px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:var(--dark);
+    resize:vertical;min-height:200px}
+  .use-pane textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .use-preview{background:white;border:2px dashed var(--accent);border-radius:8px;padding:18px;min-height:200px;
+    display:flex;align-items:center;justify-content:center;text-align:center}
+  .use-counter{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .use-counter .v{font-size:64px;font-weight:800;color:var(--primary);font-family:'JetBrains Mono','SF Mono',monospace;line-height:1}
+  .use-counter .btns{display:flex;gap:8px}
+  .use-counter .btns button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-weight:700}
+  .use-counter .btns button.warn{background:var(--warn)}
+  .use-todos{display:flex;flex-direction:column;gap:6px;width:100%;max-width:320px}
+  .use-todos .add{display:flex;gap:6px}
+  .use-todos input{flex:1;padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:6px;background:#F8FAFC}
+  .use-todos input:focus{outline:none;border-color:var(--primary);background:white}
+  .use-todos button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:700}
+  .use-todos .list{display:flex;flex-direction:column;gap:4px;text-align:left;max-height:180px;overflow-y:auto;padding:4px;border:1px dashed var(--border);border-radius:6px}
+  .use-todo{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#F8FAFC;border-radius:4px;font-size:13px}
+  .use-todo.done{opacity:.5;text-decoration:line-through}
+  .use-todo .del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto}
+  .use-tabs{display:flex;gap:6px;margin-bottom:14px}
+  .use-tabs button{background:#F1F5F9;color:var(--primary);border:1px solid var(--border);padding:8px 14px;
+    border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
+  .use-tabs button.on{background:var(--primary);color:white;border-color:var(--primary)}
+  .use-warn{margin-top:8px;padding:8px 12px;background:#FEF2F2;border-left:4px solid var(--warn);border-radius:4px;
+    font-size:12px;color:#7F1D1D;display:none;font-family:'JetBrains Mono','SF Mono',monospace}
+  .use-warn.show{display:block}
+
+  /* === Tool 2: Server vs Client Boundary === */
+  .scb{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .scb-tree{background:#F8FAFC;border-radius:8px;padding:14px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:2.0}
+  .scb-comp{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;cursor:pointer;
+    transition:all .15s;border:2px solid transparent;font-weight:600}
+  .scb-comp.server{background:rgba(30,58,138,.1);color:var(--primary);border-color:rgba(30,58,138,.3)}
+  .scb-comp.client{background:rgba(250,204,21,.2);color:#92400E;border-color:rgba(250,204,21,.5)}
+  .scb-comp:hover{transform:translateX(2px)}
+  .scb-comp .ic{font-size:14px}
+  .scb-comp .b{font-family:inherit;font-size:11px;padding:1px 6px;border-radius:3px;font-weight:700}
+  .scb-comp.server .b{background:var(--primary);color:white}
+  .scb-comp.client .b{background:var(--secondary);color:var(--dark)}
+  .scb-stats{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .scb-stat{background:#F8FAFC;border-radius:8px;padding:12px;text-align:center}
+  .scb-stat .n{font-size:24px;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace}
+  .scb-stat.s .n{color:var(--primary)}
+  .scb-stat.c .n{color:#92400E}
+  .scb-stat.b .n{color:var(--accent)}
+  .scb-stat .l{font-size:11px;color:var(--muted);margin-top:2px}
+  .scb-msg{margin-top:14px;padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.6;display:none}
+  .scb-msg.show{display:block}
+  .scb-msg.ok{background:#ECFDF5;border-left:4px solid var(--accent);color:#065F46}
+  .scb-msg.warn{background:#FEF2F2;border-left:4px solid var(--warn);color:#7F1D1D}
+  .scb-msg.tip{background:#FFFBEB;border-left:4px solid var(--secondary);color:#92400E}
+  .scb-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+  .scb-actions button{background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;
+    padding:6px 12px;cursor:pointer;font-weight:600;font-size:12px}
+
+  /* === Tool 3: TanStack Query Cache Viz === */
+  .tq{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .tq-grid{display:grid;grid-template-columns:1fr 320px;gap:14px}
+  @media(max-width:780px){.tq-grid{grid-template-columns:1fr}}
+  .tq-views{display:flex;flex-direction:column;gap:10px}
+  .tq-view{background:#F8FAFC;border-radius:8px;padding:14px;border:2px solid var(--border)}
+  .tq-view .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .tq-view .hd .nm{font-weight:700;font-size:14px}
+  .tq-view .hd .st{font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;padding:2px 8px;border-radius:4px}
+  .tq-view .hd .st.idle{background:#E2E8F0;color:#64748B}
+  .tq-view .hd .st.loading{background:#FEF3C7;color:#92400E}
+  .tq-view .hd .st.success{background:#D1FAE5;color:#065F46}
+  .tq-view .hd .st.stale{background:#FED7AA;color:#9A3412}
+  .tq-data{background:white;border-radius:4px;padding:8px 10px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;color:var(--muted);min-height:32px}
+  .tq-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .tq-actions button{background:white;border:1px solid var(--border);color:var(--primary);padding:4px 10px;
+    border-radius:4px;cursor:pointer;font-size:12px;font-weight:600}
+  .tq-actions button:hover{background:var(--primary);color:white}
+  .tq-log{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:12px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.7;max-height:380px;overflow-y:auto;min-height:200px}
+  .tq-log .info{color:#7DD3FC} .tq-log .net{color:#FDE68A} .tq-log .cache{color:#86EFAC} .tq-log .stale{color:#FCA5A5}
+  .tq-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+  .tq-stat{background:#F8FAFC;border-radius:6px;padding:8px;text-align:center}
+  .tq-stat .n{font-weight:800;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .tq-stat .l{font-size:10px;color:var(--muted)}
+
+  /* === Tool 4: Routing Visualizer === */
+  .route{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .route-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.route-grid{grid-template-columns:1fr}}
+  .route-tree{background:#F8FAFC;border-radius:8px;padding:14px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.9;border:1px solid var(--border)}
+  .route-file{padding:2px 0;cursor:pointer;border-left:3px solid transparent;padding-left:8px;margin-left:-8px;border-radius:0 4px 4px 0;transition:all .15s}
+  .route-file:hover{background:rgba(30,58,138,.08);border-color:var(--primary)}
+  .route-file.active{background:rgba(30,58,138,.15);border-color:var(--primary);font-weight:700}
+  .route-file .name{color:var(--primary);font-weight:600}
+  .route-file .lbl{color:var(--muted);font-size:11px;margin-left:8px}
+  .route-url{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:14px;margin-bottom:10px}
+  .route-url .meth{color:#FDE68A;font-weight:bold;margin-right:8px}
+  .route-render{background:white;border:2px dashed var(--accent);border-radius:8px;padding:18px;min-height:140px}
+  .route-render h4{color:var(--primary);font-size:18px;margin-bottom:6px}
+  .route-render p{color:var(--muted);font-size:14px;line-height:1.7}
+  .route-form{display:flex;gap:6px;align-items:center;margin-top:10px}
+  .route-form label{font-size:12px;color:var(--muted);font-weight:600}
+  .route-form input{flex:1;padding:6px 10px;border:1.5px solid #CBD5E1;border-radius:6px;background:#F8FAFC;font-size:13px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .route-form input:focus{outline:none;border-color:var(--primary);background:white}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:white;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第2回</span> <b>FE フレームワーク</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#use">2<span>useState ライブ</span><span class="ic">⚛️</span></a>
+  <a href="#scb">3<span>Server / Client 境界</span><span class="ic">▲</span></a>
+  <a href="#tq">4<span>TanStack Query キャッシュ</span><span class="ic">💎</span></a>
+  <a href="#route">5<span>ルーティング</span><span class="ic">🗺️</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#wrap">7<span>まとめ</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第2回 ／ 高校生プログラミング塾・中級</div>
+    <h1>フロントエンド<br>フレームワーク</h1>
+    <p>React / Next.js / 状態管理 — <b>Server と Client</b> を 分ける</p>
+    <div class="em">⚛️▲💎</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. useState Live
+     ======================================================== -->
+<div class="divider" id="use" data-snav-target>
+  <div class="num">01.</div>
+  <h2>useState ライブ シミュレータ</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>「状態 が UI を 決定 する」 を 体感</h2>
+  <p class="lead">React の <code>useState</code> 相当 を 純粋 JS で 再現。 状態 を 書き換える と、 UI が <b>自動で</b> 追従。 NG パターン（直接ミューテーション）と OK パターン（イミュータブル更新）の 違い も 体感。</p>
+
+  <div class="use">
+    <div class="use-tabs" role="tablist">
+      <button class="on" data-u="counter" onclick="useSwitch('counter')" aria-label="カウンター">カウンター</button>
+      <button data-u="todos" onclick="useSwitch('todos')" aria-label="TODO リスト">TODO リスト</button>
+    </div>
+
+    <div class="use-grid">
+      <div class="use-pane">
+        <label for="useCode">📝 コード（編集 可、 状態 変更 で 即 反映）</label>
+        <textarea id="useCode" spellcheck="false"></textarea>
+      </div>
+      <div class="use-pane">
+        <label>🖥️ プレビュー（UI ＝ f(state)）</label>
+        <div class="use-preview" id="usePreview"></div>
+        <div class="use-warn" id="useWarn" role="alert"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. Server vs Client Boundary
+     ======================================================== -->
+<div class="divider" id="scb" data-snav-target>
+  <div class="num">02.</div>
+  <h2>Server vs Client コンポーネント 境界</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>クリック で 境界 を 切り替える</h2>
+  <p class="lead">Next.js App Router の コンポーネント ツリー。 各 コンポーネント を クリック して **Server ↔ Client** を 切り替え、 境界 が 適切 か メッセージ が 出ます。 「葉 だけ Client」 の パターン を 体感。</p>
+
+  <div class="scb">
+    <div class="scb-tree" id="scbTree"></div>
+
+    <div class="scb-stats" id="scbStats"></div>
+    <div class="scb-msg" id="scbMsg" role="status" aria-live="polite"></div>
+
+    <div class="scb-actions">
+      <button onclick="scbPreset('good')" aria-label="良いパターン">😊 良い 境界</button>
+      <button onclick="scbPreset('all-client')" aria-label="全Client">😱 全部 Client</button>
+      <button onclick="scbPreset('all-server')" aria-label="全Server">❄️ 全部 Server</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. TanStack Query Cache Viz
+     ======================================================== -->
+<div class="divider" id="tq" data-snav-target>
+  <div class="num">03.</div>
+  <h2>TanStack Query キャッシュ Visualizer</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>キャッシュ の 動き を リアルタイム 観察</h2>
+  <p class="lead">3つ の View が 同じ <code>["users"]</code> queryKey を 使っています。 fetch / invalidate / stale 化 を ボタン で 操作。 右 の ログ で 「ネット 走った？ キャッシュ ヒット？」 を 確認。</p>
+
+  <div class="tq">
+    <div class="tq-grid">
+      <div class="tq-views">
+        <div class="tq-view" data-v="0">
+          <div class="hd"><span class="nm">📋 List View — queryKey: ["users"]</span><span class="st idle" id="tqSt0">idle</span></div>
+          <div class="tq-data" id="tqD0">（未取得）</div>
+          <div class="tq-actions">
+            <button onclick="tqFetch(0)" aria-label="View0 で fetch">▶ fetch</button>
+            <button onclick="tqUnmount(0)" aria-label="View0 を unmount">unmount</button>
+          </div>
+        </div>
+        <div class="tq-view" data-v="1">
+          <div class="hd"><span class="nm">📊 Stats View — queryKey: ["users"]</span><span class="st idle" id="tqSt1">idle</span></div>
+          <div class="tq-data" id="tqD1">（未取得）</div>
+          <div class="tq-actions">
+            <button onclick="tqFetch(1)" aria-label="View1 で fetch">▶ fetch</button>
+            <button onclick="tqUnmount(1)" aria-label="View1 を unmount">unmount</button>
+          </div>
+        </div>
+        <div class="tq-view" data-v="2">
+          <div class="hd"><span class="nm">🔔 Notify View — queryKey: ["users"]</span><span class="st idle" id="tqSt2">idle</span></div>
+          <div class="tq-data" id="tqD2">（未取得）</div>
+          <div class="tq-actions">
+            <button onclick="tqFetch(2)" aria-label="View2 で fetch">▶ fetch</button>
+            <button onclick="tqUnmount(2)" aria-label="View2 を unmount">unmount</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          <button onclick="tqMutate()" style="background:var(--secondary);color:var(--dark);border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px" aria-label="ミューテーション">✏️ POST + invalidate</button>
+          <button onclick="tqStale()" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px" aria-label="stale化">⏱ stale 時間 を 進める</button>
+          <button onclick="tqReset()" style="background:#F1F5F9;color:var(--primary);border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px" aria-label="リセット">🔄 全リセット</button>
+        </div>
+
+        <div class="tq-stats">
+          <div class="tq-stat"><div class="n" id="tqNet" style="color:var(--warn)">0</div><div class="l">ネット fetch 回数</div></div>
+          <div class="tq-stat"><div class="n" id="tqHit" style="color:var(--accent)">0</div><div class="l">キャッシュ ヒット</div></div>
+        </div>
+      </div>
+
+      <div class="tq-log" id="tqLog" aria-label="キャッシュ ログ"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. Routing Visualizer
+     ======================================================== -->
+<div class="divider" id="route" data-snav-target>
+  <div class="num">04.</div>
+  <h2>Next.js App Router 可視化</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>ファイル ＝ ルート</h2>
+  <p class="lead">左 の ファイル ツリー を クリック する と、 右 で **対応する URL** と **レンダリング 結果** が 表示。 動的 セグメント（<code>[id]</code>）に は 数値 を 入れて 切り替え。</p>
+
+  <div class="route">
+    <div class="route-grid">
+      <div class="route-tree" id="routeTree" aria-label="App Router ファイル ツリー"></div>
+      <div>
+        <div class="route-url" id="routeUrl"><span class="meth">GET</span>/</div>
+        <div class="route-render" id="routeRender">
+          <h4>👋 ようこそ</h4>
+          <p>左 で ファイル を 選んで ください。 ファイル パス が そのまま URL に なります。</p>
+        </div>
+        <div class="route-form" id="routeForm" style="display:none">
+          <label for="routeParam">[id] =</label>
+          <input id="routeParam" value="42" aria-label="動的セグメント">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="c">
+      <div class="q">Q1. useState で 配列 を 更新 する とき **NG** な のは？</div>
+      <div class="opts">
+        <button data-c="a">setItems([...items, newItem])</button>
+        <button data-c="b">setItems(items.filter(...))</button>
+        <button data-c="c">items.push(newItem); setItems(items);</button>
+      </div>
+      <div class="ex">💡 push は 元配列 を ミューテート。 React は 参照 が 同じ と 判断 して 再レンダ しない。 必ず 新しい 配列 を 作って 渡す。</div>
+    </div>
+    <div class="qrow" data-answer="b">
+      <div class="q">Q2. Next.js App Router で 「Client Component」 が 必要 な のは？</div>
+      <div class="opts">
+        <button data-c="a">DB から データ を 取得 する とき</button>
+        <button data-c="b">useState や onClick を 使う とき</button>
+        <button data-c="c">画像 を 表示 する とき</button>
+      </div>
+      <div class="ex">💡 イベント / フック が 必要 な 「葉」 だけ "use client"。 データ 取得 / レイアウト は Server。</div>
+    </div>
+    <div class="qrow" data-answer="b">
+      <div class="q">Q3. Server State（API データ）の キャッシュ に 向く ライブラリ は？</div>
+      <div class="opts">
+        <button data-c="a">Redux</button>
+        <button data-c="b">TanStack Query</button>
+        <button data-c="c">Zustand</button>
+      </div>
+      <div class="ex">💡 TanStack Query は 「再取得 / stale / 楽観的更新 / 無効化」 が 宣言的。 Zustand は Client State（UI 開閉 等）専用。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. まとめ
+     ======================================================== -->
+<div class="divider" id="wrap" data-snav-target>
+  <div class="num">06.</div>
+  <h2>きょうのまとめ</h2>
+</div>
+
+<section class="section">
+  <h2>おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>⚛️ UI ＝ f(state)</h3><p style="color:var(--muted);font-size:14px">状態 を イミュータブル に 更新、 React が UI を 自動 同期。</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>▲ Server / Client の 境界 は 葉 に</h3><p style="color:var(--muted);font-size:14px">データ取得 ／ レイアウト ＝ Server、 イベント が 必要 な 葉 だけ Client。</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>💎 状態 を 2つ に 分ける</h3><p style="color:var(--muted);font-size:14px">Server State ＝ TanStack Query、 Client State ＝ Zustand / useState。</p></div></div>
+  </div>
+</section>
+
+<footer>高校生プログラミング塾 ／ 中級 第2回｜フロントエンドフレームワーク</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* === 1. useState Live === */
+  // 簡易 useState ＋ 再レンダ システム を 自前 実装
+  let useStateValues = [];
+  let useStateIdx = 0;
+  function useState(initial){
+    const idx = useStateIdx++;
+    if(useStateValues[idx] === undefined) useStateValues[idx] = initial;
+    const set = (v) => {
+      const next = typeof v === 'function' ? v(useStateValues[idx]) : v;
+      // 参照同一 チェック
+      if(next === useStateValues[idx]){
+        document.getElementById('useWarn').classList.add('show');
+        document.getElementById('useWarn').textContent = '⚠️ 参照 が 同じ → React は 再レンダ しない（直接ミューテーション の 罠）';
+      } else {
+        document.getElementById('useWarn').classList.remove('show');
+      }
+      useStateValues[idx] = next;
+      renderUse();
+    };
+    return [useStateValues[idx], set];
+  }
+
+  const USE_PRESETS = {
+    counter: `// React 風 カウンター
+function Counter() {
+  const [count, setCount] = useState(0);
+  return ui(
+    counterUI(count,
+      () => setCount(count + 1),  // OK: 新しい 値
+      () => setCount(0)
+    )
+  );
+}`,
+    todos: `// React 風 TODO
+function Todos() {
+  const [items, setItems] = useState([
+    { id: 1, text: '掃除', done: false },
+    { id: 2, text: '宿題', done: false }
+  ]);
+  return ui(todosUI(items,
+    (text) => setItems([...items, { id: Date.now(), text, done: false }]),
+    (id) => setItems(items.map(i => i.id === id ? {...i, done: !i.done} : i)),
+    (id) => setItems(items.filter(i => i.id !== id))
+  ));
+}`,
+  };
+
+  let useCur = 'counter';
+  function useSwitch(t){
+    useCur = t;
+    document.querySelectorAll('.use-tabs button').forEach(b => b.classList.toggle('on', b.dataset.u === t));
+    document.getElementById('useCode').value = USE_PRESETS[t];
+    useStateValues = []; // リセット
+    renderUse();
+  }
+
+  function counterUI(count, onInc, onReset){
+    return `<div class="use-counter">
+      <div class="v">${count}</div>
+      <div class="btns">
+        <button type="button" aria-label="＋1">＋1</button>
+        <button type="button" class="warn" aria-label="リセット">RESET</button>
+      </div>
+    </div>`;
+  }
+  function todosUI(items, onAdd, onToggle, onDel){
+    let list = items.map(i =>
+      `<div class="use-todo ${i.done?'done':''}">
+        <input type="checkbox" ${i.done?'checked':''} data-toggle="${i.id}" aria-label="完了 切り替え">
+        <span>${escapeHTML(i.text)}</span>
+        <button class="del" data-del="${i.id}" aria-label="削除">✕</button>
+      </div>`).join('');
+    if(!list) list = '<div style="color:var(--muted);padding:8px;text-align:center;font-size:12px">（空）</div>';
+    return `<div class="use-todos">
+      <div class="add">
+        <input id="todoInput" placeholder="新しい TODO" aria-label="新規 TODO">
+        <button type="button" id="todoAdd" aria-label="追加">追加</button>
+      </div>
+      <div class="list">${list}</div>
+    </div>`;
+  }
+  function renderUse(){
+    useStateIdx = 0;
+    if(useCur === 'counter'){
+      const [count, setCount] = useState(0);
+      document.getElementById('usePreview').innerHTML = counterUI(count);
+      const btns = document.querySelectorAll('.use-counter button');
+      btns[0].addEventListener('click', () => setCount(count + 1));
+      btns[1].addEventListener('click', () => setCount(0));
+    } else {
+      const [items, setItems] = useState([
+        { id: 1, text: '掃除', done: false },
+        { id: 2, text: '宿題', done: false },
+      ]);
+      document.getElementById('usePreview').innerHTML = todosUI(items);
+      const addInput = document.getElementById('todoInput');
+      const addBtn = document.getElementById('todoAdd');
+      function add(){
+        const v = addInput.value.trim();
+        if(!v) return;
+        setItems([...items, { id: Date.now(), text: v, done: false }]);
+        addInput.value = '';
+      }
+      addBtn.addEventListener('click', add);
+      addInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } });
+      document.querySelectorAll('[data-toggle]').forEach(el => {
+        el.addEventListener('change', () => {
+          const id = +el.dataset.toggle;
+          setItems(items.map(i => i.id === id ? {...i, done: !i.done} : i));
+        });
+      });
+      document.querySelectorAll('[data-del]').forEach(el => {
+        el.addEventListener('click', () => {
+          const id = +el.dataset.del;
+          setItems(items.filter(i => i.id !== id));
+        });
+      });
+    }
+  }
+  useSwitch('counter');
+
+  /* === 2. Server vs Client Boundary === */
+  const SCB_INITIAL = [
+    { id:'app',      name:'app/layout.tsx',                 indent:0, kind:'server', needs:[] },
+    { id:'page',     name:'app/page.tsx',                   indent:1, kind:'server', needs:['db'] },
+    { id:'hdr',      name:'  Header.tsx',                   indent:2, kind:'server', needs:[] },
+    { id:'menu',     name:'    UserMenu.tsx',               indent:3, kind:'client', needs:['useState'] },
+    { id:'theme',    name:'    ThemeToggle.tsx',            indent:3, kind:'client', needs:['useState','localStorage'] },
+    { id:'main',     name:'  Main.tsx',                     indent:2, kind:'server', needs:['db'] },
+    { id:'list',     name:'    PostList.tsx',               indent:3, kind:'server', needs:['db'] },
+    { id:'item',     name:'      PostItem.tsx',             indent:4, kind:'server', needs:[] },
+    { id:'like',     name:'        LikeButton.tsx',         indent:5, kind:'client', needs:['onClick'] },
+    { id:'form',     name:'    NewPostForm.tsx',            indent:3, kind:'client', needs:['useState','onSubmit'] },
+    { id:'foot',     name:'  Footer.tsx',                   indent:2, kind:'server', needs:[] },
+  ];
+  let scbState = JSON.parse(JSON.stringify(SCB_INITIAL));
+  function renderScb(){
+    const wrap = document.getElementById('scbTree');
+    wrap.innerHTML = '';
+    scbState.forEach(c => {
+      const el = document.createElement('div');
+      el.style.paddingLeft = (c.indent * 16) + 'px';
+      const span = document.createElement('button');
+      span.type = 'button';
+      span.className = 'scb-comp ' + c.kind;
+      span.setAttribute('aria-label', c.name + ' (' + c.kind + ')');
+      span.innerHTML = `<span class="ic" aria-hidden="true">${c.kind === 'server' ? '🖥️' : '🌐'}</span><span>${escapeHTML(c.name)}</span><span class="b">${c.kind === 'server' ? 'RSC' : 'use client'}</span>`;
+      span.addEventListener('click', () => {
+        c.kind = c.kind === 'server' ? 'client' : 'server';
+        renderScb();
+      });
+      el.appendChild(span);
+      wrap.appendChild(el);
+    });
+    // 統計
+    const srv = scbState.filter(c => c.kind === 'server').length;
+    const cli = scbState.filter(c => c.kind === 'client').length;
+    document.getElementById('scbStats').innerHTML =
+      `<div class="scb-stat s"><div class="n">${srv}</div><div class="l">Server</div></div>
+       <div class="scb-stat c"><div class="n">${cli}</div><div class="l">Client</div></div>
+       <div class="scb-stat b"><div class="n">${Math.round(cli / (srv+cli) * 100)}%</div><div class="l">Client率</div></div>`;
+    // 評価
+    const msg = document.getElementById('scbMsg');
+    msg.classList.add('show');
+    msg.classList.remove('ok','warn','tip');
+    const violations = [];
+    scbState.forEach(c => {
+      // Client にしか できない 操作 を Server で 使ってる
+      if(c.kind === 'server' && c.needs.some(n => ['useState','onClick','onSubmit','localStorage'].includes(n))){
+        violations.push(`<b>${c.name}</b> は ${c.needs.join('/')} を 使う のに Server！ "use client" 必要`);
+      }
+      // Server にしか できない 操作 を Client で 使ってる
+      if(c.kind === 'client' && c.needs.includes('db')){
+        violations.push(`<b>${c.name}</b> は DB 直アクセス が 必要 だが Client！ Server に 戻す か API 経由 に`);
+      }
+    });
+    if(violations.length){
+      msg.classList.add('warn');
+      msg.innerHTML = '❌ <b>問題 が ' + violations.length + ' 件:</b><ul style="margin-left:18px;margin-top:6px">' + violations.map(v => '<li>' + v + '</li>').join('') + '</ul>';
+    } else if(cli / (srv+cli) > 0.5){
+      msg.classList.add('tip');
+      msg.innerHTML = '💡 Client 率 が 高すぎます（' + Math.round(cli/(srv+cli)*100) + '%）。 「葉 だけ Client」 の パターン に 寄せて バンドル サイズ を 抑えよう。';
+    } else if(cli === 0){
+      msg.classList.add('tip');
+      msg.innerHTML = '💡 全部 Server。 イベント 操作（クリック / 入力）が 必要 な 葉 は Client に 変更 する 必要 あり。';
+    } else {
+      msg.classList.add('ok');
+      msg.innerHTML = '✅ <b>良い 境界 設計！</b> 葉 だけ Client、 データ取得 / レイアウト は Server。 これ が Next.js App Router の 王道 パターン です。';
+    }
+  }
+  function scbPreset(k){
+    if(k === 'good'){
+      scbState = JSON.parse(JSON.stringify(SCB_INITIAL));
+    } else if(k === 'all-client'){
+      scbState = JSON.parse(JSON.stringify(SCB_INITIAL));
+      scbState.forEach(c => c.kind = 'client');
+    } else if(k === 'all-server'){
+      scbState = JSON.parse(JSON.stringify(SCB_INITIAL));
+      scbState.forEach(c => c.kind = 'server');
+    }
+    renderScb();
+  }
+  renderScb();
+
+  /* === 3. TanStack Query Cache === */
+  const tqViews = [
+    { mounted:false, state:'idle', data:null },
+    { mounted:false, state:'idle', data:null },
+    { mounted:false, state:'idle', data:null },
+  ];
+  let tqCache = null;
+  let tqCacheTime = 0;
+  let tqStaleTime = 30000; // 30秒
+  let tqNetCount = 0;
+  let tqHitCount = 0;
+  let tqLogs = [];
+
+  function tqLog(kind, msg){
+    const ts = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+    tqLogs.push({ ts, kind, msg });
+    if(tqLogs.length > 50) tqLogs.shift();
+    const wrap = document.getElementById('tqLog');
+    wrap.innerHTML = tqLogs.map(l => `<div><span class="info">[${l.ts}]</span> <span class="${l.kind}">${l.kind.toUpperCase()}</span> ${escapeHTML(l.msg)}</div>`).join('');
+    wrap.scrollTop = wrap.scrollHeight;
+  }
+  function tqRender(){
+    tqViews.forEach((v, i) => {
+      document.getElementById('tqSt' + i).className = 'st ' + v.state;
+      document.getElementById('tqSt' + i).textContent = v.state;
+      document.getElementById('tqD' + i).textContent = v.data ? JSON.stringify(v.data).slice(0, 60) + '…' : (v.mounted ? '...' : '（unmounted）');
+    });
+    document.getElementById('tqNet').textContent = tqNetCount;
+    document.getElementById('tqHit').textContent = tqHitCount;
+  }
+  function tqIsFresh(){
+    return tqCache && (Date.now() - tqCacheTime) < tqStaleTime;
+  }
+  async function tqFetch(i){
+    tqViews[i].mounted = true;
+    if(tqIsFresh()){
+      // キャッシュ ヒット
+      tqViews[i].state = 'success';
+      tqViews[i].data = tqCache;
+      tqHitCount++;
+      tqLog('cache', `View ${i+1}: キャッシュ ヒット（fresh、 ネット 0）`);
+      tqRender();
+      return;
+    }
+    // ネット fetch
+    tqViews[i].state = 'loading';
+    tqLog('net', `View ${i+1}: GET /api/users (network)`);
+    tqRender();
+    await new Promise(r => setTimeout(r, 600));
+    tqNetCount++;
+    tqCache = [{id:1,name:'Alice'},{id:2,name:'Bob'},{id:3,name:'Carol'}];
+    tqCacheTime = Date.now();
+    tqViews.forEach(v => {
+      if(v.mounted){
+        v.state = 'success';
+        v.data = tqCache;
+      }
+    });
+    tqLog('cache', `キャッシュ 更新（全 View に 配信）`);
+    tqRender();
+  }
+  function tqUnmount(i){
+    tqViews[i].mounted = false;
+    tqViews[i].state = 'idle';
+    tqViews[i].data = null;
+    tqLog('info', `View ${i+1}: unmount`);
+    tqRender();
+  }
+  function tqMutate(){
+    tqLog('net', `POST /api/users (mutation)`);
+    setTimeout(() => {
+      tqCache = null;
+      tqLog('cache', `invalidateQueries(["users"]) → キャッシュ無効化`);
+      // マウント中 の view が 自動 refetch
+      const mountedIdx = tqViews.findIndex(v => v.mounted);
+      if(mountedIdx >= 0){
+        tqLog('info', `mounted View が ある ので 自動 refetch`);
+        tqFetch(mountedIdx);
+      }
+      tqRender();
+    }, 400);
+  }
+  function tqStale(){
+    tqCacheTime -= 60000; // 1分 過去 に
+    tqLog('stale', `30秒 以上 経過 → キャッシュ stale 化`);
+    tqRender();
+  }
+  function tqReset(){
+    tqViews.forEach(v => { v.mounted = false; v.state = 'idle'; v.data = null; });
+    tqCache = null; tqCacheTime = 0; tqNetCount = 0; tqHitCount = 0; tqLogs = [];
+    tqLog('info', 'リセット');
+    tqRender();
+  }
+  tqLog('info', '3つ の View が ["users"] queryKey で 待機中');
+  tqRender();
+
+  /* === 4. Routing Visualizer === */
+  const ROUTES = [
+    { f:'app/',                       n:'app/',                          dir:true },
+    { f:'app/layout.tsx',             n:'  layout.tsx',                  url:'共通レイアウト', lbl:'全ページ ラップ' },
+    { f:'app/page.tsx',               n:'  page.tsx',                    url:'/',                           lbl:'トップ' },
+    { f:'app/about/page.tsx',         n:'  about/page.tsx',              url:'/about',                      lbl:'静的' },
+    { f:'app/posts/page.tsx',         n:'  posts/page.tsx',              url:'/posts',                      lbl:'一覧' },
+    { f:'app/posts/[id]/page.tsx',    n:'  posts/[id]/page.tsx',         url:'/posts/[id]', lbl:'動的'   },
+    { f:'app/posts/[id]/edit/page.tsx', n:'  posts/[id]/edit/page.tsx',  url:'/posts/[id]/edit', lbl:'動的' },
+    { f:'app/api/posts/route.ts',     n:'  api/posts/route.ts',          url:'/api/posts',                  lbl:'API GET/POST' },
+    { f:'app/api/posts/[id]/route.ts', n:'  api/posts/[id]/route.ts',    url:'/api/posts/[id]', lbl:'API 動的' },
+  ];
+  let routeSel = 'app/page.tsx';
+  function renderRoute(){
+    const wrap = document.getElementById('routeTree');
+    wrap.innerHTML = '';
+    ROUTES.forEach(r => {
+      if(r.dir){
+        const d = document.createElement('div');
+        d.style.color = 'var(--muted)';
+        d.style.fontWeight = '700';
+        d.textContent = '📁 ' + r.f;
+        wrap.appendChild(d);
+        return;
+      }
+      const el = document.createElement('div');
+      el.className = 'route-file' + (routeSel === r.f ? ' active' : '');
+      el.setAttribute('role','button');
+      el.setAttribute('tabindex','0');
+      el.setAttribute('aria-label', r.f + ' → ' + r.url);
+      el.innerHTML = '📄 <span class="name">' + escapeHTML(r.n) + '</span><span class="lbl">' + escapeHTML(r.lbl) + '</span>';
+      el.addEventListener('click', () => { routeSel = r.f; renderRoute(); });
+      el.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); routeSel = r.f; renderRoute(); } });
+      wrap.appendChild(el);
+    });
+    // URL 表示
+    const r = ROUTES.find(x => x.f === routeSel);
+    if(!r) return;
+    const isApi = r.f.startsWith('app/api');
+    const isLayout = r.f === 'app/layout.tsx';
+    let urlText = r.url;
+    let methText = isApi ? 'GET' : 'PAGE';
+    const isDyn = urlText.includes('[id]');
+    if(isDyn){
+      const v = document.getElementById('routeParam').value || '42';
+      urlText = urlText.replace('[id]', v);
+    }
+    document.getElementById('routeUrl').innerHTML = `<span class="meth">${methText}</span>${escapeHTML(urlText)}`;
+    document.getElementById('routeForm').style.display = isDyn ? 'flex' : 'none';
+
+    const render = document.getElementById('routeRender');
+    if(isLayout){
+      render.innerHTML = '<h4>🎨 共通レイアウト</h4><p>全 ページ を ラップ。 ヘッダー / フッター / グローバル スタイル など 共通要素。</p>';
+    } else if(r.f === 'app/page.tsx'){
+      render.innerHTML = '<h4>🏠 トップ ページ</h4><p>「/」 アクセス で 表示 される。 ファイル パス ＝ URL の 基本。</p>';
+    } else if(r.f === 'app/about/page.tsx'){
+      render.innerHTML = '<h4>ℹ️ About</h4><p>「/about」 アクセス で 表示。 about/ フォルダ ＋ page.tsx で URL が 1階層 深く なる。</p>';
+    } else if(r.f === 'app/posts/page.tsx'){
+      render.innerHTML = '<h4>📝 投稿一覧</h4><p>DB から 全 投稿 を 取得 して 表示（Server Component で fetch）。</p>';
+    } else if(r.f === 'app/posts/[id]/page.tsx'){
+      const v = document.getElementById('routeParam').value || '42';
+      render.innerHTML = `<h4>📄 投稿 詳細</h4><p>パラメータ id = <b>${escapeHTML(v)}</b> で DB から 該当 投稿 を 取得。 動的 セグメント <code>[id]</code> は URL から 自動 で 受け取る。</p>`;
+    } else if(r.f === 'app/posts/[id]/edit/page.tsx'){
+      const v = document.getElementById('routeParam').value || '42';
+      render.innerHTML = `<h4>✏️ 投稿 編集</h4><p>id = <b>${escapeHTML(v)}</b> の 編集フォーム。 ネスト された 動的 ルート。</p>`;
+    } else if(r.f.startsWith('app/api')){
+      render.innerHTML = `<h4>🔌 API エンドポイント</h4><p><code>route.ts</code> ＝ Route Handler。 GET / POST / PUT / DELETE 等 の HTTP メソッド を export。 ${isDyn ? 'パラメータ で 動的 取得。' : ''}</p>`;
+    }
+  }
+  document.getElementById('routeParam').addEventListener('input', renderRoute);
+  renderRoute();
+
+  /* === Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){ b.classList.add('right'); showToast('せいかい！ 🎉'); }
+        else { b.classList.add('wrong'); row.querySelector(`button[data-c="${ans}"]`).classList.add('right'); }
+        row.classList.add('answered');
+      });
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・中級 第1回｜チーム開発の現実</title>
+<style>
+  :root{
+    --primary:#1E3A8A; --secondary:#FACC15; --accent:#14B8A6;
+    --warn:#DC2626; --dark:#0F172A; --light:#F0F9FF;
+    --panel:#FFFFFF; --muted:#64748B;
+    --border:rgba(15,23,42,.10); --shadow:0 4px 12px rgba(15,23,42,.10);
+    --code-bg:#0F172A; --code-text:#E2E8F0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--primary),var(--accent),var(--secondary));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--secondary);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#1E3A8A 0%,#0F172A 60%,#020617 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(255,255,255,.18);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.2);font-weight:800}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--secondary);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--secondary);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card h3{color:var(--dark);font-size:18px;margin-bottom:8px;font-weight:700}
+  .card.tip{border-left:5px solid var(--secondary);background:#FFFBEB}
+
+  /* === Tool 1: PR Compare === */
+  .prcmp{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .prcmp-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:2px solid var(--border)}
+  .prcmp-tabs button{background:transparent;border:none;padding:8px 14px;cursor:pointer;font-weight:700;color:var(--muted);
+    border-bottom:3px solid transparent;margin-bottom:-2px}
+  .prcmp-tabs button.on{color:var(--primary);border-color:var(--primary)}
+  .prcmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.prcmp-grid{grid-template-columns:1fr}}
+  .pr{border-radius:8px;padding:14px;border:2px solid var(--border)}
+  .pr.bad{background:#FEF2F2;border-color:#FECACA}
+  .pr.good{background:#F0FDF4;border-color:#86EFAC}
+  .pr h4{font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .pr.bad h4{color:var(--warn)} .pr.good h4{color:#15803D}
+  .pr .title{font-weight:700;font-size:15px;margin-bottom:8px}
+  .pr .meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .pr .body{background:white;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.7;border:1px solid var(--border);white-space:pre-wrap;
+    max-height:260px;overflow-y:auto}
+  .pr .stats{display:flex;gap:10px;margin-top:8px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px}
+  .pr .stats span{padding:2px 8px;border-radius:4px;background:white;border:1px solid var(--border)}
+  .pr .stats .add{color:#15803D}
+  .pr .stats .del{color:var(--warn)}
+  .prcmp-checks{margin-top:14px}
+  .prcmp-check{display:flex;align-items:flex-start;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px dashed #E2E8F0}
+  .prcmp-check:last-child{border-bottom:none}
+  .prcmp-check .ico{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+  .prcmp-check.ng .ico{color:var(--warn)}
+  .prcmp-check.ok .ico{color:#15803D}
+
+  /* === Tool 2: Review Comment Tone Trainer === */
+  .tone{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .tone-prompt{padding:14px 16px;background:#F8FAFC;border-radius:8px;margin-bottom:14px;border-left:4px solid var(--primary)}
+  .tone-prompt .ctx{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .tone-prompt .code{background:var(--code-bg);color:var(--code-text);border-radius:6px;padding:10px 12px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-x:auto}
+  .tone-opts{display:grid;gap:8px}
+  .tone-opt{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:white;border-radius:8px;
+    border:2px solid var(--border);cursor:pointer;transition:all .15s;text-align:left;font:inherit;font-size:13px;line-height:1.6}
+  .tone-opt:hover{border-color:var(--primary)}
+  .tone-opt .badge{padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0}
+  .tone-opt .badge.nit       {background:#E0E7FF;color:#3730A3}
+  .tone-opt .badge.suggestion{background:#FEF3C7;color:#92400E}
+  .tone-opt .badge.must      {background:#FEE2E2;color:#991B1B}
+  .tone-opt .badge.harsh     {background:#1E293B;color:white}
+  .tone-opt .badge.ok        {background:#D1FAE5;color:#065F46}
+  .tone-opt.right{background:#ECFDF5;border-color:var(--accent)}
+  .tone-opt.wrong{background:#FEF2F2;border-color:var(--warn);opacity:.7}
+  .tone-result{margin-top:12px;padding:12px 16px;border-radius:8px;display:none;font-size:13px;line-height:1.6}
+  .tone-result.show{display:block}
+  .tone-result.ok{background:#ECFDF5;border-left:4px solid var(--accent);color:#065F46}
+  .tone-result.ng{background:#FEF2F2;border-left:4px solid var(--warn);color:#7F1D1D}
+  .tone-actions{display:flex;gap:8px;margin-top:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  .tone-actions .score{font-size:13px;color:var(--muted)}
+  .tone-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+
+  /* === Tool 3: Branch Strategy Simulator === */
+  .branch{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .branch-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .branch-tabs button{background:#F1F5F9;color:var(--primary);border:1px solid var(--border);padding:8px 14px;
+    border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
+  .branch-tabs button.on{background:var(--primary);color:white;border-color:var(--primary)}
+  .branch-svg{background:#F8FAFC;border-radius:8px;padding:14px;border:1px solid var(--border);overflow-x:auto}
+  .branch-svg svg{display:block;width:100%;max-width:880px;height:auto;min-height:200px}
+  .branch-info{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  @media(max-width:780px){.branch-info{grid-template-columns:1fr}}
+  .branch-info .col{padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.7}
+  .branch-info .col.pro{background:#ECFDF5;border-left:4px solid var(--accent)}
+  .branch-info .col.con{background:#FEF2F2;border-left:4px solid var(--warn)}
+  .branch-info .col h4{margin-bottom:6px;font-size:13px}
+  .branch-info .col.pro h4{color:#065F46}
+  .branch-info .col.con h4{color:#7F1D1D}
+  .branch-info .col ul{margin-left:18px}
+
+  /* === Tool 4: Conventional Commits Generator === */
+  .cc{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .cc-form{display:grid;grid-template-columns:140px 1fr;gap:10px;margin-bottom:14px;align-items:start}
+  @media(max-width:780px){.cc-form{grid-template-columns:1fr}}
+  .cc-form label{font-weight:600;font-size:13px;color:var(--muted);padding-top:8px}
+  .cc-form select, .cc-form input, .cc-form textarea{
+    width:100%;padding:8px 12px;border:1.5px solid #CBD5E1;border-radius:6px;background:#F8FAFC;font-size:13px;font-family:inherit}
+  .cc-form textarea{font-family:'JetBrains Mono','SF Mono',monospace;resize:vertical;min-height:80px}
+  .cc-form select:focus, .cc-form input:focus, .cc-form textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .cc-out{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px 16px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:13px;line-height:1.7;white-space:pre-wrap}
+  .cc-out .type{color:#7DD3FC} .cc-out .scope{color:#FCD34D} .cc-out .breaking{color:#FCA5A5;font-weight:bold}
+  .cc-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .cc-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+  .cc-actions button.ghost{background:#F1F5F9;color:var(--primary);border:1px solid var(--border)}
+  .cc-bcheck{margin-top:8px;padding:10px 14px;background:#FFFBEB;border-radius:6px;font-size:13px;display:none}
+  .cc-bcheck.show{display:block;border-left:4px solid var(--secondary)}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #CBD5E1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#D1FAE5;border-color:var(--accent);color:#065F46}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#F8FAFC;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:white;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>中級 第1回</span> <b>チーム開発 の 現実</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#prcmp">2<span>良い PR / 悪い PR</span><span class="ic">📋</span></a>
+  <a href="#tone">3<span>レビュー トーン</span><span class="ic">💬</span></a>
+  <a href="#branch">4<span>ブランチ戦略</span><span class="ic">🌳</span></a>
+  <a href="#cc">5<span>Commit メッセージ</span><span class="ic">📝</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#wrap">7<span>まとめ</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第1回 ／ 高校生プログラミング塾・中級</div>
+    <h1>チーム開発<br>の 現実</h1>
+    <p>PR / レビュー / ブランチ戦略 を <b>チーム の 一員</b> として 体得</p>
+    <div class="em">🤝🔀👀</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. PR 比較
+     ======================================================== -->
+<div class="divider" id="prcmp" data-snav-target>
+  <div class="num">01.</div>
+  <h2>良い PR / 悪い PR を 並べる</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>3つ の シナリオ で 比較</h2>
+  <p class="lead">同じ 「機能追加」 でも、 タイトル ／ 本文 ／ サイズ で **レビューしやすさ** が 激変。 左 が 悪い 例、 右 が 良い 例。 下 の チェック項目 で 違い を 言語化。</p>
+
+  <div class="prcmp">
+    <div class="prcmp-tabs" role="tablist" aria-label="シナリオ">
+      <button class="on" data-s="login"   onclick="prSwitch('login')" aria-label="ログイン機能">ログイン 機能</button>
+      <button data-s="refactor" onclick="prSwitch('refactor')" aria-label="リファクタリング">リファクタ</button>
+      <button data-s="bug"   onclick="prSwitch('bug')" aria-label="バグ修正">バグ 修正</button>
+    </div>
+
+    <div class="prcmp-grid">
+      <div class="pr bad">
+        <h4>❌ 悪い PR</h4>
+        <div class="title" id="prBadT"></div>
+        <div class="meta" id="prBadM"></div>
+        <div class="body" id="prBadB"></div>
+        <div class="stats" id="prBadS"></div>
+      </div>
+      <div class="pr good">
+        <h4>✅ 良い PR</h4>
+        <div class="title" id="prGoodT"></div>
+        <div class="meta" id="prGoodM"></div>
+        <div class="body" id="prGoodB"></div>
+        <div class="stats" id="prGoodS"></div>
+      </div>
+    </div>
+
+    <div class="prcmp-checks" id="prChecks"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. レビューコメント トーン
+     ======================================================== -->
+<div class="divider" id="tone" data-snav-target>
+  <div class="num">02.</div>
+  <h2>レビュー コメント の トーン</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>どれが 「良い」 レビュー？</h2>
+  <p class="lead">同じ 指摘 でも 言い方 で チーム の 雰囲気 が 変わります。 5問 解いて 「nit / suggestion / must / harsh」 の 違い を 体感。</p>
+
+  <div class="tone">
+    <div class="tone-prompt" id="toneP"></div>
+    <div class="tone-opts" id="toneOpts" role="radiogroup" aria-label="レビュー コメント 候補"></div>
+    <div class="tone-result" id="toneResult" role="status" aria-live="polite"></div>
+    <div class="tone-actions">
+      <div class="score">問題 <b id="toneIdx">1</b> / 5 — スコア: <b id="toneScore">0</b></div>
+      <button onclick="toneNext()" aria-label="次の問題">▶ 次へ</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. ブランチ戦略 シミュレータ
+     ======================================================== -->
+<div class="divider" id="branch" data-snav-target>
+  <div class="num">03.</div>
+  <h2>ブランチ戦略 比較</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>GitHub Flow / Git Flow / Trunk-based</h2>
+  <p class="lead">3つ の 戦略 を SVG 図 で 比較。 タブ で 切り替え、 各々 の メリット ／ デメリット ／ 向く チーム規模 を 確認。</p>
+
+  <div class="branch">
+    <div class="branch-tabs" role="tablist">
+      <button class="on" data-b="github"  onclick="brSwitch('github')"  aria-label="GitHub Flow">GitHub Flow</button>
+      <button data-b="gitflow" onclick="brSwitch('gitflow')" aria-label="Git Flow">Git Flow</button>
+      <button data-b="trunk"   onclick="brSwitch('trunk')"   aria-label="Trunk-based">Trunk-based</button>
+    </div>
+    <div class="branch-svg" id="branchSvg" aria-label="ブランチ戦略 図"></div>
+    <div class="branch-info" id="branchInfo"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. Conventional Commits ジェネレータ
+     ======================================================== -->
+<div class="divider" id="cc" data-snav-target>
+  <div class="num">04.</div>
+  <h2>Conventional Commits ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>標準形式 で コミット を 書く</h2>
+  <p class="lead">type / scope / subject / body / breaking change を 入力 する と、 <code>type(scope): subject</code> 形式 が 自動 生成 されます。 リリースノート / SemVer 自動化 と 相性 抜群。</p>
+
+  <div class="cc">
+    <div class="cc-form">
+      <label for="ccType">type</label>
+      <select id="ccType" aria-label="変更 種別">
+        <option value="feat">feat — 新機能</option>
+        <option value="fix">fix — バグ修正</option>
+        <option value="docs">docs — ドキュメント</option>
+        <option value="style">style — フォーマット</option>
+        <option value="refactor">refactor — リファクタ</option>
+        <option value="perf">perf — パフォーマンス</option>
+        <option value="test">test — テスト</option>
+        <option value="chore">chore — 雑務</option>
+        <option value="ci">ci — CI設定</option>
+      </select>
+
+      <label for="ccScope">scope（任意）</label>
+      <input id="ccScope" placeholder="auth, ui, db..." aria-label="スコープ">
+
+      <label for="ccSubject">subject</label>
+      <input id="ccSubject" placeholder="add password reset endpoint" maxlength="72" aria-label="件名">
+
+      <label for="ccBody">body（任意）</label>
+      <textarea id="ccBody" placeholder="変更 の 詳細、 背景、 影響範囲 など" aria-label="本文"></textarea>
+
+      <label for="ccBreaking">破壊的変更</label>
+      <div>
+        <label style="font-weight:400;padding:0;font-size:14px;display:inline-flex;align-items:center;gap:6px">
+          <input type="checkbox" id="ccBreaking" aria-label="破壊的変更"> あり（BREAKING CHANGE: を 追加）
+        </label>
+      </div>
+
+      <label for="ccIssue">Closes（任意）</label>
+      <input id="ccIssue" placeholder="42" aria-label="Issue 番号">
+    </div>
+
+    <div class="cc-out" id="ccOut" aria-label="生成された コミット メッセージ"></div>
+    <div class="cc-bcheck" id="ccBcheck" role="status" aria-live="polite"></div>
+
+    <div class="cc-actions">
+      <button onclick="ccCopy()" aria-label="コピー">📋 コピー</button>
+      <button class="ghost" onclick="ccLoad('release')" aria-label="リリース 例">📦 リリース 例</button>
+      <button class="ghost" onclick="ccLoad('bug')" aria-label="バグ修正 例">🐛 バグ修正 例</button>
+      <button class="ghost" onclick="ccLoad('breaking')" aria-label="破壊的変更 例">💥 破壊的変更 例</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="a">
+      <div class="q">Q1. 5人 チーム / 週1リリース の Web サービス に **おすすめ** の ブランチ戦略 は？</div>
+      <div class="opts">
+        <button data-c="a">GitHub Flow</button>
+        <button data-c="b">Git Flow</button>
+        <button data-c="c">Trunk-based ＋ Feature Flag</button>
+        <button data-c="d">ブランチ なし</button>
+      </div>
+      <div class="ex">💡 5人 / 週1 は GitHub Flow の ど真ん中。 Git Flow は オーバースペック、 Trunk-based は Feature Flag 基盤 が 重い。</div>
+    </div>
+    <div class="qrow" data-answer="b">
+      <div class="q">Q2. レビュー コメント の 「**must:**」 を 多用 する 弊害 は？</div>
+      <div class="opts">
+        <button data-c="a">時間 が かかる</button>
+        <button data-c="b">レビュアー が 偉そう に 見え、 心理的安全性 が 下がる</button>
+        <button data-c="c">CI が 遅くなる</button>
+      </div>
+      <div class="ex">💡 must は 厳選、 nit / suggestion を 多用。 「コード を 批判 する のであって 人 を 批判 しない」 が 鉄則。</div>
+    </div>
+    <div class="qrow" data-answer="c">
+      <div class="q">Q3. Conventional Commits の **主な メリット** は？</div>
+      <div class="opts">
+        <button data-c="a">コミット が 速い</button>
+        <button data-c="b">日本語 が 書ける</button>
+        <button data-c="c">CHANGELOG / SemVer の **自動化** が できる</button>
+      </div>
+      <div class="ex">💡 release-please / semantic-release が type を 元に 自動 で バージョン を 上げ、 リリースノート を 生成。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. まとめ
+     ======================================================== -->
+<div class="divider" id="wrap" data-snav-target>
+  <div class="num">06.</div>
+  <h2>きょうのまとめ</h2>
+</div>
+
+<section class="section">
+  <h2>おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>📋 良い PR ＝ 小さい / 1目的 / 「なぜ」</h3><p style="color:var(--muted);font-size:14px">300行以下、 タイトル一文、 What / Why / How、 スクショ ／ テスト。</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>💬 レビュー は コード を 批判、 人 を 批判 しない</h3><p style="color:var(--muted);font-size:14px">nit: / suggestion: / must: の 重大度 ラベル で トーン を 制御。</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>🌳 ブランチ戦略 は 状況 で 選ぶ</h3><p style="color:var(--muted);font-size:14px">5〜20人 ＝ GitHub Flow、 大規模 製品 ＝ Git Flow、 巨大 ＝ Trunk-based。</p></div></div>
+  </div>
+</section>
+
+<footer>高校生プログラミング塾 ／ 中級 第1回｜チーム開発 の 現実</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* === 1. PR Compare === */
+  const PR_DATA = {
+    login: {
+      bad: {
+        title: 'update',
+        meta: 'by yamada · 5,328 lines changed · 47 files',
+        body: '色々 直しました。\n\nログイン と あと CSS と DB の マイグレーション も。',
+        stats: { add: 4982, del: 346 },
+      },
+      good: {
+        title: 'feat(auth): add password reset endpoint',
+        meta: 'by yamada · 184 lines · 6 files',
+        body: '## 概要\nパスワード忘れた ユーザー向け の リセット フロー を 追加。\n\n## なぜ\n- Issue #42 で 要望 多数（10件 / 月）\n- サポート対応 を 自動化\n\n## どう\n- POST /api/auth/password/reset を 追加\n- メール送信 は 既存 mailer を 再利用\n- トークン 有効期限 1時間\n\n## チェック\n- [x] テスト追加\n- [x] CI 緑\n- [x] スクリーンショット 添付\n\nCloses #42',
+        stats: { add: 178, del: 6 },
+      },
+      checks: [
+        { ng:'5,328 行（読み切れない）',                ok:'184 行（10分 で 読める）' },
+        { ng:'タイトル "update" — 意図不明',          ok:'feat(auth): で 目的 一目' },
+        { ng:'本文 が 雑（What / Why / How なし）',    ok:'構造化 された 本文' },
+        { ng:'目的 が 混在（ログイン + CSS + DB）',    ok:'1 目的（パスワード リセット のみ）' },
+        { ng:'Issue 参照 / テスト なし',              ok:'Closes #42 / テスト同梱' },
+      ],
+    },
+    refactor: {
+      bad: {
+        title: 'big refactor',
+        meta: 'by yamada · 12,847 lines · 134 files',
+        body: '良くしました。',
+        stats: { add: 8421, del: 4426 },
+      },
+      good: {
+        title: 'refactor(api): extract validation to shared module',
+        meta: 'by yamada · 246 lines · 8 files',
+        body: '## 概要\n各 エンドポイント で 重複 していた バリデーション を `src/validation/` に 集約。\n\n## なぜ\n- 同じ 検証ロジック が 5箇所 で 重複\n- バグ修正 を 1箇所 で 完結 させたい\n\n## 注意\n- **挙動変更 なし**（純粋 抽出 のみ）\n- 既存テスト 全 グリーン で 確認',
+        stats: { add: 124, del: 122 },
+      },
+      checks: [
+        { ng:'12,847 行 の リファクタ — マージ 不可能',  ok:'246 行 — 1時間 で レビュー 可能' },
+        { ng:'タイトル 抽象的',                          ok:'refactor(api): 抽出範囲 を 明示' },
+        { ng:'機能変更 と 混在 する 危険',                ok:'「挙動変更 なし」 を 明記' },
+        { ng:'本文 1行 で 意図 不明',                     ok:'なぜ ／ 注意点 を 明示' },
+        { ng:'add 8421 / del 4426 — 何 が 変わった？',  ok:'add 124 / del 122 — 純粋 抽出' },
+      ],
+    },
+    bug: {
+      bad: {
+        title: 'fix',
+        meta: 'by yamada · 3 lines · 1 file',
+        body: 'なおした',
+        stats: { add: 2, del: 1 },
+      },
+      good: {
+        title: 'fix(dashboard): prevent 500 on logout race',
+        meta: 'by yamada · 21 lines · 2 files',
+        body: '## 概要\nログアウト 直後 に ダッシュボード を リロード する と 500 が 発生 する 問題 を 修正。\n\n## 再現手順\n1. /login で ログイン\n2. ヘッダー の ログアウト 押下\n3. すぐ に F5（< 200ms）\n→ 500 Internal Server Error\n\n## 原因\n`req.user` 解決 と セッション破棄 の レース。 セッション 破棄 が 先 に 走り `req.user.id` が undefined に なる。\n\n## 修正\n`if (!req.user) redirect("/login")` を ミドルウェア に 追加。\n\n## テスト\n- 失敗 シナリオ を pytest で 再現\n- 修正後 / 修正前 で 切り替え 検証\n\nCloses #123',
+        stats: { add: 19, del: 2 },
+      },
+      checks: [
+        { ng:'タイトル "fix" — 何 を？',                ok:'fix(dashboard): + 症状 が 一目' },
+        { ng:'本文 「なおした」 — 内容 / 原因 不明',     ok:'再現手順 / 原因 / 修正 / テスト' },
+        { ng:'再現 手順 が ない — 確認 不能',            ok:'手順 3つ で 再現 可能' },
+        { ng:'根本原因 の 説明 なし',                    ok:'レース 条件 と 修正方針 を 明示' },
+        { ng:'テスト なし — 再発 防げない',              ok:'pytest で 失敗 シナリオ を 固定' },
+      ],
+    },
+  };
+  let prCur = 'login';
+  function prSwitch(s){
+    prCur = s;
+    document.querySelectorAll('.prcmp-tabs button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+    renderPr();
+  }
+  function renderPr(){
+    const d = PR_DATA[prCur];
+    document.getElementById('prBadT').textContent = d.bad.title;
+    document.getElementById('prBadM').textContent = d.bad.meta;
+    document.getElementById('prBadB').textContent = d.bad.body;
+    document.getElementById('prBadS').innerHTML = `<span class="add">+${d.bad.stats.add}</span><span class="del">-${d.bad.stats.del}</span>`;
+    document.getElementById('prGoodT').textContent = d.good.title;
+    document.getElementById('prGoodM').textContent = d.good.meta;
+    document.getElementById('prGoodB').textContent = d.good.body;
+    document.getElementById('prGoodS').innerHTML = `<span class="add">+${d.good.stats.add}</span><span class="del">-${d.good.stats.del}</span>`;
+    const checksWrap = document.getElementById('prChecks');
+    checksWrap.innerHTML = '<h4 style="margin-top:14px;margin-bottom:8px;color:var(--primary)">違い を 1つずつ 確認</h4>';
+    d.checks.forEach(c => {
+      const ng = document.createElement('div');
+      ng.className = 'prcmp-check ng';
+      ng.innerHTML = `<span class="ico" aria-hidden="true">❌</span><span>${escapeHTML(c.ng)}</span>`;
+      checksWrap.appendChild(ng);
+      const ok = document.createElement('div');
+      ok.className = 'prcmp-check ok';
+      ok.innerHTML = `<span class="ico" aria-hidden="true">⭕</span><span>${escapeHTML(c.ok)}</span>`;
+      checksWrap.appendChild(ok);
+    });
+  }
+  renderPr();
+
+  /* === 2. Tone Trainer === */
+  const TONE_Q = [
+    {
+      ctx: '変数名 が `temp1` `temp2` で 意味 が 取れない',
+      code: 'const temp1 = users.filter(u => u.age >= 18);\nconst temp2 = temp1.map(u => u.email);',
+      opts: [
+        { lvl:'harsh',      txt:'こんな 変数名 で よく PR 投げられますね',    correct:false, why:'感情的 / 個人攻撃。 心理的安全性 を 破壊' },
+        { lvl:'nit',        txt:'nit: `adults` / `adultEmails` の 方 が 意図 が 伝わる かも？', correct:true, why:'nit ＝ 軽い指摘。 提案 ベース で 角 が 立たない' },
+        { lvl:'must',       txt:'must: 変数名 を 直さない と マージ 不可',     correct:false, why:'重大度 不適切。 変数名 で must は 強すぎる' },
+      ],
+    },
+    {
+      ctx: '認証 ロジック で API キー を コードに ハードコード',
+      code: 'const API_KEY = "sk-1234567890abcdef";\nconst res = await fetch(URL, { headers: { Authorization: API_KEY }});',
+      opts: [
+        { lvl:'nit',        txt:'nit: 後で env に 移しても いいかも',         correct:false, why:'重大度 過小。 セキュリティ問題 は must' },
+        { lvl:'must',       txt:'must: API キー を ハードコード しない（環境変数 へ）。 マージ前 に 必須',  correct:true, why:'セキュリティ ＝ 強制 で OK、 理由 と 解決策 を 明示' },
+        { lvl:'suggestion', txt:'suggestion: env に した 方 が 良いと 思います',  correct:false, why:'弱すぎる。 漏洩 リスク に は must が 適切' },
+      ],
+    },
+    {
+      ctx: '関数 が 50行 で 読みづらい',
+      code: 'function processOrder(order) {\n  // ... 50行 の 検証 + DB + メール送信 ...\n}',
+      opts: [
+        { lvl:'harsh',      txt:'こんな 長い 関数 書いてダメ',                correct:false, why:'攻撃的、 提案 なし' },
+        { lvl:'must',       txt:'must: 関数 を 分割 しない と マージ 不可',   correct:false, why:'コードレビューは 強制 より 議論。 50行 関数 は すぐ must で 弾かない' },
+        { lvl:'suggestion', txt:'suggestion: 検証 / DB / メール の 3 関数 に 分けると テスト しやすそう。 別 PR でも OK', correct:true, why:'提案 + 理由 + 段階的選択肢。 議論 を 促す' },
+      ],
+    },
+    {
+      ctx: 'else if が 5段 ネスト',
+      code: 'if (a) {\n  if (b) {\n    if (c) {\n      if (d) {\n        if (e) {\n          return "deep";\n        }\n      }\n    }\n  }\n}',
+      opts: [
+        { lvl:'nit',        txt:'nit: ネスト 深い、 early return で 浅く できる',  correct:true, why:'軽い指摘 + 具体的 改善案。 ベスト' },
+        { lvl:'harsh',      txt:'読めない、 やり直し',                       correct:false, why:'攻撃 + 提案 なし' },
+        { lvl:'must',       txt:'must: 全部 リファクタ',                     correct:false, why:'must は 過剰。 nit + 提案 で 十分' },
+      ],
+    },
+    {
+      ctx: '新人 の 初 PR、 動く けど テスト が ない',
+      code: '// 新規 機能 / テスト ファイル なし',
+      opts: [
+        { lvl:'harsh',      txt:'テスト ない の は 論外',                     correct:false, why:'新人 を 萎縮 させる。 教育 機会 を 逃す' },
+        { lvl:'ok',         txt:'初 PR ありがとう！ テスト 追加 だけ お願い できますか？ サンプル を リンク します: [...]。 詰まったら 声かけて', correct:true, why:'歓迎 + 具体 依頼 + 助け 申し出。 新人 の 心理的 安全 を 守る' },
+        { lvl:'must',       txt:'must: テスト を 書いて',                    correct:false, why:'冷たい。 リンク も 助け も ない' },
+      ],
+    },
+  ];
+  let toneIdx = 0;
+  let toneScore = 0;
+  let toneAnswered = false;
+  function renderTone(){
+    const q = TONE_Q[toneIdx];
+    document.getElementById('toneIdx').textContent = toneIdx + 1;
+    document.getElementById('toneScore').textContent = toneScore;
+    const p = document.getElementById('toneP');
+    p.innerHTML = `<div class="ctx">📋 ${escapeHTML(q.ctx)}</div><div class="code">${escapeHTML(q.code)}</div>`;
+    const optsWrap = document.getElementById('toneOpts');
+    optsWrap.innerHTML = '';
+    // 選択肢 を シャッフル
+    const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+    shuffled.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'tone-opt';
+      b.type = 'button';
+      b.setAttribute('role','radio');
+      b.setAttribute('aria-checked','false');
+      b.innerHTML = `<span class="badge ${o.lvl}">${o.lvl}</span><span>${escapeHTML(o.txt)}</span>`;
+      b.addEventListener('click', () => toneAnswer(b, o));
+      optsWrap.appendChild(b);
+    });
+    document.getElementById('toneResult').classList.remove('show');
+    toneAnswered = false;
+  }
+  function toneAnswer(btn, opt){
+    if(toneAnswered) return;
+    toneAnswered = true;
+    btn.classList.add(opt.correct ? 'right' : 'wrong');
+    btn.setAttribute('aria-checked','true');
+    if(opt.correct) toneScore++;
+    document.getElementById('toneScore').textContent = toneScore;
+    const r = document.getElementById('toneResult');
+    r.classList.add('show', opt.correct ? 'ok' : 'ng');
+    r.classList.remove(opt.correct ? 'ng' : 'ok');
+    r.innerHTML = (opt.correct ? '✅ 正解！ ' : '❌ 残念… ') + escapeHTML(opt.why);
+  }
+  function toneNext(){
+    toneIdx = (toneIdx + 1) % TONE_Q.length;
+    if(toneIdx === 0) showToast('🎉 全 5問 完走！ スコア ' + toneScore + ' / 5');
+    renderTone();
+  }
+  renderTone();
+
+  /* === 3. Branch Strategy === */
+  const BR_SVG = {
+    github: `<svg viewBox="0 0 880 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GitHub Flow ブランチ図">
+      <text x="20" y="40" font-family="JetBrains Mono,monospace" font-size="14" fill="#0F172A" font-weight="bold">main</text>
+      <line x1="80" y1="35" x2="860" y2="35" stroke="#1E3A8A" stroke-width="3"/>
+      ${[120,220,320,420,520,620,720,820].map(x => `<circle cx="${x}" cy="35" r="6" fill="#1E3A8A"/>`).join('')}
+      <line x1="220" y1="35" x2="280" y2="100" stroke="#14B8A6" stroke-width="2"/>
+      <line x1="280" y1="100" x2="420" y2="100" stroke="#14B8A6" stroke-width="2"/>
+      <line x1="420" y1="100" x2="420" y2="35" stroke="#14B8A6" stroke-width="2"/>
+      <circle cx="280" cy="100" r="5" fill="#14B8A6"/>
+      <circle cx="350" cy="100" r="5" fill="#14B8A6"/>
+      <circle cx="420" cy="100" r="5" fill="#14B8A6"/>
+      <text x="280" y="125" font-family="JetBrains Mono,monospace" font-size="12" fill="#14B8A6">feat/login</text>
+      <line x1="520" y1="35" x2="580" y2="170" stroke="#FACC15" stroke-width="2"/>
+      <line x1="580" y1="170" x2="660" y2="170" stroke="#FACC15" stroke-width="2"/>
+      <line x1="660" y1="170" x2="720" y2="35" stroke="#FACC15" stroke-width="2"/>
+      <circle cx="580" cy="170" r="5" fill="#FACC15"/>
+      <circle cx="660" cy="170" r="5" fill="#FACC15"/>
+      <text x="580" y="195" font-family="JetBrains Mono,monospace" font-size="12" fill="#B45309">fix/header</text>
+    </svg>`,
+    gitflow: `<svg viewBox="0 0 880 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Git Flow ブランチ図">
+      <text x="20" y="25" font-family="JetBrains Mono,monospace" font-size="14" fill="#0F172A" font-weight="bold">main</text>
+      <line x1="80" y1="20" x2="860" y2="20" stroke="#1E3A8A" stroke-width="3"/>
+      ${[120,500,820].map(x => `<circle cx="${x}" cy="20" r="6" fill="#1E3A8A"/>`).join('')}
+      <text x="20" y="95" font-family="JetBrains Mono,monospace" font-size="14" fill="#0F172A" font-weight="bold">develop</text>
+      <line x1="120" y1="90" x2="860" y2="90" stroke="#14B8A6" stroke-width="3"/>
+      ${[160,240,320,400,480,560,640,720,800].map(x => `<circle cx="${x}" cy="90" r="5" fill="#14B8A6"/>`).join('')}
+      <line x1="240" y1="90" x2="280" y2="150" stroke="#FACC15" stroke-width="2"/>
+      <line x1="280" y1="150" x2="380" y2="150" stroke="#FACC15" stroke-width="2"/>
+      <line x1="380" y1="150" x2="400" y2="90" stroke="#FACC15" stroke-width="2"/>
+      <circle cx="320" cy="150" r="5" fill="#FACC15"/>
+      <text x="280" y="172" font-family="JetBrains Mono,monospace" font-size="12" fill="#B45309">feature/login</text>
+      <line x1="480" y1="90" x2="500" y2="20" stroke="#A78BFA" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="430" y="55" font-family="JetBrains Mono,monospace" font-size="12" fill="#7C3AED">release/1.0</text>
+      <line x1="800" y1="20" x2="820" y2="20" stroke="#DC2626" stroke-width="2"/>
+      <text x="730" y="200" font-family="JetBrains Mono,monospace" font-size="11" fill="#64748B">hotfix は main から 派生 → main + develop に マージ</text>
+    </svg>`,
+    trunk: `<svg viewBox="0 0 880 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Trunk-based ブランチ図">
+      <text x="20" y="55" font-family="JetBrains Mono,monospace" font-size="14" fill="#0F172A" font-weight="bold">main</text>
+      <line x1="80" y1="50" x2="860" y2="50" stroke="#1E3A8A" stroke-width="4"/>
+      ${[100,140,180,220,260,300,340,380,420,460,500,540,580,620,660,700,740,780,820].map(x => `<circle cx="${x}" cy="50" r="5" fill="#1E3A8A"/>`).join('')}
+      <text x="440" y="100" font-family="JetBrains Mono,monospace" font-size="13" fill="#64748B" text-anchor="middle">全員 1日 何度も 直接 push（または 短命 ブランチ から 即マージ）</text>
+      <text x="440" y="125" font-family="JetBrains Mono,monospace" font-size="13" fill="#14B8A6" text-anchor="middle">未完成 機能 は Feature Flag で OFF</text>
+      <text x="440" y="150" font-family="JetBrains Mono,monospace" font-size="13" fill="#FACC15" text-anchor="middle">CI/CD で 毎コミット 検証</text>
+    </svg>`,
+  };
+  const BR_INFO = {
+    github: {
+      pros: ['シンプル（main + 短命 ブランチ）', 'CI/CD と 相性 最高', '1日 複数回 リリース 可', 'マージ後 即 デプロイ'],
+      cons: ['複数バージョン 運用 に 弱い', 'リリース履歴 が main に 集約'],
+      who: '5〜20人 / Web サービス / 1日複数リリース',
+    },
+    gitflow: {
+      pros: ['複数 バージョン 並行 運用', 'リリース ブランチ で 安定化', 'hotfix と 機能開発 を 分離'],
+      cons: ['ブランチ が 多すぎる', 'マージ コスト 高い', 'CI/CD 設定 複雑'],
+      who: '大規模 / パッケージ製品 / 月次リリース',
+    },
+    trunk: {
+      pros: ['ブランチ コスト ゼロ', '統合 問題 が 即発見', '究極の Continuous Integration', 'チーム規模 に スケール'],
+      cons: ['Feature Flag 基盤 が 必須', 'CI/CD が 強力 でない と 破綻', '心理的 ハードル 高い'],
+      who: '数百人〜 / FAANG 級 / Feature Flag 整備済み',
+    },
+  };
+  let brCur = 'github';
+  function brSwitch(b){
+    brCur = b;
+    document.querySelectorAll('.branch-tabs button').forEach(btn => btn.classList.toggle('on', btn.dataset.b === b));
+    document.getElementById('branchSvg').innerHTML = BR_SVG[b];
+    const inf = BR_INFO[b];
+    document.getElementById('branchInfo').innerHTML = `
+      <div class="col pro"><h4>⭕ メリット</h4><ul>${inf.pros.map(p => '<li>' + escapeHTML(p) + '</li>').join('')}</ul></div>
+      <div class="col con"><h4>❌ デメリット</h4><ul>${inf.cons.map(p => '<li>' + escapeHTML(p) + '</li>').join('')}</ul></div>
+      <div class="col" style="grid-column:1/-1;background:#FFFBEB;border-left:4px solid var(--secondary);color:#92400E">
+        <h4>👥 向いている チーム</h4>${escapeHTML(inf.who)}
+      </div>`;
+  }
+  brSwitch('github');
+
+  /* === 4. Conventional Commits === */
+  function renderCc(){
+    const type = document.getElementById('ccType').value;
+    const scope = document.getElementById('ccScope').value.trim();
+    const subject = document.getElementById('ccSubject').value.trim();
+    const body = document.getElementById('ccBody').value.trim();
+    const breaking = document.getElementById('ccBreaking').checked;
+    const issue = document.getElementById('ccIssue').value.trim();
+
+    let line1 = `<span class="type">${type}</span>`;
+    if(scope) line1 += `(<span class="scope">${escapeHTML(scope)}</span>)`;
+    if(breaking) line1 += '<span class="breaking">!</span>';
+    line1 += ': ' + (subject ? escapeHTML(subject) : '<i style="color:#94A3B8">subject を 入力…</i>');
+    let out = line1;
+    if(body){ out += '\n\n' + escapeHTML(body); }
+    if(breaking){
+      out += '\n\n<span class="breaking">BREAKING CHANGE:</span> 互換性 を 失います';
+    }
+    if(issue){ out += '\n\nCloses #' + escapeHTML(issue); }
+    document.getElementById('ccOut').innerHTML = out;
+
+    // breaking ヒント
+    const bcheck = document.getElementById('ccBcheck');
+    if(breaking){
+      bcheck.classList.add('show');
+      bcheck.innerHTML = '⚠️ 破壊的変更 → SemVer の <b>メジャー バージョン</b> が 上がります（例: 1.x → 2.0）。 release-please / semantic-release が 検知。';
+    } else {
+      bcheck.classList.remove('show');
+    }
+
+    // subject 長さ チェック
+    if(subject.length > 72){
+      bcheck.classList.add('show');
+      bcheck.style.borderLeftColor = 'var(--warn)';
+      bcheck.innerHTML = '⚠️ subject が 72文字 超過 — 50文字 以内 推奨';
+    } else {
+      bcheck.style.borderLeftColor = '';
+    }
+  }
+  function ccCopy(){
+    const text = document.getElementById('ccOut').textContent;
+    navigator.clipboard.writeText(text).then(
+      () => showToast('📋 コピー しました'),
+      () => showToast('⚠️ コピー 失敗（手動 で 選択）')
+    );
+  }
+  function ccLoad(k){
+    if(k === 'release'){
+      document.getElementById('ccType').value = 'feat';
+      document.getElementById('ccScope').value = 'auth';
+      document.getElementById('ccSubject').value = 'add password reset endpoint';
+      document.getElementById('ccBody').value = 'POST /api/auth/password/reset を 追加。\n- メール送信 は 既存 mailer サービス を 再利用\n- トークン 有効期限 1時間';
+      document.getElementById('ccBreaking').checked = false;
+      document.getElementById('ccIssue').value = '42';
+    } else if(k === 'bug'){
+      document.getElementById('ccType').value = 'fix';
+      document.getElementById('ccScope').value = 'dashboard';
+      document.getElementById('ccSubject').value = 'prevent 500 on logout race';
+      document.getElementById('ccBody').value = 'ログアウト 直後 の リロード で req.user が undefined に なる レース を 修正。\nミドルウェア に if (!req.user) redirect を 追加。';
+      document.getElementById('ccBreaking').checked = false;
+      document.getElementById('ccIssue').value = '123';
+    } else if(k === 'breaking'){
+      document.getElementById('ccType').value = 'refactor';
+      document.getElementById('ccScope').value = 'api';
+      document.getElementById('ccSubject').value = 'rename /users to /accounts';
+      document.getElementById('ccBody').value = 'API 全体 を /users から /accounts へ rename。\n旧エンドポイント は 削除。';
+      document.getElementById('ccBreaking').checked = true;
+      document.getElementById('ccIssue').value = '';
+    }
+    renderCc();
+  }
+  ['ccType','ccScope','ccSubject','ccBody','ccIssue'].forEach(id => {
+    document.getElementById(id).addEventListener('input', renderCc);
+  });
+  document.getElementById('ccBreaking').addEventListener('change', renderCc);
+  ccLoad('release');
+
+  /* === Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){ b.classList.add('right'); showToast('せいかい！ 🎉'); }
+        else { b.classList.add('wrong'); row.querySelector(`button[data-c="${ans}"]`).classList.add('right'); }
+        row.classList.add('answered');
+      });
+    });
+  });
+</script>
+</body>
+</html>
