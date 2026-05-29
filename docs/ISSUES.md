@@ -28,38 +28,40 @@
 
 ---
 
-## 🖥️ [Feature] 高校生向けコース の interactive.html 実装
+## ~~🖥️ [Feature] 高校生向けコース の interactive.html 実装~~ — **完了 2026-05-26**
 
 **Labels:** `enhancement`, `new-course`, `priority/medium`
 
-### 背景
+### 実装結果（完了）
 
-高校生 12回 の `lesson.md` は 完成済み だが、 各回 に 対応する 体験型 `interactive.html` が 未実装。
-中学生・上級 第4回 / 高齢者・上級 第4回 と 同等 の 多機能 ツール集 を 揃えたい。
+高校生 12回 すべて の `interactive.html` を 完成（合計 約 **10,800行**、 全48ツール）。
 
-### 想定 する 主な ツール（回別）
-
-| 回 | ツール 案 |
+| 回 | 実装ツール |
 |---|---|
-| 高初1 開発環境 | Docker Compose 設計 シミュレータ / dotfiles 構成 ビルダー |
-| 高初2 型 | TS Playground（ts→js 変換 体験） / Zod スキーマ ビジュアライザー |
-| 高初3 TDD | in-browser jest ランナー（中・上級 第3回 を 流用 / 拡張） |
-| 高初4 Issue駆動 | カンバン ボード ＋ プランニング ポーカー |
-| 高中1 チーム開発 | 良い PR / 悪い PR 比較 ビューア |
-| 高中2 FE | React Hooks シミュレータ / Server vs Client 境界 ビジュアライザー |
-| 高中3 BE スケール | N+1 体感 ベンチ / Redis キャッシュ ヒット率 グラフ |
-| 高中4 DevOps | CI/CD パイプライン エディタ / SLO エラー予算 ダッシュボード |
-| 高上1 アーキ | C4 図 エディタ / DDD 集約 設計 ツール |
-| 高上2 AI/ML | scikit-learn デモ（ブラウザ TF.js）/ プロンプト エディタ |
-| 高上3 キャリア | キャリアシート ジェネレータ / GitHub プロフィール プレビュー |
-| 高上4 卒業発表会 | 発表 タイマー / 修了証 ジェネレータ |
+| 高初1 開発環境 | ⏱️環境構築タイムレース / 🐳Docker Compose ビルダー / 📁dotfiles ビルダー / 🔒pre-commit シミュレータ |
+| 高初2 型 | 📐TS型推論 Playground / 🛡️Zod スキーマ Visualizer / ⚠️any vs unknown / 🎯型ガード Trainer |
+| 高初3 TDD | 🔄TDDサイクル Visualizer / ▶テストランナー / 📊カバレッジ Viz / 🎯FizzBuzz Quest |
+| 高初4 Issue駆動 | 🎫カンバン D&D / 🃏プランニングポーカー / 📊スプリント計画 / 🔁KPT レトロ + 🎓修了証 |
+| 高中1 チーム開発 | 📋良い/悪いPR比較 / 💬レビュートーン Trainer / 🌳ブランチ戦略 / 📝Conventional Commits |
+| 高中2 FE | ⚛️useState ライブ / ▲Server/Client境界 / 💎TanStack Query キャッシュ / 🗺️ルーティング Viz |
+| 高中3 BE スケール | 🐌N+1ベンチ / ⚡インデックス効果 / 🔴Redis Cache-aside / 🚦マイグレ安全度判定 |
+| 高中4 DevOps | 🚀CI/CDパイプ Viz / 📊SLO エラー予算 / 🔔アラート Trainer / 📋構造化ログ + 🎓修了証 |
+| 高上1 アーキ | 🏛️モノリス/マイクロ Tradeoff / 📐DDD 集約設計 / 🧱ヘキサゴナル / 🗺️C4 図エディタ |
+| 高上2 AI/ML | 🎯k-NN ライブデモ / 💬プロンプト品質スコア / 🔮RAG パイプ / 👁️幻覚検出 Trainer |
+| 高上3 キャリア | 🧭キャリア診断 / 👤GitHub プロフィール ジェネレータ / 💼ビジネスモデル Sim / 🌍OSS 最初の一歩 |
+| 高上4 卒業発表会 | ⏱️発表タイマー / 📑ピッチデック ジェネレータ / 💬質問ボード / 🏆グランド修了証（全12回） |
 
-### 受け入れ基準
+### 適用済み 配色テーマ
 
-- 12回 × interactive.html ＝ **12ファイル** 追加
-- 既存 配色テーマ（初級スレート×オレンジ / 中級ネイビー×イエロー / 上級ブラック×ゴールド）を 適用
-- `_templates/interactive.html` の パターン に 準拠
-- 各回 に **対話型 ツール 4個以上**
+- **初級**: スレートグレー × オレンジ × エメラルド（実務感）
+- **中級**: ミッドナイトブルー × イエロー × ティール（フレームワーク感）
+- **上級**: ネイビー × ゴールド × ブラック（卒業・プロ感）
+
+### CI 結果
+
+- 52 HTML / 51 inline scripts: 全パス
+- ID 重複: 0件
+- a11y warning: 61件（増加なし）
 
 ---
 

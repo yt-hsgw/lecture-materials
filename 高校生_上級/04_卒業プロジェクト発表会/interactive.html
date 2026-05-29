@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・上級 第4回｜卒業プロジェクト発表会 ／ 修了</title>
+<style>
+  :root{
+    --primary:#1E40AF; --secondary:#EAB308; --accent:#CA8A04;
+    --warn:#DC2626; --dark:#0C0A09; --light:#FAFAF9;
+    --panel:#FFFFFF; --muted:#78716C;
+    --border:rgba(12,10,9,.10); --shadow:0 4px 12px rgba(12,10,9,.10);
+    --code-bg:#0C0A09; --code-text:#FAFAF9;
+    --gold:#EAB308; --navy:#1E40AF; --black:#0C0A09;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--navy),var(--gold),var(--accent));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--gold);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(12,10,9,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden;display:none}
+  .confetti.on{display:block}
+  .confetti span{position:absolute;width:12px;height:16px;top:-20px;border-radius:2px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#0C0A09 0%,#1E40AF 60%,#0C0A09 100%);overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(234,179,8,.2),transparent 60%),
+                                                       radial-gradient(circle at 80% 70%,rgba(30,64,175,.4),transparent 60%);pointer-events:none}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(234,179,8,.2);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px;color:var(--gold);border:1px solid rgba(234,179,8,.4)}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.4);font-weight:800;
+    background:linear-gradient(135deg,#FAFAF9 0%,#EAB308 50%,#FAFAF9 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    background-size:200% 200%;animation:shimmer 4s ease-in-out infinite}
+  @keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--gold);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--gold);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card.tip{border-left:5px solid var(--gold);background:#FFFBEB}
+
+  /* === Tool 1: Presentation Timer === */
+  .timer{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .timer-display{text-align:center;background:var(--code-bg);border-radius:12px;padding:32px;margin-bottom:14px;position:relative;overflow:hidden}
+  .timer-display.warn{background:linear-gradient(135deg,#451A03,#7F1D1D)}
+  .timer-display.over{animation:pulseRed 1s infinite}
+  @keyframes pulseRed{0%,100%{background:#0C0A09}50%{background:#7F1D1D}}
+  .timer-display .v{font-size:clamp(56px,12vw,120px);font-weight:900;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--gold);line-height:1}
+  .timer-display.warn .v{color:#FBBF24}
+  .timer-display.over .v{color:#FCA5A5}
+  .timer-display .sub{font-size:13px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .timer-progress{height:8px;background:#E7E5E4;border-radius:4px;overflow:hidden;margin-bottom:14px}
+  .timer-progress .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold),var(--warn));transition:width 1s linear}
+  .timer-ctrl{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .timer-ctrl button{background:var(--primary);color:white;border:none;border-radius:6px;padding:10px 20px;cursor:pointer;font-weight:700;font-size:14px;min-width:80px}
+  .timer-ctrl button.ghost{background:#FAFAF9;color:var(--primary);border:1px solid var(--border)}
+  .timer-ctrl button.danger{background:var(--warn)}
+  .timer-preset{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+  .timer-preset button{background:#FAFAF9;color:var(--primary);border:1px solid var(--border);padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+  .timer-preset button.on{background:var(--primary);color:white;border-color:var(--primary)}
+
+  /* === Tool 2: Pitch Deck Generator === */
+  .pitch{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .pitch-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+  .pitch-form > div{display:flex;flex-direction:column;gap:4px}
+  .pitch-form label{font-weight:600;font-size:12px;color:var(--muted)}
+  .pitch-form input, .pitch-form textarea{width:100%;padding:8px 12px;border:1.5px solid #D6D3D1;border-radius:6px;background:#FAFAF9;font-size:13px;font-family:inherit}
+  .pitch-form input:focus, .pitch-form textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .pitch-form textarea{resize:vertical;min-height:48px}
+  .pitch-slides{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+  .pitch-slide{background:linear-gradient(135deg,#1E40AF,#0C0A09);color:white;border-radius:8px;padding:16px;min-height:140px;
+    border:2px solid var(--gold);position:relative;overflow:hidden;display:flex;flex-direction:column}
+  .pitch-slide::before{content:attr(data-n);position:absolute;top:6px;right:10px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:10px;color:var(--gold);opacity:.6}
+  .pitch-slide h3{font-size:13px;color:var(--gold);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+  .pitch-slide .content{font-size:14px;line-height:1.5;color:white;flex:1;font-weight:600}
+  .pitch-slide.metrics .content{font-size:24px;font-family:'JetBrains Mono','SF Mono',monospace;font-weight:800;color:var(--gold);text-align:center;display:flex;align-items:center;justify-content:center}
+  .pitch-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .pitch-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .pitch-actions button.ghost{background:#FAFAF9;color:var(--primary);border:1px solid var(--border)}
+
+  /* === Tool 3: Question Board === */
+  .qb{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qb-input{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .qb-input input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid #D6D3D1;border-radius:6px;background:#FAFAF9;font-size:14px}
+  .qb-input input:focus{outline:none;border-color:var(--primary);background:white}
+  .qb-input select{padding:9px 12px;border:1.5px solid #D6D3D1;border-radius:6px;background:white;font-size:13px}
+  .qb-input button{background:var(--primary);color:white;border:none;border-radius:6px;padding:10px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .qb-list{display:flex;flex-direction:column;gap:8px}
+  .qb-item{background:#FAFAF9;border-radius:8px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;
+    border-left:4px solid var(--border);transition:all .15s}
+  .qb-item.answered{opacity:.6;background:#ECFDF5;border-color:#10B981}
+  .qb-item .vote{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+  .qb-item .vote button{background:white;border:1px solid var(--border);color:var(--muted);cursor:pointer;
+    width:32px;height:24px;border-radius:4px;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .qb-item .vote button:hover{background:var(--primary);color:white;border-color:var(--primary)}
+  .qb-item .vote .n{font-weight:800;color:var(--primary);font-size:14px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .qb-item .body{flex:1}
+  .qb-item .txt{font-size:14px;line-height:1.5;font-weight:600}
+  .qb-item .meta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px}
+  .qb-item .meta .tag{padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:10px;font-weight:700}
+  .qb-item .meta .tag.tech{background:#DBEAFE;color:#1E3A8A}
+  .qb-item .meta .tag.biz{background:#FEF3C7;color:#92400E}
+  .qb-item .meta .tag.career{background:#E0E7FF;color:#3730A3}
+  .qb-item .actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+  .qb-item .actions button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}
+  .qb-item .actions button:hover{background:#E7E5E4;color:var(--primary)}
+  .qb-stats{margin-top:14px;padding:10px 14px;background:#FFFBEB;border-left:4px solid var(--gold);border-radius:6px;font-size:13px}
+
+  /* === Tool 4: Grand Certificate (12回 完走) === */
+  .grand{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .grand-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+  .grand-form label{display:block;font-weight:600;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .grand-form input{width:100%;padding:9px 12px;border:1.5px solid #D6D3D1;border-radius:8px;background:#FAFAF9;font-size:14px}
+  .grand-form input:focus{outline:none;border-color:var(--primary);background:white}
+
+  .grand-cert{background:linear-gradient(135deg,#0C0A09 0%,#1E40AF 30%,#0C0A09 70%,#1E40AF 100%);
+    background-size:200% 200%;animation:gradMove 8s ease infinite;
+    border:8px double var(--gold);border-radius:18px;padding:50px 36px;text-align:center;position:relative;overflow:hidden;color:white}
+  @keyframes gradMove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .grand-cert::before{content:'🎓';position:absolute;top:14px;left:24px;font-size:64px;opacity:.15}
+  .grand-cert::after{content:'🎓';position:absolute;bottom:14px;right:24px;font-size:64px;opacity:.15}
+  .grand-cert .seal{position:absolute;top:14px;right:14px;width:80px;height:80px;border:3px solid var(--gold);border-radius:50%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'JetBrains Mono','SF Mono',monospace}
+  .grand-cert .seal .y{font-size:20px;font-weight:800;color:var(--gold)}
+  .grand-cert .seal .l{font-size:8px;color:var(--gold);letter-spacing:1px;margin-top:-2px}
+  .grand-cert .badge{font-size:72px;margin-bottom:8px}
+  .grand-cert h2{color:var(--gold);font-size:32px;margin:6px 0 18px;letter-spacing:10px;font-weight:800;font-family:'Inter',serif}
+  .grand-cert h3{color:white;font-size:16px;margin-bottom:18px;letter-spacing:4px;font-weight:600;opacity:.9}
+  .grand-cert .name{font-size:34px;font-weight:800;color:var(--gold);margin:18px 0;padding:14px 0;
+    border-top:3px solid var(--gold);border-bottom:3px solid var(--gold);display:inline-block;min-width:300px;
+    text-shadow:0 2px 8px rgba(234,179,8,.4)}
+  .grand-cert .body{font-size:16px;line-height:1.9;color:white;opacity:.95}
+  .grand-cert .body b{color:var(--gold)}
+  .grand-cert .footer{margin-top:22px;font-size:12px;color:var(--gold);opacity:.85;font-family:'JetBrains Mono','SF Mono',monospace;letter-spacing:1px}
+  .grand-cert .journey{margin:18px auto;max-width:600px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  @media(max-width:600px){.grand-cert .journey{grid-template-columns:repeat(2,1fr)}}
+  .grand-cert .j{background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.4);border-radius:4px;padding:6px;font-size:10px;color:var(--gold);font-family:'JetBrains Mono','SF Mono',monospace}
+  .grand-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+  .grand-actions button{border:none;border-radius:10px;padding:14px 30px;font-weight:700;cursor:pointer;font-size:15px;
+    background:var(--primary);color:white;box-shadow:0 4px 0 rgba(0,0,0,.18)}
+  .grand-actions button.celebrate{background:var(--gold);color:var(--dark)}
+  .grand-actions button.share{background:#0C0A09}
+
+  /* === Final Recap === */
+  .recap{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+  @media(max-width:780px){.recap{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.recap{grid-template-columns:1fr}}
+  .recap-cell{background:white;border-radius:8px;padding:12px;text-align:center;border:1px solid var(--border);font-size:11px}
+  .recap-cell .ic{font-size:24px;margin-bottom:4px}
+  .recap-cell .lv{font-weight:800;color:var(--primary);font-size:11px;letter-spacing:.5px}
+  .recap-cell .ttl{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3}
+
+  /* === Finale === */
+  .finale{background:linear-gradient(135deg,var(--primary) 0%,var(--gold) 50%,var(--accent) 100%);
+    color:white;text-align:center;padding:80px 24px;border-radius:14px;margin:32px 24px;position:relative;overflow:hidden}
+  .finale::before{content:'';position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.2),transparent 70%);pointer-events:none}
+  .finale .em{font-size:96px;line-height:1;position:relative;z-index:1}
+  .finale h2{color:white;font-size:clamp(32px,6vw,52px);margin:18px 0;font-weight:900;text-shadow:0 2px 12px rgba(0,0,0,.3);position:relative;z-index:1}
+  .finale p{font-size:18px;margin-top:8px;position:relative;z-index:1}
+  .finale b{color:var(--code-text);background:rgba(12,10,9,.3);padding:2px 10px;border-radius:4px}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+
+  @media print {
+    body{background:white}
+    .progressbar,.top-status,.snav,.snav-help,.modal-bg,.toast,.confetti,
+    .hero,.divider,.section:not(#grandSection),.finale,footer{display:none !important}
+    .grand-form,.grand-actions{display:none !important}
+    .grand{box-shadow:none;border:none;padding:0}
+  }
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第4回 ／ FINAL</span> <b>卒業発表会</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#timer">2<span>発表 タイマー</span><span class="ic">⏱️</span></a>
+  <a href="#pitch">3<span>ピッチ デック</span><span class="ic">📑</span></a>
+  <a href="#qb">4<span>質問 ボード</span><span class="ic">💬</span></a>
+  <a href="#grand">5<span>修了証</span><span class="ic">🎓</span></a>
+  <a href="#wrap">6<span>修了！</span><span class="ic">🎉</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="confetti" id="confetti"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第4回 ／ 高校生プログラミング塾・上級 ／ 最終回 ／ FINAL</div>
+    <h1>卒業プロジェクト<br>発表会</h1>
+    <p>全 <b style="color:var(--gold)">12回</b> の 集大成 ── あなたの 作品 を 世界 に 🎤</p>
+    <div class="em">🎓✨🎉</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. Presentation Timer
+     ======================================================== -->
+<div class="divider" id="timer" data-snav-target>
+  <div class="num">01.</div>
+  <h2>発表 タイマー</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">本番 ツール</span>
+  <h2>5〜10分 を 計る</h2>
+  <p class="lead">発表時間 を プリセット または 自由設定。 残り **1分** で **黄色 警告**、 **時間 切れ** で **赤 点滅**。 司会者 / 発表者 が 共有画面 で 使えます。</p>
+
+  <div class="timer">
+    <div class="timer-display" id="timerDisplay">
+      <div class="v" id="timerV">05:00</div>
+      <div class="sub" id="timerSub">▶ START を 押す と カウントダウン</div>
+    </div>
+
+    <div class="timer-progress" aria-label="経過時間">
+      <div class="fill" id="timerFill" style="width:0%"></div>
+    </div>
+
+    <div class="timer-ctrl">
+      <button onclick="timerStart()" id="timerStartBtn" aria-label="開始">▶ START</button>
+      <button onclick="timerPause()" id="timerPauseBtn" class="ghost" aria-label="一時停止" disabled>⏸ PAUSE</button>
+      <button onclick="timerReset()" class="danger" aria-label="リセット">🔄 RESET</button>
+      <button onclick="timerBell()" class="ghost" aria-label="ベル">🔔 BELL</button>
+    </div>
+
+    <div class="timer-preset" role="group" aria-label="プリセット時間">
+      <button class="on" data-t="300" onclick="timerSet(300)" aria-label="5分">5分</button>
+      <button data-t="420" onclick="timerSet(420)" aria-label="7分">7分</button>
+      <button data-t="600" onclick="timerSet(600)" aria-label="10分">10分</button>
+      <button data-t="120" onclick="timerSet(120)" aria-label="Q&A 2分">Q&A 2分</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. Pitch Deck Generator
+     ======================================================== -->
+<div class="divider" id="pitch" data-snav-target>
+  <div class="num">02.</div>
+  <h2>ピッチ デック ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">準備 ツール</span>
+  <h2>5枚 で 卒業プロジェクト を 語る</h2>
+  <p class="lead">**課題 → デモ → 技術 → 数字 → 次の 一歩** の 5枚 スライド。 入力 すると 即 プレビュー、 印刷 で 紙 にも。 「課題 → 数字 で 終わる」 流れ が 説得力 を 産みます。</p>
+
+  <div class="pitch">
+    <div class="pitch-form">
+      <div><label for="pt1">① 課題（誰の 何の 困りごと）</label><textarea id="pt1">高校生 が 学習 進度 を 親 と 共有 する 仕組み が ない</textarea></div>
+      <div><label for="pt2">② 解決（あなたの アプリ 名 と 1文）</label><textarea id="pt2">StudyShare — 学習時間 / 達成タスク を 自動 集計 して 保護者 へ 共有</textarea></div>
+      <div><label for="pt3">③ 技術スタック（カンマ区切り）</label><textarea id="pt3">Next.js, Turso, Tailwind, Vercel, OAuth</textarea></div>
+      <div><label for="pt4">④ 数字（ユーザー数 / 精度 / 速度）</label><textarea id="pt4">月50人 / 平均 利用 18分/日 / リテンション 60%</textarea></div>
+      <div><label for="pt5">⑤ 次の 一歩（3ヶ月 で やる こと）</label><textarea id="pt5">月100人、 課金 1%、 友達 紹介 機能</textarea></div>
+    </div>
+
+    <div class="pitch-slides" id="pitchSlides"></div>
+
+    <div class="pitch-actions">
+      <button onclick="window.print()" aria-label="印刷">🖨️ 印刷 して 配布</button>
+      <button class="ghost" onclick="info('💡','ピッチ デック の コツ','**5枚 で 5分** が 黄金 比率（1枚 1分）<br><br>' +
+        '① <b>課題</b> — 共感 で 引き込む（自分も 困った）<br>' +
+        '② <b>解決</b> — デモ で 見せる（百聞 は 一見）<br>' +
+        '③ <b>技術</b> — なぜ それ を 選んだ か（理由）<br>' +
+        '④ <b>数字</b> — 小さく ても 具体的 に（ユーザー 5人 でも OK）<br>' +
+        '⑤ <b>次の 一歩</b> — 3ヶ月 で やる こと（実現可能 に）')" aria-label="コツ">💡 5枚 の コツ</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. Question Board
+     ======================================================== -->
+<div class="divider" id="qb" data-snav-target>
+  <div class="num">03.</div>
+  <h2>質問 ボード（Q&A 整理）</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">本番 ツール</span>
+  <h2>観客 の 質問 を 投票 で 優先度 付け</h2>
+  <p class="lead">発表中 / Q&A 中 に 観客 から の 質問 を 集約。 **👍 投票** で 優先度 が 上がり、 多い 順 で 答える。 時間切れ で 残った 質問 は 「Slack で 回答」 と 約束。</p>
+
+  <div class="qb">
+    <div class="qb-input">
+      <input id="qbText" placeholder="質問 を 入力（例: なぜ Turso？ / マネタイズ は？）" aria-label="質問">
+      <select id="qbTag" aria-label="カテゴリ">
+        <option value="tech">🔧 技術</option>
+        <option value="biz">💼 ビジネス</option>
+        <option value="career">🎓 キャリア</option>
+      </select>
+      <button onclick="qbAdd()" aria-label="質問追加">＋ 投稿</button>
+    </div>
+
+    <div class="qb-list" id="qbList"></div>
+
+    <div class="qb-stats" id="qbStats" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. Grand Certificate
+     ======================================================== -->
+<div class="divider" id="grand" data-snav-target>
+  <div class="num">04.</div>
+  <h2>🏆 グランド 修了証（全 12回 完走）</h2>
+</div>
+
+<section class="section" id="grandSection">
+  <h2>全 12回 を 走り 抜いた あなた へ</h2>
+  <p class="lead">高校生プログラミング塾・**初級 + 中級 + 上級 ＝ 全12回** を 修了 した 証 です。 名前 を 入れて 印刷 / SNS共有 OK。</p>
+
+  <div class="grand">
+    <div class="grand-form">
+      <div><label for="grandName">お名前（フル ネーム or ハンドル）</label><input id="grandName" placeholder="Yamada Taro" aria-label="お名前"></div>
+      <div><label for="grandDate">日付</label><input id="grandDate" placeholder="2026年5月26日" aria-label="日付"></div>
+      <div><label for="grandProject">卒業プロジェクト 名</label><input id="grandProject" placeholder="StudyShare" aria-label="プロジェクト名"></div>
+    </div>
+
+    <div class="grand-cert" id="grandCert">
+      <div class="seal" aria-hidden="true"><div class="y">12</div><div class="l">COURSES</div></div>
+      <div class="badge" aria-hidden="true">🎓</div>
+      <h2>CERTIFICATE</h2>
+      <h3>OF FULL COMPLETION</h3>
+      <div class="body">
+        <div class="name" id="grandShowName">あなたの お名前</div>
+        <p>
+        この 証書 は、 上記 の 人物 が<br>
+        高校生プログラミング塾 の<br>
+        <b>初級 / 中級 / 上級 ＝ 全 12 回</b> を<br>
+        最後 まで やり 遂げ、<br>
+        卒業プロジェクト <b id="grandShowProject">「あなたの プロジェクト」</b> を<br>
+        完成 ・ 発表 した こと を 証 します。
+        </p>
+
+        <div class="journey">
+          <div class="j">🐳 環境構築</div><div class="j">📐 型</div><div class="j">🔴 TDD</div><div class="j">🎫 Issue 駆動</div>
+          <div class="j">🤝 チーム</div><div class="j">⚛️ React/Next</div><div class="j">🗄️ DB/Cache</div><div class="j">🚀 DevOps</div>
+          <div class="j">🏛️ アーキ</div><div class="j">🧠 AI/ML</div><div class="j">💼 キャリア</div><div class="j">🎓 卒業発表</div>
+        </div>
+
+        <div class="footer" id="grandShowDate">2026年5月26日 ／ 高校生プログラミング塾</div>
+      </div>
+    </div>
+
+    <div class="grand-actions">
+      <button onclick="window.print()" aria-label="印刷">🖨️ 印刷</button>
+      <button class="celebrate" onclick="grandCelebrate()" aria-label="紙吹雪">🎊 おめでとう！</button>
+      <button class="share" onclick="grandShare()" aria-label="SNS用テキスト">📱 SNS用 テキスト</button>
+    </div>
+
+    <h3 style="margin-top:24px;font-size:14px;color:var(--muted)">📚 全 12回 の 旅</h3>
+    <div class="recap">
+      <div class="recap-cell"><div class="ic">🐳</div><div class="lv">初級 1</div><div class="ttl">開発環境 プロ仕様</div></div>
+      <div class="recap-cell"><div class="ic">📐</div><div class="lv">初級 2</div><div class="ttl">型 のある 世界</div></div>
+      <div class="recap-cell"><div class="ic">🔴</div><div class="lv">初級 3</div><div class="ttl">TDD 実践</div></div>
+      <div class="recap-cell"><div class="ic">🎫</div><div class="lv">初級 4</div><div class="ttl">アジャイル / Issue</div></div>
+      <div class="recap-cell"><div class="ic">🤝</div><div class="lv">中級 1</div><div class="ttl">チーム開発</div></div>
+      <div class="recap-cell"><div class="ic">⚛️</div><div class="lv">中級 2</div><div class="ttl">FE フレームワーク</div></div>
+      <div class="recap-cell"><div class="ic">🗄️</div><div class="lv">中級 3</div><div class="ttl">BE スケール</div></div>
+      <div class="recap-cell"><div class="ic">🚀</div><div class="lv">中級 4</div><div class="ttl">DevOps と 監視</div></div>
+      <div class="recap-cell"><div class="ic">🏛️</div><div class="lv">上級 1</div><div class="ttl">アーキ設計</div></div>
+      <div class="recap-cell"><div class="ic">🧠</div><div class="lv">上級 2</div><div class="ttl">AI / ML</div></div>
+      <div class="recap-cell"><div class="ic">💼</div><div class="lv">上級 3</div><div class="ttl">起業 / OSS / キャリア</div></div>
+      <div class="recap-cell" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border-color:var(--gold)"><div class="ic">🎓</div><div class="lv">上級 4</div><div class="ttl">卒業発表 ← ここ！</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. Finale
+     ======================================================== -->
+<div id="wrap" data-snav-target></div>
+
+<div class="finale">
+  <div class="em">🎓✨🎉</div>
+  <h2>卒業 おめでとう！</h2>
+  <p style="font-size:18px;margin-top:8px">高校生プログラミング塾 ＝ <b>全 12回</b> を 完走 した あなた は<br>
+  「<b>初日 から 戦力</b>」 に なれる レベル に 到達 しました。<br><br>
+  あなた の 旅 は ここから。<br>
+  <b>就職 / 起業 / OSS / 進学</b> ── どの 道 を 選んでも、 きっと 大丈夫。<br><br>
+  <b>また どこか で 会いましょう！</b> 🚀</p>
+  <button onclick="grandCelebrate()" style="margin-top:24px;background:white;color:var(--primary);
+    border:none;padding:16px 36px;border-radius:12px;font-family:inherit;font-size:16px;
+    font-weight:800;cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.2);letter-spacing:1px">🎊 GRAND CELEBRATION 🎊</button>
+</div>
+
+<footer>高校生プログラミング塾 ／ 上級 第4回｜卒業プロジェクト発表会 ／ <b style="color:var(--primary)">全 12回 修了 おめでとう！</b></footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  const confettiBox = document.getElementById('confetti');
+  function grandCelebrate(){
+    confettiBox.innerHTML = '';
+    confettiBox.classList.add('on');
+    const colors = ['#1E40AF','#EAB308','#CA8A04','#FAFAF9','#3B82F6','#FACC15'];
+    for(let i = 0; i < 150; i++){ // 普段より 倍 の 紙吹雪！
+      const s = document.createElement('span');
+      s.style.left = Math.random() * 100 + '%';
+      s.style.background = colors[Math.floor(Math.random() * colors.length)];
+      s.style.animationDuration = (1.8 + Math.random() * 2.0) + 's';
+      s.style.animationDelay = (Math.random() * 0.8) + 's';
+      confettiBox.appendChild(s);
+    }
+    showToast('🎉 グランド 修了 おめでとう！');
+    setTimeout(()=>confettiBox.classList.remove('on'), 5000);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* === 1. Presentation Timer === */
+  let timerTotal = 300;
+  let timerLeft = 300;
+  let timerRunning = false;
+  let timerInterval = null;
+  function timerFormat(s){
+    const m = Math.floor(Math.abs(s) / 60);
+    const sec = Math.abs(s) % 60;
+    return (s < 0 ? '-' : '') + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  }
+  function timerRender(){
+    document.getElementById('timerV').textContent = timerFormat(timerLeft);
+    const display = document.getElementById('timerDisplay');
+    display.classList.remove('warn','over');
+    let subText;
+    if(timerLeft <= 0){
+      display.classList.add('over');
+      subText = '⏰ 時間切れ — Q&A へ';
+    } else if(timerLeft <= 60){
+      display.classList.add('warn');
+      subText = `⚠️ 残り ${timerLeft} 秒`;
+    } else {
+      subText = timerRunning ? '進行中 …' : '▶ START で 開始';
+    }
+    document.getElementById('timerSub').textContent = subText;
+    const pct = Math.max(0, Math.min(100, (timerTotal - timerLeft) / timerTotal * 100));
+    document.getElementById('timerFill').style.width = pct + '%';
+  }
+  function timerStart(){
+    if(timerRunning) return;
+    timerRunning = true;
+    document.getElementById('timerStartBtn').disabled = true;
+    document.getElementById('timerPauseBtn').disabled = false;
+    timerInterval = setInterval(() => {
+      timerLeft--;
+      timerRender();
+      if(timerLeft === 60) showToast('⚠️ 残り 1分');
+      if(timerLeft === 0){
+        timerBell();
+        showToast('⏰ 時間切れ');
+      }
+      if(timerLeft < -30){ // 30秒 オーバー で 自動停止
+        timerPause();
+        showToast('🔇 自動停止');
+      }
+    }, 1000);
+  }
+  function timerPause(){
+    timerRunning = false;
+    clearInterval(timerInterval);
+    document.getElementById('timerStartBtn').disabled = false;
+    document.getElementById('timerPauseBtn').disabled = true;
+    timerRender();
+  }
+  function timerReset(){
+    timerPause();
+    timerLeft = timerTotal;
+    timerRender();
+    showToast('🔄 リセット');
+  }
+  function timerSet(s){
+    timerPause();
+    timerTotal = s;
+    timerLeft = s;
+    document.querySelectorAll('.timer-preset button').forEach(b => b.classList.toggle('on', +b.dataset.t === s));
+    timerRender();
+  }
+  function timerBell(){
+    // Web Audio API で 短い ベル音
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0.3, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      o.start(); o.stop(ctx.currentTime + 0.6);
+      setTimeout(() => {
+        const o2 = ctx.createOscillator();
+        const g2 = ctx.createGain();
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.frequency.value = 660;
+        g2.gain.setValueAtTime(0.3, ctx.currentTime);
+        g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        o2.start(); o2.stop(ctx.currentTime + 0.8);
+      }, 200);
+    } catch(e) {}
+    showToast('🔔 ベル');
+  }
+  timerRender();
+
+  /* === 2. Pitch Deck Generator === */
+  const PITCH_SLIDES = [
+    { id:'pt1', t:'問題 / 課題', cls:'' },
+    { id:'pt2', t:'解決 / プロダクト', cls:'' },
+    { id:'pt3', t:'技術 スタック', cls:'' },
+    { id:'pt4', t:'数字 / 実績', cls:'metrics' },
+    { id:'pt5', t:'次の 一歩', cls:'' },
+  ];
+  function pitchRender(){
+    const wrap = document.getElementById('pitchSlides');
+    wrap.innerHTML = '';
+    PITCH_SLIDES.forEach((s, i) => {
+      const v = document.getElementById(s.id).value.trim() || '（未入力）';
+      const el = document.createElement('div');
+      el.className = 'pitch-slide ' + s.cls;
+      el.dataset.n = (i + 1) + ' / 5';
+      el.setAttribute('role','article');
+      el.setAttribute('aria-label', s.t);
+      el.innerHTML = `<h3>${escapeHTML(s.t)}</h3><div class="content">${escapeHTML(v)}</div>`;
+      wrap.appendChild(el);
+    });
+  }
+  PITCH_SLIDES.forEach(s => document.getElementById(s.id).addEventListener('input', pitchRender));
+  pitchRender();
+
+  /* === 3. Question Board === */
+  let qbItems = [
+    { id:1, txt:'なぜ Next.js で React 単体 ではなく？', tag:'tech', votes:5, answered:false },
+    { id:2, txt:'課金 する 予定 は？', tag:'biz', votes:3, answered:false },
+    { id:3, txt:'大学 で も 続ける？', tag:'career', votes:2, answered:true },
+  ];
+  let qbNextId = 4;
+  function qbRender(){
+    qbItems.sort((a, b) => {
+      if(a.answered !== b.answered) return a.answered ? 1 : -1;
+      return b.votes - a.votes;
+    });
+    const wrap = document.getElementById('qbList');
+    wrap.innerHTML = '';
+    qbItems.forEach(it => {
+      const el = document.createElement('div');
+      el.className = 'qb-item' + (it.answered ? ' answered' : '');
+      el.innerHTML = `<div class="vote">
+          <button class="up" data-id="${it.id}" aria-label="投票">👍</button>
+          <div class="n">${it.votes}</div>
+        </div>
+        <div class="body">
+          <div class="txt">${escapeHTML(it.txt)}</div>
+          <div class="meta"><span class="tag ${it.tag}">${it.tag}</span>${it.answered ? '<span style="color:#10B981">✓ 回答済み</span>' : ''}</div>
+        </div>
+        <div class="actions">
+          <button class="ans" data-id="${it.id}" aria-label="回答済みにする">${it.answered ? '↩️ 戻す' : '✓ 済み'}</button>
+          <button class="del" data-id="${it.id}" aria-label="削除">🗑️</button>
+        </div>`;
+      el.querySelector('.up').addEventListener('click', () => { it.votes++; qbRender(); });
+      el.querySelector('.ans').addEventListener('click', () => { it.answered = !it.answered; qbRender(); });
+      el.querySelector('.del').addEventListener('click', () => { qbItems = qbItems.filter(x => x.id !== it.id); qbRender(); });
+      wrap.appendChild(el);
+    });
+    const total = qbItems.length;
+    const answered = qbItems.filter(i => i.answered).length;
+    document.getElementById('qbStats').innerHTML =
+      `📊 質問 <b>${total}</b> 件 ／ 回答済み <b>${answered}</b> 件 ／ 残 <b>${total - answered}</b> 件
+      ${total - answered > 0 ? '— 時間 切れ で 残った 質問 は Slack で 答える 約束 を！' : '— 全 回答 完了！'}`;
+  }
+  function qbAdd(){
+    const t = document.getElementById('qbText').value.trim();
+    if(!t) return;
+    const tag = document.getElementById('qbTag').value;
+    qbItems.push({ id: qbNextId++, txt: t, tag, votes: 1, answered: false });
+    document.getElementById('qbText').value = '';
+    qbRender();
+    showToast('📝 質問 を 追加');
+  }
+  document.getElementById('qbText').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); qbAdd(); } });
+  qbRender();
+
+  /* === 4. Grand Certificate === */
+  function grandRender(){
+    document.getElementById('grandShowName').textContent = document.getElementById('grandName').value || 'あなたの お名前';
+    document.getElementById('grandShowProject').textContent = '「' + (document.getElementById('grandProject').value || 'あなたの プロジェクト') + '」';
+    document.getElementById('grandShowDate').textContent = (document.getElementById('grandDate').value || '日付') + ' ／ 高校生プログラミング塾';
+  }
+  // 日付 デフォルト = 今日
+  const today = new Date();
+  document.getElementById('grandDate').value = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+  ['grandName','grandDate','grandProject'].forEach(id => document.getElementById(id).addEventListener('input', grandRender));
+  grandRender();
+
+  function grandShare(){
+    const name = document.getElementById('grandName').value || 'Yamada Taro';
+    const project = document.getElementById('grandProject').value || 'My Project';
+    const text = `🎓 高校生プログラミング塾 全12回 修了！
+
+「環境構築 → 型 → TDD → Issue駆動 → チーム開発 →
+React/Next.js → DB/Cache → DevOps → アーキ → AI/ML →
+キャリア → 卒業発表」
+
+卒業プロジェクト: ${project}
+${name}
+
+#高校生プログラミング塾 #エンジニアの卵`;
+    navigator.clipboard.writeText(text).then(
+      () => showToast('📱 SNS 用 テキスト を コピー'),
+      () => info('📱','SNS 用 テキスト','<pre style="font-size:12px;line-height:1.6;white-space:pre-wrap">' + escapeHTML(text) + '</pre>')
+    );
+  }
+</script>
+</body>
+</html>

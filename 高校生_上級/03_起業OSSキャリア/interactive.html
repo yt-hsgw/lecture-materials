@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高校生・上級 第3回｜起業・OSS・キャリア</title>
+<style>
+  :root{
+    --primary:#1E40AF; --secondary:#EAB308; --accent:#CA8A04;
+    --warn:#DC2626; --dark:#0C0A09; --light:#FAFAF9;
+    --panel:#FFFFFF; --muted:#78716C;
+    --border:rgba(12,10,9,.10); --shadow:0 4px 12px rgba(12,10,9,.10);
+    --code-bg:#0C0A09; --code-text:#FAFAF9;
+    --gold:#EAB308; --navy:#1E40AF; --black:#0C0A09;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter','Hiragino Sans','Yu Gothic',sans-serif;
+    color:var(--dark);background:var(--light);line-height:1.7;-webkit-font-smoothing:antialiased}
+  button,input,select,textarea{font:inherit}
+
+  .progressbar{position:fixed;top:0;left:0;height:4px;width:0%;
+    background:linear-gradient(90deg,var(--navy),var(--gold),var(--accent));z-index:100;transition:width .15s}
+  .top-status{position:fixed;top:18px;right:18px;z-index:60;background:rgba(255,255,255,.95);
+    padding:8px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:13px;border:1px solid var(--border)}
+  .top-status b{color:var(--primary)}
+
+  .snav{position:fixed;right:14px;top:50%;transform:translateY(-50%);z-index:80;display:flex;flex-direction:column;gap:8px}
+  .snav a{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    background:white;border:1.5px solid var(--primary);color:var(--primary);text-decoration:none;font-weight:bold;font-size:13px;
+    box-shadow:0 2px 4px rgba(0,0,0,.08);position:relative;transition:transform .15s,background .15s,color .15s}
+  .snav a:hover,.snav a:focus{transform:translateX(-3px);outline:none}
+  .snav a.active{background:var(--primary);color:white}
+  .snav a > span:not(.ic){position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    background:var(--dark);border-radius:6px;padding:5px 12px;color:white;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:all .15s;font-size:12px}
+  .snav a:hover > span:not(.ic),.snav a:focus > span:not(.ic){opacity:1;transform:translateY(-50%)}
+  .snav a .ic{position:absolute;top:-6px;right:-6px;background:var(--gold);width:18px;height:18px;border-radius:50%;
+    border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dark)}
+
+  .snav-help{position:fixed;left:14px;bottom:14px;z-index:80;background:white;border:1.5px solid var(--primary);
+    color:var(--primary);font-weight:bold;width:32px;height:32px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:var(--shadow)}
+  .snav-help:hover{background:var(--primary);color:white}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(12,10,9,.65);display:none;align-items:center;justify-content:center;
+    z-index:200;padding:20px;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{background:white;border-radius:14px;padding:30px;max-width:620px;width:100%;position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.4);animation:popIn .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--border)}
+  @keyframes popIn{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+  .modal-close{position:absolute;top:-12px;right:-12px;width:36px;height:36px;background:var(--warn);color:white;
+    border:3px solid white;border-radius:50%;font-size:18px;cursor:pointer;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .modal-close:hover{transform:rotate(90deg)}
+  .modal-emoji{font-size:60px;text-align:center;margin-bottom:8px}
+  .modal-title{text-align:center;color:var(--primary);font-size:24px;margin-bottom:14px;font-weight:bold}
+  .modal-body{font-size:15px;line-height:1.8}
+  .modal-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
+  .modal-btn{background:var(--primary);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}
+
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--dark);color:white;padding:10px 22px;border-radius:8px;font-weight:600;z-index:300;
+    opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 6px 20px rgba(0,0,0,.3);font-size:14px}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hero{min-height:88vh;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:white;padding:48px 20px;position:relative;
+    background:linear-gradient(135deg,#0C0A09 0%,#1E40AF 60%,#0C0A09 100%)}
+  .hero-inner{position:relative;z-index:1;max-width:960px}
+  .label{display:inline-block;background:rgba(234,179,8,.2);padding:6px 18px;border-radius:8px;
+    font-weight:600;margin-bottom:18px;backdrop-filter:blur(4px);font-size:14px;color:var(--gold);border:1px solid rgba(234,179,8,.4)}
+  .hero h1{font-size:clamp(40px,7vw,82px);line-height:1.15;margin-bottom:18px;letter-spacing:-1px;
+    text-shadow:0 4px 20px rgba(0,0,0,.4);font-weight:800;
+    background:linear-gradient(135deg,#FAFAF9 0%,#EAB308 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{font-size:clamp(17px,2vw,22px);opacity:.95}
+  .hero .em{font-size:clamp(56px,9vw,96px);margin-top:24px}
+  .scroll-hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:13px;animation:bounce 2s infinite;opacity:.85}
+  @keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+
+  .divider{background:var(--dark);color:white;text-align:center;padding:56px 20px}
+  .divider .num{color:var(--gold);font-weight:bold;font-size:18px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .divider h2{color:var(--gold);font-size:clamp(30px,5vw,48px);margin-top:6px;letter-spacing:-.5px}
+
+  .section{padding:72px 24px;max-width:1100px;margin:0 auto}
+  .section-label{display:inline-block;background:var(--primary);color:white;padding:5px 14px;border-radius:6px;
+    font-weight:600;font-size:13px;margin-bottom:14px;letter-spacing:.5px}
+  h2{font-size:clamp(26px,4vw,40px);color:var(--primary);margin-bottom:8px;font-weight:800;letter-spacing:-.5px}
+  .lead{font-size:17px;color:var(--muted);margin-bottom:28px}
+
+  .card{background:var(--panel);border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  .card.tip{border-left:5px solid var(--gold);background:#FFFBEB}
+
+  /* === Tool 1: Career Compass === */
+  .career{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .career-q{padding:14px 16px;background:#FAFAF9;border-radius:8px;margin-bottom:14px;border-left:4px solid var(--primary)}
+  .career-q .step{font-weight:700;font-size:12px;color:var(--accent);font-family:'JetBrains Mono','SF Mono',monospace}
+  .career-q .q{font-weight:700;font-size:15px;margin-top:4px}
+  .career-opts{display:grid;gap:8px}
+  .career-opt{padding:12px 14px;background:white;border-radius:8px;border:2px solid var(--border);cursor:pointer;
+    font-family:inherit;font-size:13px;text-align:left;line-height:1.6;transition:all .15s}
+  .career-opt:hover{border-color:var(--primary);background:#FFFBEB}
+  .career-opt.sel{background:#FFFBEB;border-color:var(--gold);box-shadow:0 0 0 3px rgba(234,179,8,.2)}
+  .career-bar{display:flex;gap:6px;margin-bottom:14px}
+  .career-bar > div{flex:1;height:6px;background:#E7E5E4;border-radius:3px;transition:background .25s}
+  .career-bar > div.done{background:var(--gold)}
+  .career-bar > div.current{background:var(--primary)}
+  .career-result{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+  @media(max-width:780px){.career-result{grid-template-columns:1fr}}
+  .career-path{padding:14px;border-radius:10px;border:2px solid var(--border);background:#FAFAF9;transition:all .25s}
+  .career-path.top{border-color:var(--gold);background:linear-gradient(135deg,#FFFBEB,#FEF3C7);box-shadow:0 4px 12px rgba(234,179,8,.25)}
+  .career-path h3{font-size:16px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+  .career-path .score{font-family:'JetBrains Mono','SF Mono',monospace;font-weight:800;color:var(--primary);font-size:18px}
+  .career-path .desc{font-size:12px;color:var(--muted);line-height:1.6}
+  .career-path .crown{display:none;margin-left:6px}
+  .career-path.top .crown{display:inline}
+  .career-actions{display:flex;gap:8px;margin-top:14px;justify-content:center;flex-wrap:wrap}
+  .career-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:13px}
+  .career-actions button.ghost{background:#FAFAF9;color:var(--primary);border:1px solid var(--border)}
+
+  /* === Tool 2: GitHub Profile Generator === */
+  .gh{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.gh-grid{grid-template-columns:1fr}}
+  .gh-form{display:grid;gap:10px}
+  .gh-form label{font-weight:600;font-size:12px;color:var(--muted);margin-bottom:-4px}
+  .gh-form input, .gh-form textarea{width:100%;padding:8px 12px;border:1.5px solid #D6D3D1;border-radius:6px;
+    background:#FAFAF9;font-size:13px;font-family:inherit}
+  .gh-form input:focus, .gh-form textarea:focus{outline:none;border-color:var(--primary);background:white}
+  .gh-form textarea{resize:vertical;min-height:60px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .gh-preview{background:#0D1117;color:#E6EDF3;border-radius:8px;padding:18px;overflow-x:auto;
+    font-family:'Inter','Hiragino Sans',sans-serif;font-size:14px;line-height:1.6;border:1px solid #30363D}
+  .gh-preview h1{color:#E6EDF3;font-size:24px;border-bottom:1px solid #30363D;padding-bottom:8px;margin-bottom:12px;font-weight:600}
+  .gh-preview h2{color:#E6EDF3;font-size:18px;margin:14px 0 8px;font-weight:600}
+  .gh-preview p{margin-bottom:8px;color:#C9D1D9}
+  .gh-preview ul{margin:6px 0 8px 22px;color:#C9D1D9}
+  .gh-preview li{margin-bottom:2px}
+  .gh-preview code{background:#161B22;color:#79C0FF;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px}
+  .gh-preview .badge{display:inline-block;background:#1F6FEB;color:white;padding:2px 8px;border-radius:4px;font-size:11px;margin:2px 4px 2px 0}
+  .gh-preview .stat{display:inline-block;background:#161B22;border:1px solid #30363D;padding:6px 12px;border-radius:6px;margin:4px 4px 4px 0;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px}
+  .gh-preview a{color:#58A6FF;text-decoration:none}
+  .gh-md{margin-top:14px;background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:14px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.7;max-height:240px;overflow-y:auto;white-space:pre-wrap}
+  .gh-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .gh-actions button{background:var(--primary);color:white;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px}
+  .gh-actions button.ghost{background:#FAFAF9;color:var(--primary);border:1px solid var(--border)}
+
+  /* === Tool 3: Business Model Simulator === */
+  .bm{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .bm-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .bm-tabs button{background:#FAFAF9;color:var(--primary);border:1px solid var(--border);padding:8px 14px;
+    border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
+  .bm-tabs button.on{background:var(--primary);color:white;border-color:var(--primary)}
+  .bm-ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;padding:14px;background:#FAFAF9;border-radius:8px}
+  .bm-ctrl > div{display:flex;flex-direction:column;gap:4px}
+  .bm-ctrl label{font-weight:600;font-size:12px;color:var(--muted)}
+  .bm-ctrl input[type=range]{width:100%}
+  .bm-ctrl input[type=number]{padding:6px 10px;border:1.5px solid #D6D3D1;border-radius:6px;background:white;font-size:13px;font-family:'JetBrains Mono','SF Mono',monospace}
+  .bm-ctrl .val{font-family:'JetBrains Mono','SF Mono',monospace;font-weight:700;color:var(--primary);text-align:right;font-size:13px}
+  .bm-result{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+  .bm-stat{background:#FAFAF9;border-radius:8px;padding:14px;text-align:center}
+  .bm-stat.gold{background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px solid var(--gold)}
+  .bm-stat .n{font-size:24px;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--primary);line-height:1}
+  .bm-stat .l{font-size:11px;color:var(--muted);margin-top:4px}
+  .bm-chart{background:#FAFAF9;border-radius:8px;padding:14px;border:1px solid var(--border)}
+  .bm-chart svg{display:block;width:100%;max-width:880px;height:auto;margin:0 auto}
+  .bm-msg{margin-top:12px;padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.6;
+    background:#FFFBEB;border-left:4px solid var(--gold);color:#92400E}
+
+  /* === Tool 4: OSS First Steps === */
+  .oss{background:white;border-radius:14px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .oss-steps{display:flex;flex-direction:column;gap:10px}
+  .oss-step{display:grid;grid-template-columns:48px 1fr auto;gap:14px;align-items:center;padding:14px;
+    background:#FAFAF9;border-radius:8px;border-left:4px solid var(--border);transition:all .25s}
+  .oss-step.done{background:#FFFBEB;border-color:var(--gold)}
+  .oss-step.current{background:white;border-color:var(--primary);box-shadow:0 4px 12px rgba(30,64,175,.15)}
+  .oss-step .num{width:40px;height:40px;background:white;border:2px solid var(--border);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'JetBrains Mono','SF Mono',monospace;color:var(--muted)}
+  .oss-step.done .num{background:var(--gold);border-color:var(--gold);color:var(--dark)}
+  .oss-step.done .num::before{content:'✓'}
+  .oss-step.current .num{background:var(--primary);border-color:var(--primary);color:white}
+  .oss-step .info{flex:1}
+  .oss-step .nm{font-weight:700;font-size:14px;margin-bottom:2px}
+  .oss-step .desc{font-size:12px;color:var(--muted);line-height:1.6}
+  .oss-step .action{background:var(--primary);color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:12px;white-space:nowrap}
+  .oss-step.done .action{background:#FAFAF9;color:var(--accent);border:1px solid var(--gold)}
+  .oss-templates{margin-top:14px}
+  .oss-tpl-tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+  .oss-tpl-tabs button{background:#FAFAF9;color:var(--primary);border:1px solid var(--border);padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+  .oss-tpl-tabs button.on{background:var(--primary);color:white;border-color:var(--primary)}
+  .oss-tpl{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:12px 14px;
+    font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;max-height:280px;overflow-y:auto}
+  .oss-tpl .k{color:#7DD3FC} .oss-tpl .com{color:#94A3B8} .oss-tpl .em{color:#FCD34D;font-weight:bold}
+
+  /* === Quiz === */
+  .quiz{background:white;border-radius:12px;padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);margin-top:14px}
+  .qrow{margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed #E2E8F0}
+  .qrow:last-child{border-bottom:none}
+  .qrow .q{font-weight:700;font-size:15px;margin-bottom:10px}
+  .qrow .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .qrow .opts button{background:white;border:1.5px solid #D6D3D1;color:var(--dark);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .qrow .opts button:hover{border-color:var(--primary)}
+  .qrow .opts button.right{background:#FEF3C7;border-color:var(--gold);color:#92400E}
+  .qrow .opts button.wrong{background:#FEE2E2;border-color:var(--warn);color:#7F1D1D}
+  .qrow .ex{font-size:13px;color:var(--muted);margin-top:8px;display:none;background:#FAFAF9;padding:10px;border-radius:6px;line-height:1.6}
+  .qrow.answered .ex{display:block}
+
+  .summary{display:grid;gap:10px;margin-top:18px}
+  .summary-row{background:white;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .summary-row .num{flex-shrink:0;width:38px;height:38px;background:var(--primary);color:var(--gold);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;font-family:'JetBrains Mono','SF Mono',monospace}
+
+  footer{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+  @media (max-width:880px){.snav{display:none}.top-status{left:12px;right:12px;text-align:center;top:14px}.section{padding:56px 16px}}
+</style>
+</head>
+<body>
+
+<div class="progressbar" id="progressbar"></div>
+<div class="top-status"><span>上級 第3回</span> <b>キャリア</b></div>
+
+<nav class="snav" aria-label="ページ内ナビゲーション">
+  <a href="#top" class="active">1<span>はじめに</span></a>
+  <a href="#career">2<span>キャリア診断</span><span class="ic">🧭</span></a>
+  <a href="#gh">3<span>GitHub プロフィール</span><span class="ic">👤</span></a>
+  <a href="#bm">4<span>ビジネスモデル</span><span class="ic">💼</span></a>
+  <a href="#oss">5<span>OSS 最初の一歩</span><span class="ic">🌍</span></a>
+  <a href="#quiz">6<span>クイズ</span></a>
+  <a href="#wrap">7<span>まとめ</span></a>
+</nav>
+<button class="snav-help" id="snav-help" aria-label="ショートカット説明" title="ショートカット (?)">?</button>
+
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    <div id="modal-emoji" class="modal-emoji"></div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <div id="modal-body" class="modal-body"></div>
+    <div class="modal-actions"><button class="modal-btn" onclick="closeModal()">わかった</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<header class="hero" id="top" data-snav-target>
+  <div class="hero-inner">
+    <div class="label">第3回 ／ 高校生プログラミング塾・上級</div>
+    <h1>起業・OSS・<br>キャリア</h1>
+    <p>就職 / 起業 / OSS / 進学 — <b>4つの 道</b> を 並べる</p>
+    <div class="em">💼🚀🌍🎓</div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<!-- ========================================================
+     1. Career Compass
+     ======================================================== -->
+<div class="divider" id="career" data-snav-target>
+  <div class="num">01.</div>
+  <h2>キャリア 診断 コンパス</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>6問 で 4つ の 道 を 比較</h2>
+  <p class="lead">価値観 / リスク許容度 / 興味 などの 6問 に 答える と、 **就職 / 起業 / OSS / 進学** の 4軸 で あなた の 適性 が スコアリング されます。 正解 は ない、 自分 を 知る ヒント として。</p>
+
+  <div class="career">
+    <div class="career-bar" id="careerBar"></div>
+    <div class="career-q" id="careerQ"></div>
+    <div class="career-opts" id="careerOpts" role="radiogroup" aria-label="選択肢"></div>
+
+    <div class="career-result" id="careerResult" style="display:none">
+      <div class="career-path" data-path="job">
+        <h3>💼 就職<span class="crown" aria-hidden="true">👑</span><span class="score" id="careerJob">--</span></h3>
+        <div class="desc">安定 / 給与 / 福利厚生 / チーム で 学ぶ。 まず 3年 経験 を 積む 王道。</div>
+      </div>
+      <div class="career-path" data-path="biz">
+        <h3>🚀 起業<span class="crown" aria-hidden="true">👑</span><span class="score" id="careerBiz">--</span></h3>
+        <div class="desc">自由 / 上限 なし / リスク 高。 失敗 から 学ぶ サイクル が 必要。</div>
+      </div>
+      <div class="career-path" data-path="oss">
+        <h3>🌍 OSS<span class="crown" aria-hidden="true">👑</span><span class="score" id="careerOss">--</span></h3>
+        <div class="desc">世界 と 繋がる / 学習 加速 / 実績 が 動く 履歴書 に。 副業 と 相性 良し。</div>
+      </div>
+      <div class="career-path" data-path="edu">
+        <h3>🎓 進学<span class="crown" aria-hidden="true">👑</span><span class="score" id="careerEdu">--</span></h3>
+        <div class="desc">CS 基礎 / 研究 / 海外 大学院 へ の 入口。 時間 と 学費 が 必要。</div>
+      </div>
+    </div>
+
+    <div class="career-actions">
+      <button onclick="careerReset()" aria-label="やり直す">🔄 もう一度</button>
+      <button class="ghost" onclick="info('💡','キャリア 診断 について','**正解 は ありません**。 6問 の 結果 は **今日 の 自分 の 仮 の 答え**。<br><br>' +
+        '・組み合わせ が 普通 です（大学 + 個人開発 + OSS 等）<br>' +
+        '・3年 後 / 5年 後 で 答え は 変わります<br>' +
+        '・他人 と 比べない、 自分 の 状況 / 興味 / リスク許容度 で 決める<br>' +
+        '・「やってみる → 1年 後 に 評価」 を 繰り返す が 王道')" aria-label="診断について">💡 この 診断 について</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     2. GitHub Profile Generator
+     ======================================================== -->
+<div class="divider" id="gh" data-snav-target>
+  <div class="num">02.</div>
+  <h2>GitHub プロフィール ジェネレータ</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>「動く 履歴書」 を 30秒 で 作る</h2>
+  <p class="lead">あなた の username と 略歴 / スキル / 作品 を 入力 する と、 **GitHub プロフィール README** の Markdown が 生成 されます。 そのまま <code>github.com/&lt;username&gt;</code> リポジトリ に 貼って ください。</p>
+
+  <div class="gh">
+    <div class="gh-grid">
+      <div class="gh-form">
+        <label for="ghName">名前 / ハンドル</label>
+        <input id="ghName" value="Yamada Taro / @yamada_dev" aria-label="名前 / ハンドル">
+        <label for="ghBio">自己紹介（1〜2行）</label>
+        <input id="ghBio" value="高校3年。 Web / AI / OSS が 好き。 個人開発 と インターン が 趣味。" aria-label="自己紹介">
+        <label for="ghSkills">スキル（カンマ区切り）</label>
+        <input id="ghSkills" value="TypeScript, React, Next.js, Python, Docker, Turso" aria-label="スキル">
+        <label for="ghWorks">作品 タイトル（1行1つ）</label>
+        <textarea id="ghWorks" spellcheck="false">todo-cool-app — 自作 TODO（120★、 月10ユーザー）
+study-tracker — Next.js + Turso、 友達 5人 で 使用
+react-router 翻訳 PR 5件 — OSS 初コントリビュート</textarea>
+        <label for="ghGoals">今年 やりたい こと（1行1つ）</label>
+        <textarea id="ghGoals" spellcheck="false">自分の 卒業プロジェクト を 100ユーザー
+OSS コントリビューション 月1回
+AtCoder 緑 達成</textarea>
+      </div>
+      <div>
+        <div class="gh-preview" id="ghPreview" aria-label="GitHub プロフィール プレビュー"></div>
+        <div class="gh-md" id="ghMd" aria-label="生成された Markdown"></div>
+        <div class="gh-actions">
+          <button onclick="ghCopy()" aria-label="Markdown コピー">📋 Markdown コピー</button>
+          <button onclick="ghDownload()" class="ghost" aria-label="ダウンロード">⬇️ README.md ダウンロード</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     3. Business Model Simulator
+     ======================================================== -->
+<div class="divider" id="bm" data-snav-target>
+  <div class="num">03.</div>
+  <h2>ビジネスモデル シミュレータ</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">体感</span>
+  <h2>「月10万円」 まで 何が 必要 か</h2>
+  <p class="lead">4つ の 主要 ビジネスモデル（SaaS / 広告 / 物販 / 受託）の パラメータ を 操作 して、 **MRR / 利益 / 必要 顧客数** を 計算。 「サブスク は 100人 で 月10万」 が ピンと 来る ように。</p>
+
+  <div class="bm">
+    <div class="bm-tabs" role="tablist">
+      <button class="on" data-b="saas" onclick="bmSwitch('saas')" aria-label="SaaS">📦 SaaS</button>
+      <button data-b="ad" onclick="bmSwitch('ad')" aria-label="広告">📣 広告</button>
+      <button data-b="ec" onclick="bmSwitch('ec')" aria-label="物販">🛍️ 物販</button>
+      <button data-b="con" onclick="bmSwitch('con')" aria-label="受託">🤝 受託</button>
+    </div>
+
+    <div class="bm-ctrl" id="bmCtrl"></div>
+
+    <div class="bm-result">
+      <div class="bm-stat"><div class="n" id="bmRev">--</div><div class="l">月間 売上（MRR）</div></div>
+      <div class="bm-stat"><div class="n" id="bmCost">--</div><div class="l">月間 コスト</div></div>
+      <div class="bm-stat gold"><div class="n" id="bmProfit">--</div><div class="l">月間 利益</div></div>
+      <div class="bm-stat"><div class="n" id="bmGoal">--</div><div class="l">月10万 達成 に 必要</div></div>
+    </div>
+
+    <div class="bm-chart" id="bmChart" aria-label="売上 推移 グラフ"></div>
+
+    <div class="bm-msg" id="bmMsg" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ========================================================
+     4. OSS First Steps
+     ======================================================== -->
+<div class="divider" id="oss" data-snav-target>
+  <div class="num">04.</div>
+  <h2>OSS コントリビュート 最初の一歩</h2>
+</div>
+
+<section class="section">
+  <span class="section-label">ハンズオン</span>
+  <h2>7ステップ で 初 マージ まで</h2>
+  <p class="lead">各 ステップ を 順番 に 完了 → 次 へ。 PR テンプレ / コミット メッセージ / レビュー対応 文例 を コピペ で 使えます。 「世界 と 繋がる 1コミット」 を 体験しよう。</p>
+
+  <div class="oss">
+    <div class="oss-steps" id="ossSteps"></div>
+
+    <div class="oss-templates">
+      <h4 style="font-size:13px;color:var(--muted);margin-bottom:8px">📋 使える テンプレ</h4>
+      <div class="oss-tpl-tabs" role="tablist">
+        <button class="on" data-t="search" onclick="ossTpl('search')" aria-label="リポジトリ検索クエリ">🔍 Issue 検索 クエリ</button>
+        <button data-t="comment" onclick="ossTpl('comment')" aria-label="着手宣言コメント">💬 着手宣言</button>
+        <button data-t="pr" onclick="ossTpl('pr')" aria-label="PR テンプレ">📝 PR 本文</button>
+        <button data-t="review" onclick="ossTpl('review')" aria-label="レビュー対応">🙏 レビュー対応</button>
+      </div>
+      <div class="oss-tpl" id="ossTplBody" aria-label="テンプレート 本文"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     5. クイズ
+     ======================================================== -->
+<div class="divider" id="quiz" data-snav-target>
+  <div class="num">05.</div>
+  <h2>クイズ で ふり返ろう</h2>
+</div>
+
+<section class="section">
+  <h2>3問チャレンジ</h2>
+  <div class="quiz">
+    <div class="qrow" data-answer="b">
+      <div class="q">Q1. 新卒 エンジニア 採用 で **最も アピール される** のは？</div>
+      <div class="opts">
+        <button data-c="a">取得 した 資格 の 数</button>
+        <button data-c="b">主体的 に 関わった プロジェクト の 設計判断</button>
+        <button data-c="c">学校 の 成績</button>
+      </div>
+      <div class="ex">💡 「React と Vue で 迷って ◯◯ の 理由 で React」 の 1文 が 資格10個 より 強い。 「自分の頭 で 決めた」 を 言語化。</div>
+    </div>
+    <div class="qrow" data-answer="b">
+      <div class="q">Q2. 高校生 で 個人事業主 として 開業 する とき **必須** なのは？</div>
+      <div class="opts">
+        <button data-c="a">100万円 の 資本金</button>
+        <button data-c="b">保護者 の 同意（18歳未満 は 法律行為 に 必須）</button>
+        <button data-c="c">英語</button>
+      </div>
+      <div class="ex">💡 18歳未満 は 法律行為 に 保護者同意 が 必須。 個人事業主 は 開業届 1枚 で 始められる が、 銀行口座 / 契約 で 保護者 が 関わる。</div>
+    </div>
+    <div class="qrow" data-answer="c">
+      <div class="q">Q3. OSS 初コントリビュート に **適した** Issue ラベル は？</div>
+      <div class="opts">
+        <button data-c="a">critical / blocker</button>
+        <button data-c="b">duplicate</button>
+        <button data-c="c">good first issue / help wanted</button>
+      </div>
+      <div class="ex">💡 `good first issue` ＝ メンテナ が 初心者向け に 厳選。 typo / 翻訳 / テスト追加 から 始めるのが 王道。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================
+     6. まとめ
+     ======================================================== -->
+<div class="divider" id="wrap" data-snav-target>
+  <div class="num">06.</div>
+  <h2>きょうのまとめ</h2>
+</div>
+
+<section class="section">
+  <h2>おぼえたこと</h2>
+  <div class="summary">
+    <div class="summary-row"><div class="num">1</div><div><h3>🧭 4つ の 道 ＝ 組み合わせ</h3><p style="color:var(--muted);font-size:14px">就職 / 起業 / OSS / 進学 — 排他的 ではなく 組み合わせ が 普通。 状況 で 選ぶ。</p></div></div>
+    <div class="summary-row"><div class="num">2</div><div><h3>👤 GitHub プロフィール ＝ 動く 履歴書</h3><p style="color:var(--muted);font-size:14px">README で 自己紹介 + Pinned で 見せる。 継続コミット が 一番 効く。</p></div></div>
+    <div class="summary-row"><div class="num">3</div><div><h3>💼 ビジネスモデル の 数字 感</h3><p style="color:var(--muted);font-size:14px">サブスク 100人 ＝ 月10万、 広告 100万 PV ＝ 月10万 等、 規模感 を 持つ。</p></div></div>
+    <div class="summary-row"><div class="num">4</div><div><h3>🌍 OSS で 世界 と 繋がる</h3><p style="color:var(--muted);font-size:14px">good first issue から 1コミット、 採用面接 で 1秒 で 通る 実績 に。</p></div></div>
+  </div>
+</section>
+
+<footer>高校生プログラミング塾 ／ 上級 第3回｜起業・OSS・キャリア</footer>
+
+<script>
+  /* === 共通 === */
+  const progressbar = document.getElementById('progressbar');
+  const targets = [...document.querySelectorAll('[data-snav-target]')];
+  const navLinks = [...document.querySelectorAll('.snav a')];
+  function updateProgress(){
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    progressbar.style.width = (max <= 0 ? 0 : (window.scrollY/max)*100) + '%';
+    const y = window.scrollY + window.innerHeight*0.3;
+    let cur = 0;
+    targets.forEach((el,i)=>{ if(el.getBoundingClientRect().top + window.scrollY <= y) cur = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active', i===cur));
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+
+  const mb = document.getElementById('modal-bg');
+  function info(emoji, title, body){
+    document.getElementById('modal-emoji').textContent = emoji;
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-body').innerHTML = body;
+    mb.classList.add('show');
+  }
+  function closeModal(){ mb.classList.remove('show'); }
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  const toast = document.getElementById('toast');
+  let toastT = null;
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastT);
+    toastT = setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    if(/^[1-9]$/.test(e.key)){
+      const i = parseInt(e.key,10) - 1;
+      if(targets[i]) targets[i].scrollIntoView({behavior:'smooth'});
+    } else if(e.key === '?') {
+      info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+    }
+  });
+  document.getElementById('snav-help').addEventListener('click', () => {
+    info('⌨️','ショートカット','<b>↑ / ↓</b>: スクロール<br><b>1〜9</b>: 各 セクション へ ジャンプ<br><b>Esc</b>: ウィンドウ を 閉じる');
+  });
+
+  function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* === 1. Career Compass === */
+  // 各 質問 は 4軸 へ 配点（job / biz / oss / edu）
+  const CAREER_Q = [
+    {
+      q: '5年後 の 自分 を 想像 する とき、 ワクワク する のは？',
+      opts: [
+        { t:'大きな チーム の 中 で プロジェクト を 引っ張る', s:{ job:3, biz:1, oss:1, edu:1 } },
+        { t:'自分 の サービス を 大きく している', s:{ job:0, biz:3, oss:1, edu:0 } },
+        { t:'世界中 の エンジニア と 仕事 を している', s:{ job:1, biz:1, oss:3, edu:1 } },
+        { t:'研究 を 深めて 論文 を 書いている', s:{ job:0, biz:0, oss:1, edu:3 } },
+      ],
+    },
+    {
+      q: 'リスク 許容度 は？',
+      opts: [
+        { t:'安定 が 第一、 給料 が 入る 確実 性 重視', s:{ job:3, biz:0, oss:1, edu:2 } },
+        { t:'失敗 しても 学べば OK、 挑戦 したい', s:{ job:0, biz:3, oss:2, edu:0 } },
+        { t:'金銭リスク は 取りたく ない が 時間 投資 は OK', s:{ job:1, biz:0, oss:3, edu:2 } },
+      ],
+    },
+    {
+      q: '学ぶ スタイル は？',
+      opts: [
+        { t:'体系的 に 教えて もらう のが 好き', s:{ job:1, biz:0, oss:0, edu:3 } },
+        { t:'必要 に なったら 自分で 調べる', s:{ job:2, biz:3, oss:2, edu:0 } },
+        { t:'他人 の コード を 読んで 学ぶ', s:{ job:1, biz:1, oss:3, edu:1 } },
+        { t:'先輩 から 教わる', s:{ job:3, biz:1, oss:2, edu:1 } },
+      ],
+    },
+    {
+      q: 'お金 に ついて の 考え は？',
+      opts: [
+        { t:'毎月 安定 した 給料 が 欲しい', s:{ job:3, biz:0, oss:0, edu:1 } },
+        { t:'上限 なし で 稼ぎたい', s:{ job:0, biz:3, oss:0, edu:0 } },
+        { t:'お金 より 学習 / 経験 を 優先', s:{ job:1, biz:1, oss:3, edu:3 } },
+      ],
+    },
+    {
+      q: '人 と 関わる のは？',
+      opts: [
+        { t:'チーム で 一緒 に 作る のが 好き', s:{ job:3, biz:2, oss:1, edu:1 } },
+        { t:'1人 で 黙々 と やる のが 好き', s:{ job:0, biz:1, oss:2, edu:2 } },
+        { t:'非同期 で 世界中 の 人 と やりとり', s:{ job:0, biz:1, oss:3, edu:0 } },
+        { t:'教える / 後輩 を 育てる のが 好き', s:{ job:2, biz:1, oss:2, edu:3 } },
+      ],
+    },
+    {
+      q: '今 一番 持っている リソース は？',
+      opts: [
+        { t:'時間 が ある（学生）', s:{ job:0, biz:2, oss:3, edu:3 } },
+        { t:'お金 が ある（バイト / 貯金）', s:{ job:0, biz:3, oss:1, edu:2 } },
+        { t:'実家 / 親 の サポート', s:{ job:1, biz:2, oss:1, edu:3 } },
+        { t:'すぐ 使える スキル / 作品', s:{ job:3, biz:3, oss:2, edu:0 } },
+      ],
+    },
+  ];
+  let careerIdx = 0;
+  let careerScore = { job: 0, biz: 0, oss: 0, edu: 0 };
+  function renderCareer(){
+    const bar = document.getElementById('careerBar');
+    bar.innerHTML = '';
+    for(let i = 0; i < CAREER_Q.length; i++){
+      const d = document.createElement('div');
+      if(i < careerIdx) d.className = 'done';
+      else if(i === careerIdx) d.className = 'current';
+      bar.appendChild(d);
+    }
+    if(careerIdx >= CAREER_Q.length){
+      // 結果表示
+      document.getElementById('careerQ').style.display = 'none';
+      document.getElementById('careerOpts').style.display = 'none';
+      document.getElementById('careerResult').style.display = 'grid';
+      const total = Object.values(careerScore).reduce((a,b) => a+b, 0) || 1;
+      const max = Math.max(...Object.values(careerScore));
+      Object.entries(careerScore).forEach(([k, v]) => {
+        const pct = Math.round(v / total * 100);
+        document.getElementById('career' + k.charAt(0).toUpperCase() + k.slice(1)).textContent = pct + '%';
+        document.querySelector(`.career-path[data-path="${k === 'job' ? 'job' : k === 'biz' ? 'biz' : k === 'oss' ? 'oss' : 'edu'}"]`).classList.toggle('top', v === max);
+      });
+      return;
+    }
+    const q = CAREER_Q[careerIdx];
+    document.getElementById('careerQ').style.display = 'block';
+    document.getElementById('careerOpts').style.display = 'grid';
+    document.getElementById('careerResult').style.display = 'none';
+    document.getElementById('careerQ').innerHTML = `<div class="step">Q ${careerIdx + 1} / ${CAREER_Q.length}</div><div class="q">${escapeHTML(q.q)}</div>`;
+    const wrap = document.getElementById('careerOpts');
+    wrap.innerHTML = '';
+    q.opts.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'career-opt';
+      b.type = 'button';
+      b.setAttribute('role','radio');
+      b.setAttribute('aria-checked','false');
+      b.textContent = o.t;
+      b.addEventListener('click', () => careerAnswer(o));
+      wrap.appendChild(b);
+    });
+  }
+  function careerAnswer(o){
+    Object.entries(o.s).forEach(([k, v]) => { careerScore[k] += v; });
+    careerIdx++;
+    if(careerIdx === CAREER_Q.length){
+      showToast('🎉 診断 完了！');
+    }
+    renderCareer();
+  }
+  function careerReset(){
+    careerIdx = 0;
+    careerScore = { job: 0, biz: 0, oss: 0, edu: 0 };
+    renderCareer();
+  }
+  renderCareer();
+
+  /* === 2. GitHub Profile Generator === */
+  function ghRender(){
+    const name    = document.getElementById('ghName').value.trim() || 'Your Name';
+    const bio     = document.getElementById('ghBio').value.trim();
+    const skills  = document.getElementById('ghSkills').value.split(',').map(s => s.trim()).filter(Boolean);
+    const works   = document.getElementById('ghWorks').value.split('\n').map(s => s.trim()).filter(Boolean);
+    const goals   = document.getElementById('ghGoals').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+    // プレビュー
+    let prev = `<h1>👋 Hi, I'm ${escapeHTML(name)}</h1>`;
+    if(bio) prev += `<p>${escapeHTML(bio)}</p>`;
+    if(skills.length){
+      prev += '<h2>🛠️ Skills</h2><div>';
+      skills.forEach(s => { prev += `<span class="badge">${escapeHTML(s)}</span>`; });
+      prev += '</div>';
+    }
+    if(works.length){
+      prev += '<h2>📦 Projects</h2><ul>';
+      works.forEach(w => { prev += `<li>${escapeHTML(w)}</li>`; });
+      prev += '</ul>';
+    }
+    if(goals.length){
+      prev += '<h2>🎯 This Year</h2><ul>';
+      goals.forEach(g => { prev += `<li>${escapeHTML(g)}</li>`; });
+      prev += '</ul>';
+    }
+    prev += `<h2>📈 GitHub Stats</h2>
+      <span class="stat">⭐ stars: 145</span>
+      <span class="stat">🔥 streak: 32 days</span>
+      <span class="stat">📦 repos: 18</span>`;
+    document.getElementById('ghPreview').innerHTML = prev;
+
+    // Markdown
+    let md = `# 👋 Hi, I'm ${name}\n\n`;
+    if(bio) md += bio + '\n\n';
+    if(skills.length){
+      md += '## 🛠️ Skills\n\n';
+      md += skills.map(s => '`' + s + '`').join(' ') + '\n\n';
+    }
+    if(works.length){
+      md += '## 📦 Projects\n\n';
+      works.forEach(w => { md += '- ' + w + '\n'; });
+      md += '\n';
+    }
+    if(goals.length){
+      md += '## 🎯 This Year\n\n';
+      goals.forEach(g => { md += '- [ ] ' + g + '\n'; });
+      md += '\n';
+    }
+    md += '## 📈 GitHub Stats\n\n';
+    md += '![Stats](https://github-readme-stats.vercel.app/api?username=<your-handle>&show_icons=true&theme=tokyonight)\n';
+    document.getElementById('ghMd').textContent = md;
+  }
+  function ghCopy(){
+    navigator.clipboard.writeText(document.getElementById('ghMd').textContent).then(
+      () => showToast('📋 Markdown コピー'),
+      () => showToast('⚠️ コピー 失敗')
+    );
+  }
+  function ghDownload(){
+    const blob = new Blob([document.getElementById('ghMd').textContent], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'README.md';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  ['ghName','ghBio','ghSkills','ghWorks','ghGoals'].forEach(id => document.getElementById(id).addEventListener('input', ghRender));
+  ghRender();
+
+  /* === 3. Business Model Simulator === */
+  const BM_MODELS = {
+    saas: {
+      nm: 'SaaS（月額サブスク）',
+      params: [
+        { id:'users', nm:'有料 ユーザー数', min:1,  max:1000, step:1,  val:50, fmt: v => v + ' 人' },
+        { id:'price', nm:'月額 料金（円）', min:100, max:10000, step:100, val:980, fmt: v => '¥' + v },
+        { id:'churn', nm:'解約 率（% / 月）', min:0,  max:20, step:0.5, val:5, fmt: v => v + '%' },
+      ],
+      calc: (p) => {
+        const rev = p.users * p.price;
+        const cost = 5000 + p.users * 50; // インフラ 5000円 + ユーザー あたり 50円
+        return { rev, cost, ltv: p.price / (p.churn / 100), msg: `LTV ＝ ¥${Math.round(p.price / (p.churn / 100)).toLocaleString()}（解約率 ${p.churn}% で）` };
+      },
+    },
+    ad: {
+      nm: '広告（PV モデル）',
+      params: [
+        { id:'pv',     nm:'月間 PV',          min:1, max:9, step:0.1, val:5, fmt: v => Math.round(Math.pow(10, v)).toLocaleString() + ' PV' },
+        { id:'ctr',    nm:'CTR（クリック率 %）', min:0.1, max:5, step:0.1, val:0.5, fmt: v => v + '%' },
+        { id:'cpc',    nm:'1クリック 単価（円）', min:10, max:200, step:5, val:30, fmt: v => '¥' + v },
+      ],
+      calc: (p) => {
+        const pv = Math.round(Math.pow(10, p.pv));
+        const clicks = pv * (p.ctr / 100);
+        const rev = Math.round(clicks * p.cpc);
+        const cost = 3000 + pv * 0.001;
+        return { rev, cost, msg: `${Math.round(clicks).toLocaleString()} クリック × ¥${p.cpc} ＝ ¥${rev.toLocaleString()}` };
+      },
+    },
+    ec: {
+      nm: '物販 EC',
+      params: [
+        { id:'units', nm:'月間 販売数', min:1,  max:1000, step:1, val:30, fmt: v => v + ' 個' },
+        { id:'price', nm:'販売価格（円）', min:500, max:50000, step:500, val:3000, fmt: v => '¥' + v.toLocaleString() },
+        { id:'cogs',  nm:'原価率（%）', min:10, max:90, step:5, val:40, fmt: v => v + '%' },
+      ],
+      calc: (p) => {
+        const rev = p.units * p.price;
+        const cost = rev * (p.cogs / 100) + p.units * 200; // 原価 + 発送
+        return { rev, cost, msg: `粗利率 ${(100 - p.cogs)}%、 発送費 込み で 月利益 ¥${(rev - cost).toLocaleString()}` };
+      },
+    },
+    con: {
+      nm: '受託 開発',
+      params: [
+        { id:'rate',  nm:'時単価（円）', min:1000, max:15000, step:500, val:3000, fmt: v => '¥' + v.toLocaleString() + '/h' },
+        { id:'hours', nm:'月間 稼働 時間', min:10, max:200, step:5, val:40, fmt: v => v + ' h' },
+      ],
+      calc: (p) => {
+        const rev = p.rate * p.hours;
+        const cost = 2000; // 通信費 等
+        return { rev, cost, msg: `${p.hours}h × ¥${p.rate.toLocaleString()} ＝ ¥${rev.toLocaleString()}（学生 単価 帯）` };
+      },
+    },
+  };
+  let bmCur = 'saas';
+  let bmVals = {};
+  function bmSwitch(k){
+    bmCur = k;
+    bmVals = {};
+    BM_MODELS[k].params.forEach(p => { bmVals[p.id] = p.val; });
+    document.querySelectorAll('.bm-tabs button').forEach(b => b.classList.toggle('on', b.dataset.b === k));
+    renderBmCtrl();
+    renderBm();
+  }
+  function renderBmCtrl(){
+    const wrap = document.getElementById('bmCtrl');
+    wrap.innerHTML = '';
+    BM_MODELS[bmCur].params.forEach(p => {
+      const d = document.createElement('div');
+      d.innerHTML = `<label for="bm-${p.id}">${escapeHTML(p.nm)}</label>
+        <input id="bm-${p.id}" type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${bmVals[p.id]}" aria-label="${escapeHTML(p.nm)}">
+        <div class="val" id="bm-${p.id}-v">${p.fmt(bmVals[p.id])}</div>`;
+      wrap.appendChild(d);
+      document.getElementById(`bm-${p.id}`).addEventListener('input', (e) => {
+        bmVals[p.id] = parseFloat(e.target.value);
+        document.getElementById(`bm-${p.id}-v`).textContent = p.fmt(bmVals[p.id]);
+        renderBm();
+      });
+    });
+  }
+  function renderBm(){
+    const m = BM_MODELS[bmCur];
+    const r = m.calc(bmVals);
+    const profit = r.rev - r.cost;
+    document.getElementById('bmRev').textContent = '¥' + Math.round(r.rev).toLocaleString();
+    document.getElementById('bmCost').textContent = '¥' + Math.round(r.cost).toLocaleString();
+    document.getElementById('bmProfit').textContent = '¥' + Math.round(profit).toLocaleString();
+    // 月10万 達成 に 必要 な ×
+    const ratio = 100000 / Math.max(1, profit);
+    if(profit <= 0){
+      document.getElementById('bmGoal').textContent = '赤字';
+    } else if(profit >= 100000){
+      document.getElementById('bmGoal').textContent = '達成 ✓';
+    } else {
+      document.getElementById('bmGoal').textContent = '×' + ratio.toFixed(1);
+    }
+    document.getElementById('bmMsg').innerHTML = '💡 ' + r.msg;
+
+    // チャート: 12ヶ月 の 売上 推移（成長 率 5%/月 仮定）
+    const W = 800, H = 200, pad = 30;
+    let path = '', area = '';
+    const months = 12;
+    const growth = 1.05;
+    const values = [];
+    for(let i = 0; i < months; i++){
+      values.push(r.rev * Math.pow(growth, i));
+    }
+    const maxV = Math.max(...values);
+    values.forEach((v, i) => {
+      const x = pad + i * (W - 2*pad) / (months - 1);
+      const y = H - pad - (v / maxV) * (H - 2*pad);
+      path += (i === 0 ? 'M' : 'L') + ` ${x.toFixed(0)} ${y.toFixed(0)} `;
+    });
+    const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="売上 推移">
+      <line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#D6D3D1"/>
+      <line x1="${pad}" y1="${H-pad}" x2="${pad}" y2="${pad}" stroke="#D6D3D1"/>
+      <path d="${path}" fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()}" stroke-width="3"/>
+      ${values.map((v, i) => {
+        const x = pad + i * (W - 2*pad) / (months - 1);
+        const y = H - pad - (v / maxV) * (H - 2*pad);
+        return `<circle cx="${x}" cy="${y}" r="4" fill="${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()}"/>`;
+      }).join('')}
+      <text x="${W/2}" y="${H-8}" font-size="11" fill="#78716C" text-anchor="middle">月（成長率 +5%/月 仮定）</text>
+      <text x="${pad - 8}" y="${pad + 8}" font-size="10" fill="#78716C" text-anchor="end">¥${Math.round(maxV).toLocaleString()}</text>
+    </svg>`;
+    document.getElementById('bmChart').innerHTML = svg;
+  }
+  bmSwitch('saas');
+
+  /* === 4. OSS First Steps === */
+  const OSS_STEPS = [
+    { nm:'使っている OSS を 1つ 選ぶ',          desc:'まずは 自分が 使った ことの ある ライブラリ から（React / Vue / Next 等）' },
+    { nm:'good first issue を 探す',           desc:'GitHub で `is:open is:issue label:"good first issue" language:typescript` で 検索' },
+    { nm:'Issue に 着手宣言 コメント',          desc:'「I would like to work on this. Could you assign me?」 と コメント' },
+    { nm:'Fork → branch → 実装',              desc:'feat/123-fix-typo の ような ブランチ で 修正 を 行う' },
+    { nm:'ローカル で テスト を 通す',          desc:'各 リポジトリ の CONTRIBUTING.md に 従って テスト を 実行' },
+    { nm:'PR を 送る（テンプレ 通り）',         desc:'タイトル / 本文 / Issue 番号 を 明記、 セルフレビュー' },
+    { nm:'レビュー対応 → マージ 🎉',          desc:'指摘 に 感謝 して 反映、 「Thank you for the review!」 と 一言' },
+  ];
+  let ossCur = 0;
+  function renderOss(){
+    const wrap = document.getElementById('ossSteps');
+    wrap.innerHTML = '';
+    OSS_STEPS.forEach((s, i) => {
+      const el = document.createElement('div');
+      el.className = 'oss-step' + (i < ossCur ? ' done' : i === ossCur ? ' current' : '');
+      el.innerHTML = `<div class="num" aria-hidden="true">${i < ossCur ? '' : (i + 1)}</div>
+        <div class="info"><div class="nm">${escapeHTML(s.nm)}</div><div class="desc">${escapeHTML(s.desc)}</div></div>
+        <button class="action" data-i="${i}" aria-label="${i < ossCur ? '完了' : (i === ossCur ? '完了にする' : '未着手')}">${i < ossCur ? '✓ 完了' : (i === ossCur ? '完了 にする →' : 'まだ')}</button>`;
+      wrap.appendChild(el);
+    });
+    wrap.querySelectorAll('.action').forEach(b => {
+      b.addEventListener('click', () => {
+        const i = +b.dataset.i;
+        if(i === ossCur){
+          ossCur++;
+          if(ossCur >= OSS_STEPS.length){
+            showToast('🎉 初 マージ おめでとう！ 世界 と 繋がる 1コミット！');
+          }
+          renderOss();
+        } else if(i < ossCur){
+          // 取り消し
+          ossCur = i;
+          renderOss();
+        }
+      });
+    });
+  }
+  const OSS_TPL = {
+    search: `# GitHub 検索 クエリ
+is:open is:issue label:"good first issue" language:typescript stars:>1000 archived:false
+
+# 上記 を GitHub 検索 バー に 貼る だけ。 言語 や ラベル を 変えて 試そう。
+
+# よく ある ラベル:
+# - good first issue
+# - help wanted
+# - documentation
+# - bug
+# - hacktoberfest`,
+    comment: `Hi maintainers!
+
+I would like to work on this issue. Could you assign me?
+
+I plan to:
+1. <span class="em">[your approach in 1-2 lines]</span>
+2. Add a test for the change
+3. Update docs if needed
+
+Estimated PR within <span class="em">[X days]</span>. Thanks!`,
+    pr: `<span class="k">## What</span>
+<span class="com">// この PR で 何 を 変えたか（1〜2文）</span>
+Fixes typo in README "recieved" → "received"
+
+<span class="k">## Why</span>
+<span class="com">// なぜ 必要 か</span>
+Closes #<span class="em">123</span>
+
+<span class="k">## How</span>
+<span class="com">// 実装方針</span>
+Direct replacement, no functional change.
+
+<span class="k">## Checklist</span>
+- [x] Tests added/updated
+- [x] CI green
+- [x] Self-reviewed
+- [x] Docs updated (N/A)`,
+    review: `Thanks for the thorough review! 🙏
+
+I've addressed your comments:
+- <span class="em">[comment 1]</span> → fixed in <span class="em">[commit hash]</span>
+- <span class="em">[comment 2]</span> → I think <span class="em">[your reasoning]</span>. WDYT?
+
+Please take another look when you have time. Thank you!`,
+  };
+  function ossTpl(k){
+    document.querySelectorAll('.oss-tpl-tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === k));
+    document.getElementById('ossTplBody').innerHTML = OSS_TPL[k];
+  }
+  ossTpl('search');
+  renderOss();
+
+  /* === Quiz === */
+  document.querySelectorAll('.qrow').forEach(row => {
+    const ans = row.dataset.answer;
+    row.querySelectorAll('.opts button').forEach(b => {
+      b.addEventListener('click', () => {
+        if(row.classList.contains('answered')) return;
+        if(b.dataset.c === ans){ b.classList.add('right'); showToast('せいかい！ 🎉'); }
+        else { b.classList.add('wrong'); row.querySelector(`button[data-c="${ans}"]`).classList.add('right'); }
+        row.classList.add('answered');
+      });
+    });
+  });
+</script>
+</body>
+</html>
