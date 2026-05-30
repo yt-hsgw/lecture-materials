@@ -4,3 +4,8 @@ _generated/
 
 # 撮影スクリプト の 一時ファイル
 docs/videos/**/.tmp-*/
+
+# Playwright (撮影スクリプト の ローカル依存)
+node_modules/
+package.json
+package-lock.json
