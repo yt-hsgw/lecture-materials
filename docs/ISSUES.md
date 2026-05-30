@@ -123,33 +123,45 @@
 
 ---
 
-## 📸 [Task] 各回のスクリーンショット撮影
+## 📸 [Task] 各回のスクリーンショット撮影 — **準備完了 / 撮影待ち**
 
 **Labels:** `documentation`, `priority/medium`
 
-### 背景
+### 状態（2026-05-29）
 
-README には現在 SVG 模式図しかない。実画面の **スクリーンショット** を 撮影して README に 埋め込みたい。
+- ✅ 撮影スクリプト `scripts/capture-screenshots.mjs` 作成完了（Playwright Chromium 1280×720）
+- ✅ README に 12コース × `<details>` × 2×2テーブル ＝ **48画像分のパス枠** を 事前記述
+- ✅ `docs/screenshots/<12コース>/.gitkeep` を 12 ディレクトリ事前作成
+- ✅ パス整合性チェック済み（README 参照 48 ＝ 実 interactive.html 48）
+- ⏳ **撮影実行はローカル必須**（サンドボックス は npm registry 403 で Playwright 入れられない）
 
-### やること
+### ローカル実行 手順
 
-- 36回 × 主要セクション 1〜2枚 ＝ 約50〜70枚
-- 撮影サイズ：1280×720（README用）／ 800×450（サムネイル用）
-- `docs/screenshots/<コース>/<回>/<セクション>.png` に保存
-- README の SVG プレビュー欄を **実画像** に 置き換え
+```bash
+cd ~/work/講義
+npm install --save-dev playwright       # 初回のみ
+npx playwright install chromium          # 初回のみ（約200MB）
+node scripts/capture-screenshots.mjs     # 全 48 枚を 自動撮影（3-5分）
 
-### 優先撮影リスト（目玉機能）
+git add docs/screenshots/
+git commit -m "Add 48 interactive.html screenshots"
+git push origin main
+```
 
-- 中学生・中級 第2回 ライブTODOアプリ（コード＋動作の2画面）
-- 中学生・中級 第3回 モック Flask API テスター
-- 中学生・上級 第1回 ER図 リアルタイム描画
-- 中学生・上級 第2回 Git ブランチ可視化
-- 中学生・上級 第2回 SQLi プレイグラウンド
-- 高齢者・中級 第1回 町内会案内ジェネレータ
-- 高齢者・上級 第2回 AI嘘発見ゲーム
-- 小学生・中級 第3回 ライブHTMLエディタ
-- 小学生・上級 第4回 修了証 + 紙吹雪
-- 中学生・上級 第4回 ログダッシュボード
+オプション:
+
+```bash
+# 既存上書き
+node scripts/capture-screenshots.mjs --force
+
+# 特定コースだけ
+node scripts/capture-screenshots.mjs --filter 高校生
+```
+
+### 元のメモ（残置）
+
+- 撮影サイズ：1280×720（README用）— ✅ 採用
+- `docs/screenshots/<コース>/<回>.png` に保存 — ✅ 採用
 
 ---
 
@@ -272,37 +284,34 @@ interactive.html は 視覚的に 充実 しているが、 アクセシビリ�
 
 ---
 
-## 📝 [Task] 各コース「00_カリキュラム概要.md」の 統一テンプレ化
+## ~~📝 [Task] 各コース「00_カリキュラム概要.md」の 統一テンプレ化~~ — **部分完了 2026-05-26**
 
 **Labels:** `documentation`, `priority/low`
 
-### 背景
+### 状態
 
-9コースの 概要 ファイルは 既に **同じ構造** に 統一済み だが、 改訂時に 一括 管理 したい。
-
-### やること
-
-- `_templates/00_カリキュラム概要.md` を 基準テンプレに
-- セクション欠落を 検出する スクリプト
-- 改訂日付の 自動更新
+- ✅ `_templates/00_カリキュラム概要.md` を 基準テンプレに 整備
+- ✅ セクション欠落を 検出する スクリプト `scripts/check-curriculum-sections.mjs`（CI統合済）
+- ⏳ 改訂日付の 自動更新 — **未着手**（git ベース で 各 概要ファイル の last-commit-date を 参照する 方式 を 検討）
 
 ---
 
-## 🐛 [Bug] 既知の小さな問題
+## ~~🐛 [Bug] 既知の小さな問題~~ — **完了 2026-05-26**
 
 **Labels:** `bug`, `priority/low`
 
-### 中学生・上級 第1回 interactive.html
+### ✅ 中学生・上級 第2回 interactive.html — 完了
 
-`window.crypto.subtle` を 使う パスワードハッシュ デモ（第2回）が、 **`file://` プロトコル で 動かないブラウザ** がある（Chrome のセキュリティ制限）。
-- 影響：ローカル ファイルで 開いた 時、 ハッシュ生成 が 失敗
-- 対処：簡易ハッシュ（DJB2 など）への フォールバック、 または localhost で開く案内
+`window.crypto.subtle` の file:// フォールバック を 実装:
+- `HAS_SUBTLE` 動的検出 → DJB2 ベース の 簡易ハッシュ で フォールバック
+- 失敗時 UI に 警告バナー（localhost 起動推奨）
+- 既存 SHA-256 ハッシュ 表示 は そのまま
 
-### 中学生・上級 第3回 interactive.html
+### ✅ 中学生・上級 第3回 interactive.html — 完了
 
-テストランナー の `new Function()` 実行 で、 一部の ES2020+ 構文（`?.`, `??`）が 古いブラウザで エラーに なる 可能性。
-- 影響：IE / 古いSafari / Firefox ESR
-- 対処：エラー時の フォールバック メッセージ、 推奨ブラウザの明記
+テストランナー の ES2020+ 構文 対応:
+- 起動時に `'?.'` `'??'` を 試して 失敗したら 推奨ブラウザ案内（Chrome 91+ / Safari 14+ / Firefox 90+）
+- `runTests()` の catch で SyntaxError を 識別、 親切エラー 表示
 
 ---
 
@@ -337,6 +346,9 @@ interactive.html は 視覚的に 充実 しているが、 アクセシビリ�
 ## 📝 メタ情報
 
 - 作成日：2026年5月
-- 状態：高校生コース MD 12本 完成・CI/CD 構築・A11Y 第一弾 完了
-- 改訂：2026年5月26日（高校生コース追加 / CI/CD / A11Y 反映）
+- 状態：**全12コース × 4回 × (lesson.md + interactive.html) = 96ファイル コンプリート 🎉**
+- 改訂：
+  - 2026年5月26日（高校生コース追加 / CI/CD / A11Y 反映）
+  - 2026年5月26日（高校生 interactive.html 12本 完成）
+  - 2026年5月29日（スクリーンショット撮影 準備完了、 既知バグ完了化）
 - 担当：（記入）
