@@ -109,9 +109,149 @@ Marpスライド (`lesson.md`) と インタラクティブHTML (`interactive.ht
 
 ---
 
-## 📸 プレビュー（SVG模式図）
+## 📸 ギャラリー（全48ファイルの実画面）
 
-実画面のスクリーンショットは順次追加予定。以下はinteractive.htmlの典型的なレイアウトです。
+実際の `interactive.html` を 1280×720 で撮影したスクリーンショットです。各セクションを展開してください。
+
+> **📌 撮影方法**：`docs/screenshots/` 配下に画像を生成します。手順は [`scripts/README.md`](scripts/README.md#capture-screenshotsmjsスクリーンショット撮影) を参照（`npm install playwright && npx playwright install chromium && node scripts/capture-screenshots.mjs` の3コマンドで全48枚を自動撮影）。
+
+<details>
+<summary><b>🧒 小学生・初級</b>（パソコン / インターネット / プログラミング / AI）</summary>
+
+| 第1回 パソコンってなんだろう | 第2回 インターネットとWebサイト |
+|---|---|
+| ![](docs/screenshots/小学生_初級/01_パソコンってなんだろう.png) | ![](docs/screenshots/小学生_初級/02_インターネットとWebサイト.png) |
+| **第3回 プログラミングってなんだろう** | **第4回 AIってなんだろう** |
+| ![](docs/screenshots/小学生_初級/03_プログラミングってなんだろう.png) | ![](docs/screenshots/小学生_初級/04_AIってなんだろう.png) |
+
+</details>
+
+<details>
+<summary><b>🧒 小学生・中級</b>（Scratchゲーム前後編 / HTML / AI作品紹介）</summary>
+
+| 第1回 Scratchでゲーム（前編） | 第2回 Scratchでゲーム（後編） |
+|---|---|
+| ![](docs/screenshots/小学生_中級/01_Scratchでゲームを作ろう_前編.png) | ![](docs/screenshots/小学生_中級/02_Scratchでゲームを作ろう_後編.png) |
+| **第3回 HTMLで自己紹介ページ** | **第4回 AIといっしょに作品紹介** |
+| ![](docs/screenshots/小学生_中級/03_HTMLで自己紹介ページ.png) | ![](docs/screenshots/小学生_中級/04_AIといっしょに作品紹介.png) |
+
+</details>
+
+<details>
+<summary><b>🧒 小学生・上級</b>（企画書 / 制作 / テスト / 発表会）</summary>
+
+| 第1回 作品の企画書をかこう | 第2回 作品を作ろう |
+|---|---|
+| ![](docs/screenshots/小学生_上級/01_作品の企画書をかこう.png) | ![](docs/screenshots/小学生_上級/02_作品を作ろう.png) |
+| **第3回 テストしてなおそう** | **第4回 発表会** |
+| ![](docs/screenshots/小学生_上級/03_テストしてなおそう.png) | ![](docs/screenshots/小学生_上級/04_発表会.png) |
+
+</details>
+
+<details>
+<summary><b>👨‍🎓 中学生・初級</b>（コンピューター / Web / プログラミング基本 / AI活用）</summary>
+
+| 第1回 コンピューターと開発環境 | 第2回 Webとインターネット |
+|---|---|
+| ![](docs/screenshots/中学生_初級/01_コンピューターと開発環境.png) | ![](docs/screenshots/中学生_初級/02_Webとインターネット.png) |
+| **第3回 プログラミング基本構文** | **第4回 AI活用と開発の流れ** |
+| ![](docs/screenshots/中学生_初級/03_プログラミング基本構文.png) | ![](docs/screenshots/中学生_初級/04_AI活用と開発の流れ.png) |
+
+</details>
+
+<details>
+<summary><b>👨‍🎓 中学生・中級</b>（アプリ設計 / FE実装 / BE入門 / テスト・Git公開）</summary>
+
+| 第1回 アプリの設計 | 第2回 フロントエンド実装 |
+|---|---|
+| ![](docs/screenshots/中学生_中級/01_アプリの設計.png) | ![](docs/screenshots/中学生_中級/02_フロントエンド実装.png) |
+| **第3回 バックエンド入門** | **第4回 テストGit公開** |
+| ![](docs/screenshots/中学生_中級/03_バックエンド入門.png) | ![](docs/screenshots/中学生_中級/04_テストGit公開.png) |
+
+</details>
+
+<details>
+<summary><b>👨‍🎓 中学生・上級</b>（要件定義 / 実装レビュー / テストリリース / 運用マネタイズ）</summary>
+
+| 第1回 要件定義と設計 | 第2回 実装とレビュー |
+|---|---|
+| ![](docs/screenshots/中学生_上級/01_要件定義と設計.png) | ![](docs/screenshots/中学生_上級/02_実装とレビュー.png) |
+| **第3回 テストとリリース** | **第4回 運用改善マネタイズ** |
+| ![](docs/screenshots/中学生_上級/03_テストとリリース.png) | ![](docs/screenshots/中学生_上級/04_運用改善マネタイズ.png) |
+
+</details>
+
+<details>
+<summary><b>🎓 高校生・初級</b>（開発環境プロ仕様 / 型 / TDD / アジャイル）</summary>
+
+| 第1回 開発環境のプロ仕様 | 第2回 型のある世界 |
+|---|---|
+| ![](docs/screenshots/高校生_初級/01_開発環境のプロ仕様.png) | ![](docs/screenshots/高校生_初級/02_型のある世界.png) |
+| **第3回 テスト駆動開発** | **第4回 アジャイルとIssue駆動** |
+| ![](docs/screenshots/高校生_初級/03_テスト駆動開発.png) | ![](docs/screenshots/高校生_初級/04_アジャイルとIssue駆動.png) |
+
+</details>
+
+<details>
+<summary><b>🎓 高校生・中級</b>（チーム開発 / FE FW / BEスケール / DevOps監視）</summary>
+
+| 第1回 チーム開発の現実 | 第2回 フロントエンドフレームワーク |
+|---|---|
+| ![](docs/screenshots/高校生_中級/01_チーム開発の現実.png) | ![](docs/screenshots/高校生_中級/02_フロントエンドフレームワーク.png) |
+| **第3回 バックエンドのスケール** | **第4回 DevOpsと監視** |
+| ![](docs/screenshots/高校生_中級/03_バックエンドのスケール.png) | ![](docs/screenshots/高校生_中級/04_DevOpsと監視.png) |
+
+</details>
+
+<details>
+<summary><b>🎓 高校生・上級</b>（アーキ設計 / AI ML / キャリア / 卒業発表）</summary>
+
+| 第1回 アーキテクチャ設計 | 第2回 AI/ML 入門 |
+|---|---|
+| ![](docs/screenshots/高校生_上級/01_アーキテクチャ設計.png) | ![](docs/screenshots/高校生_上級/02_AI_ML入門.png) |
+| **第3回 起業・OSS・キャリア** | **第4回 卒業プロジェクト発表会** 🎓 |
+| ![](docs/screenshots/高校生_上級/03_起業OSSキャリア.png) | ![](docs/screenshots/高校生_上級/04_卒業プロジェクト発表会.png) |
+
+</details>
+
+<details>
+<summary><b>👵 高齢者・初級</b>（パソコン / ファイル / インターネット安全 / メール・写真・AI）</summary>
+
+| 第1回 パソコンを使ってみよう | 第2回 ファイルとフォルダ |
+|---|---|
+| ![](docs/screenshots/高齢者_初級/01_パソコンを使ってみよう.png) | ![](docs/screenshots/高齢者_初級/02_ファイルとフォルダ.png) |
+| **第3回 インターネットを安全に使う** | **第4回 メール・写真・AIを使ってみる** |
+| ![](docs/screenshots/高齢者_初級/03_インターネットを安全に使う.png) | ![](docs/screenshots/高齢者_初級/04_メール_写真_AIを使ってみる.png) |
+
+</details>
+
+<details>
+<summary><b>👵 高齢者・中級</b>（文書 / 表計算 / 写真・動画クラウド / ビデオ通話SNS）</summary>
+
+| 第1回 文書を作ろう | 第2回 数字の表を使ってみる |
+|---|---|
+| ![](docs/screenshots/高齢者_中級/01_文書を作ろう.png) | ![](docs/screenshots/高齢者_中級/02_数字の表を使ってみる.png) |
+| **第3回 写真動画とクラウド** | **第4回 ビデオ通話とSNS** |
+| ![](docs/screenshots/高齢者_中級/03_写真動画とクラウド.png) | ![](docs/screenshots/高齢者_中級/04_ビデオ通話とSNS.png) |
+
+</details>
+
+<details>
+<summary><b>👵 高齢者・上級</b>（クラウド・バックアップ / AIを暮らしの相棒 / 情報発信 / 行政金融電子化）</summary>
+
+| 第1回 クラウドとバックアップ | 第2回 AIを暮らしの相棒に |
+|---|---|
+| ![](docs/screenshots/高齢者_上級/01_クラウドとバックアップ.png) | ![](docs/screenshots/高齢者_上級/02_AIを暮らしの相棒に.png) |
+| **第3回 情報発信を楽しむ** | **第4回 行政金融の電子化** |
+| ![](docs/screenshots/高齢者_上級/03_情報発信を楽しむ.png) | ![](docs/screenshots/高齢者_上級/04_行政金融の電子化.png) |
+
+</details>
+
+---
+
+## 🎨 共通レイアウト（SVG模式図）
+
+以下は全 `interactive.html` で共通の UI パターンです。
 
 ### コース構成図
 
@@ -319,11 +459,11 @@ node scripts/check-a11y-static.mjs
 
 優先度順は [`docs/ISSUES.md`](docs/ISSUES.md) を参照。
 
-- 📸 各回の **スクリーンショット** を撮影してREADMEに追加
 - 🎥 各回の **デモ動画**（30秒）を作成
 - 🌍 **英語版** の作成
 - 📦 **パッケージング / 配布**（コース別 ZIP）
 - 🎓 **修了証 デザイン 統一**（共通テンプレ化）
+- ♿ A11Y 残61件（教材ツール内 input ラベル付与の漸進対応）
 
 ---
 
