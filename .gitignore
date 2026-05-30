@@ -1,3 +1,6 @@
 .DS_Store
 _generated/
 *.pptx
+
+# 撮影スクリプト の 一時ファイル
+docs/videos/**/.tmp-*/

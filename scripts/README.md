@@ -5,7 +5,8 @@
 | ファイル | 役割 |
 |---|---|
 | `build-pptx.sh` | Marpマークダウン (`lesson.md`) から PowerPoint (.pptx) を `_generated/` 配下に出力 |
-| `capture-screenshots.mjs` | 全 `interactive.html` を Playwright で 1280×720 撮影、`docs/screenshots/` に保存 |
+| `capture-screenshots.mjs` | 全 `interactive.html` を Playwright で 1280×720 撮影。`hero` / `full` / `sections` モード対応 |
+| `capture-videos.mjs` | 全 `interactive.html` を自動スクロールしながらデモ動画を WebM 録画。 `--convert-mp4` で MP4 変換 |
 | `check-inline-js.mjs` | 全 HTML の inline `<script>` を `vm.Script` で構文チェック（CI 用） |
 | `check-id-duplicates.mjs` | 同一 HTML 内の id 重複を検出（CI 用） |
 | `check-a11y-static.mjs` | lang / alt / label / icon-only button の静的 a11y チェック（CI 用） |
@@ -119,36 +120,62 @@ npx playwright install chromium
 
 ### 使い方
 
+3つのモードがあります（`--mode <hero|full|sections>`、既定 `hero`）。
+
 ```bash
-# 全 48 ファイルを撮影（既存ファイルは skip）
+# === hero（既定）: ヒーロー画面 1枚/ファイル → 計 48枚 ===
 node scripts/capture-screenshots.mjs
+node scripts/capture-screenshots.mjs --force       # 既存上書き
+node scripts/capture-screenshots.mjs --filter 高校生  # コース絞り込み
 
-# 既存ファイルを上書きして再撮影
-node scripts/capture-screenshots.mjs --force
+# === full: 縦長フルページ 1枚/ファイル → 計 48枚 (.full.png) ===
+node scripts/capture-screenshots.mjs --mode full
 
-# 特定コースだけ撮影（フォルダ名 部分一致）
-node scripts/capture-screenshots.mjs --filter 高校生
-node scripts/capture-screenshots.mjs --filter 中学生_上級
+# === sections: data-snav-target ごとに viewport 撮影 → 計 約 400 枚 ===
+node scripts/capture-screenshots.mjs --mode sections
+
+# 特定セクションだけ（id 指定）
+node scripts/capture-screenshots.mjs --mode sections --section quiz
+node scripts/capture-screenshots.mjs --mode sections --section sec1
+
+# viewport を変更（例: モバイル幅）
+node scripts/capture-screenshots.mjs --mode hero --width 800 --height 450
 ```
 
-### 出力先
+### 出力先（モード別）
 
+**hero モード**（既定）:
 ```text
 docs/screenshots/
 ├── 小学生_初級/
-│   ├── 01_パソコンってなんだろう.png
-│   ├── 02_インターネットとWebサイト.png
-│   ├── 03_プログラミングってなんだろう.png
-│   ├── 04_AIってなんだろう.png
-│   └── オプション教材__04_Scratch入門.png  (※ サブフォルダは __ で結合)
-├── 中学生_初級/
-├── ... 全 12 コース ...
+│   ├── 01_パソコンってなんだろう.png         ← 1280×720 ヒーロー
+│   └── 04_AIってなんだろう.png
 └── 高校生_上級/
-    ├── 01_アーキテクチャ設計.png
-    ├── 02_AI_ML入門.png
-    ├── 03_起業OSSキャリア.png
-    └── 04_卒業プロジェクト発表会.png
+    ├── 04_卒業プロジェクト発表会.png
+    └── ...
 ```
+
+**full モード**:
+```text
+docs/screenshots/
+└── 高校生_上級/
+    └── 04_卒業プロジェクト発表会.full.png    ← 1280×（数千px）の縦長
+```
+
+**sections モード**:
+```text
+docs/screenshots/
+└── 高校生_上級/
+    └── 04_卒業プロジェクト発表会/            ← フォルダになる
+        ├── 01-top.png                       ← ヒーロー
+        ├── 02-timer.png                     ← 発表タイマー
+        ├── 03-pitch.png                     ← ピッチデック
+        ├── 04-qb.png                        ← Q&Aボード
+        ├── 05-sec-cert.png                  ← 修了証
+        └── 06-wrap.png                      ← フィナーレ
+```
+
+撮影される セクション一覧 は 各回 の HTML 内 `[data-snav-target]` 要素 です。
 
 ### 仕組み
 
@@ -156,9 +183,9 @@ docs/screenshots/
 
 1. `file://` URL でローカルファイルとして開く
 2. `domcontentloaded` まで待ち、さらに 900ms スリープして JS 初期化を完了させる
-3. 起動時に開いたモーダルやトースト要素を非表示化
-4. `window.scrollTo(0, 0)` でヒーロー位置に戻す
-5. `page.screenshot()` で viewport（1280×720）を PNG 出力
+3. 起動時に開いたモーダル / トースト / 紙吹雪 を非表示化
+4. モード別 に スクロール 位置 を 調整 し `page.screenshot()` を 実行
+5. PNG を 該当 ディレクトリ に 保存
 
 ### 撮影後
 
@@ -187,6 +214,86 @@ git push
 #### 撮影後の画像サイズが想定より大きい / 小さい
 
 `deviceScaleFactor: 1.5` を script 内で指定しています。完全に 1280×720 にしたい場合は `1` に変更してください（README ではこの値で良い感じに見えます）。
+
+## capture-videos.mjs（デモ動画 撮影）
+
+全 `interactive.html` を Playwright で **自動スクロールしながら WebM 動画録画**。 各 セクション を 順次 滑らか に スクロール し、 約 30秒 の デモ 動画 を 生成。
+
+### 前提
+
+- Node.js 20+
+- Playwright + Chromium が インストール 済み（[screenshot 手順](#capture-screenshotsmjsスクリーンショット撮影) 参照）
+- 任意: ffmpeg（MP4 変換 する 場合）
+
+### 使い方
+
+```bash
+# 全 48 ファイルを撮影（既存ファイルは skip、 約 30秒/ファイル）
+node scripts/capture-videos.mjs
+
+# 高校生コースのみ
+node scripts/capture-videos.mjs --filter 高校生
+
+# 既存上書き + 45秒に延長
+node scripts/capture-videos.mjs --duration 45 --force
+
+# MP4 にも変換（README で 直接再生可能、 ffmpeg 必須）
+node scripts/capture-videos.mjs --convert-mp4
+
+# 特定の1ファイルだけ
+node scripts/capture-videos.mjs --filter "高校生_上級/04"
+```
+
+### 出力先
+
+```text
+docs/videos/
+├── 小学生_初級/
+│   ├── 01_パソコンってなんだろう.webm
+│   ├── 04_AIってなんだろう.webm
+│   └── ...
+└── 高校生_上級/
+    ├── 04_卒業プロジェクト発表会.webm
+    └── 04_卒業プロジェクト発表会.mp4    ← --convert-mp4 時のみ
+```
+
+### 動画の中身（自動再生される 演出）
+
+1. **0.0〜1.5秒**: ヒーロー画面で 静止（タイトル を 見せる）
+2. **1.5〜28秒**: `[data-snav-target]` セクション を 順次 滑らか に スクロール
+   - 各セクション ≒ 2〜3秒 滞在
+   - 区間の `smooth` スクロール 700ms
+3. **28〜30秒**: 最終セクション（修了証 / まとめ）で 静止
+
+セクション数が多い回（10+）では 中間 を 早送り、 少ない回（6）では 各セクション を 長め に 滞在 して 自動調整。
+
+### MP4 変換について
+
+GitHub の README で `<video>` タグ で 直接再生 する 場合 は **MP4 が 必須**（WebM 非対応）。 以下 いずれか:
+
+```bash
+# 撮影と 同時に 変換
+node scripts/capture-videos.mjs --convert-mp4
+
+# 既存 WebM を まとめて 変換
+find docs/videos -name '*.webm' | while read f; do
+  ffmpeg -y -i "$f" -c:v libx264 -crf 23 -preset fast -movflags +faststart "${f%.webm}.mp4"
+done
+```
+
+### トラブルシューティング
+
+#### 動画が真っ黒 / 壊れている
+
+Playwright の recordVideo は コンテキスト 終了時 に ファイル を 確定 します。 スクリプト 内 で `await ctx.close()` を 正しく 待っているため 通常 は 問題ない ですが、 強制終了 した 場合 `docs/videos/<コース>/.tmp-*/` に 残骸 が 残る ことが あります。 削除 してください。
+
+#### ファイルサイズ が 大きい
+
+WebM は VP8/VP9 で 圧縮 されますが、 30秒 で 5〜15MB 程度。 GitHub の リポジトリ サイズ を 抑えたい 場合 は `--filter` で 主要回 のみ 撮影 する、 または README に YouTube/Vimeo の リンク を 貼る 方式 を 検討。
+
+#### 想定 セクション 数 と 違う
+
+スクリプト は `[data-snav-target]` 要素 を 数えて 滞在時間 を 配分 します。 一部 教材（特に オプション教材）は `data-snav-target` が ない ため、 hero + 末尾 の 2点 だけ の フォールバック 動画 に なります。
 
 ## CI 用スクリプト群
 
