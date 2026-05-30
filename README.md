@@ -1,8 +1,16 @@
-# 講義資料
+# lecture-materials — プログラミング・パソコン教室の教材セット
 
-小学生・中学生・高校生・高齢者の **4対象 × 初級／中級／上級** の **全12コース・48回** の授業資料をオープンソースで公開しています。
+[![CI](https://github.com/yt-hsgw/lecture-materials/actions/workflows/check.yml/badge.svg)](https://github.com/yt-hsgw/lecture-materials/actions/workflows/check.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![All courses complete](https://img.shields.io/badge/courses-12%2F12-brightgreen)
+![Files](https://img.shields.io/badge/files-96-blue)
 
-Marpスライド (`lesson.md`) と インタラクティブHTML (`interactive.html`) の2形式で、講師の説明と受講者の体験を組み合わせて使えます。
+小学生・中学生・高校生・高齢者の **4対象 × 初級／中級／上級** = **全12コース・48回** の授業教材をオープンソースで公開しています。
+
+Marpスライド (`lesson.md`) と インタラクティブHTML (`interactive.html`) の2形式で、講師の説明と受講者の体験を組み合わせて使えるのが特徴。各 `interactive.html` は外部CDN・APIに一切依存せず、ブラウザで直接開けば動作します（オフライン教室でも安心）。
+
+> **🤝 コントリビュート歓迎**：typo修正・新規教材・対話型ツールの改善など、どんな規模でも OK。詳細は [`CONTRIBUTING.md`](CONTRIBUTING.md) を参照。
+> 改善計画・残タスクは [GitHub Issues](../../issues) と [`docs/ISSUES.md`](docs/ISSUES.md) にあります。
 
 ---
 
@@ -394,10 +402,11 @@ xdg-open 小学生_初級/04_AIってなんだろう/interactive.html
 
 - **データモデル先行**：対象者 × レベル × 教材形式 × 講義トピックを分けて管理
 - **lesson.md = 原本、PPTX = 生成物**：Git管理は原本のみ
-- **ブラウザだけで完結**：interactive.html は CDN・API への依存なし（localStorage はOK）
-- **配色で識別**：9コース各々で配色を差別化、UI共通パターンは維持
+- **ブラウザだけで完結**：interactive.html は CDN・API への依存なし（localStorage / sessionStorage も不使用）
+- **配色で識別**：12コース各々で配色を差別化、UI共通パターンは維持
 - **AI体験は疑似AI推奨**：実APIに依存せず、プロンプト品質に応じた応答を内蔵
 - **段階的開示**：初級は触る・中級は作る・上級は組み立てる
+- **オフライン耐性**：教室の Wi-Fi がなくても全機能が動作する
 
 ---
 
@@ -413,11 +422,11 @@ xdg-open 小学生_初級/04_AIってなんだろう/interactive.html
 
 ## 📊 開発統計
 
-- **総スライド数**：約 **1,700+ スライド**（lesson.md 48本）
-- **総スクリプト行数**：約 **20,000+ 行**（interactive.html × 36 の JavaScript）
-- **対話型ツール数**：**150+** （各回 4〜6個の独自ツール）
-- **クイズ問題数**：**100+**
-- **印刷可能ドキュメント**：5種（修了証4種＋町内会案内・家計簿・手順ノート）
+- **総スライド数**：約 **2,400+ スライド**（lesson.md 48本）
+- **総スクリプト行数**：約 **40,000+ 行**（interactive.html × 48 の JavaScript）
+- **対話型ツール数**：**200+** （各回 4〜6個の独自ツール）
+- **クイズ問題数**：**140+**
+- **印刷可能ドキュメント**：8種以上（修了証 7種＋町内会案内・家計簿・手順ノート 等）
 
 ---
 
@@ -455,28 +464,41 @@ node scripts/check-a11y-static.mjs
 
 ---
 
-## 🔮 今後の候補
+## 🔮 ロードマップ
 
-優先度順は [`docs/ISSUES.md`](docs/ISSUES.md) を参照。
+未着手の改善提案は [GitHub Issues](../../issues) と [`docs/ISSUES.md`](docs/ISSUES.md) を参照。生成 AI が単独で着手しやすい形式で `.github/issues-to-create/` にも下書きあり。
 
-- 🎥 各回の **デモ動画**（30秒）を作成
-- 🌍 **英語版** の作成
-- 📦 **パッケージング / 配布**（コース別 ZIP）
-- 🎓 **修了証 デザイン 統一**（共通テンプレ化）
+- 🎥 **デモ動画**（30秒×48回）作成 — 撮影スクリプト [`scripts/capture-videos.mjs`](scripts/capture-videos.mjs) 完成済み、 実行のみ残
+- 🌍 **英語版** の作成（`lesson.en.md` / `interactive.en.html`）
+- 📦 **パッケージング / 配布**（コース別 ZIP + GitHub Releases）
+- 🎓 **修了証 デザイン 統一**（共通テンプレ化 + PDF ダウンロード）
+- 💡 **受講者向けポータル Web サイト**（進度管理 / バッジ / 自動修了証）
 - ♿ A11Y 残61件（教材ツール内 input ラベル付与の漸進対応）
+
+---
+
+## 🤝 コントリビュート
+
+- バグ報告 / 機能提案: [GitHub Issues](../../issues) で歓迎
+- コード貢献: [`CONTRIBUTING.md`](CONTRIBUTING.md) のガイドラインを参照
+- 議論 / 質問: GitHub Discussions（リポジトリ設定で有効化）
+
+新規 PR・改善提案 大歓迎です！
 
 ---
 
 ## 📝 ライセンス
 
-[（ライセンス未定 — 例：CC BY-SA 4.0 / MIT を検討）]
+[MIT License](LICENSE) ©︎ 2026 contributors
+
+教材コンテンツ・コード ともに自由にお使いいただけます（クレジット表記推奨）。
 
 ---
 
-## 📞 著作・連絡先
+## 🙏 Acknowledgements
 
-- 講師：（記入）
-- 教室名：（記入）
-- 改訂：2026年5月版
+教材作成・改善には生成 AI（Anthropic Claude）も活用しています。今後の改善も AI と人間の協働で進めていく予定です。
 
-新規 Pull Request・改善提案 大歓迎です！
+---
+
+<sub>最終更新: 2026年5月</sub>

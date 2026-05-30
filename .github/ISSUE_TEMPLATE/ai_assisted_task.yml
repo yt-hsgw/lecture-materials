@@ -1,0 +1,67 @@
+name: "🤖 AI 支援タスク"
+description: 生成 AI（Claude / GPT 等）で作業しやすい形式にまとめた タスク
+labels: ["ai-assisted", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        このテンプレートは **生成 AI が単独で着手できる** タスク向けです。
+        AI が誤読しにくいように、 ファイルパス・受け入れ基準・出力例 を 明確に書いてください。
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景 / 全体像
+      placeholder: 何のために、 誰のために、 どんな結果を期待するか
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: 主な対象ファイル / ディレクトリ
+      placeholder: |
+        - `_templates/lesson.md`
+        - `scripts/check-*.mjs`
+        - `docs/A11Y.md`
+    validations:
+      required: true
+
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: 期待される成果物
+      placeholder: |
+        - 新規ファイル: `path/to/new.md`
+        - 既存ファイルの修正: `path/to/existing.html` の ◯◯ セクションに △△ を追加
+        - スクリプト: `scripts/new-tool.mjs`
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ基準（チェックリスト）
+      placeholder: |
+        - [ ] `node scripts/check-inline-js.mjs` がパス
+        - [ ] `node scripts/check-a11y-static.mjs` で warning が増えない
+        - [ ] ◯◯ がブラウザで動作する
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: 制約 / 注意
+      placeholder: |
+        - localStorage / sessionStorage は使わない（CSP）
+        - 外部CDN は禁止、 すべてインライン
+        - 配色は `_templates/README.md` のテーマ表に従う
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 参考にすべき既存実装
+      placeholder: |
+        - `中学生_上級/04_運用改善マネタイズ/interactive.html` （ログダッシュボード が 参考）
+        - `_templates/interactive.html` （構造）

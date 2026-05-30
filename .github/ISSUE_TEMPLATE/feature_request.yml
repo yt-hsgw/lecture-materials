@@ -1,0 +1,54 @@
+name: "✨ 機能提案 / 新規教材"
+description: 改善アイデア・新ツール・新コース提案
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: 種別
+      options:
+        - 既存教材の改善
+        - 新規 対話型ツール
+        - 新規 回 の追加
+        - 新規 コース の追加
+        - スクリプト / CI 改善
+        - ドキュメント改善
+        - その他
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 背景 / なぜ必要？
+      placeholder: 誰がどんなときに困っているのか、何を改善したいのか
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案内容
+      placeholder: 何をどう実装したいか、具体的に
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ基準
+      placeholder: |
+        - [ ] ◯◯ ができる
+        - [ ] ◯◯ のテストが通る
+        - [ ] ドキュメントが更新されている
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 検討した代替案（任意）
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: その他メモ（任意）
+      placeholder: 関連 PR / Issue、 参考リンク など

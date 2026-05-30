@@ -1,0 +1,68 @@
+name: "🐛 バグ報告"
+description: 教材や対話型ツールの不具合を報告
+labels: ["bug", "triage"]
+body:
+  - type: dropdown
+    id: course
+    attributes:
+      label: 対象コース
+      options:
+        - 小学生・初級
+        - 小学生・中級
+        - 小学生・上級
+        - 中学生・初級
+        - 中学生・中級
+        - 中学生・上級
+        - 高校生・初級
+        - 高校生・中級
+        - 高校生・上級
+        - 高齢者・初級
+        - 高齢者・中級
+        - 高齢者・上級
+        - 共通（_templates / scripts / README 等）
+    validations:
+      required: true
+
+  - type: input
+    id: lesson
+    attributes:
+      label: 対象回 / ファイル
+      placeholder: "例: 04_AIってなんだろう / interactive.html"
+
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きた？
+      placeholder: 具体的な症状を1〜2文で
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1. interactive.html を ブラウザで開く
+        2. ◯◯ をクリック
+        3. ◯◯ が表示される
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: 環境
+      placeholder: "例: Chrome 130 / macOS 15 / file:// プロトコル"
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: スクリーンショット / 動画（任意）
+      placeholder: 画像はドラッグ＆ドロップで添付できます
