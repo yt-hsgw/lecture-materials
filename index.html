@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="小学生・中学生・高校生・高齢者向けのプログラミングとパソコン教室教材をまとめたオープンソース教材カタログ。"
+    >
+    <title>lecture-materials | オープンソース教材カタログ</title>
+    <link rel="stylesheet" href="assets/site.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="lecture-materials トップへ">
+        <span class="brand-mark">LM</span>
+        <span>lecture-materials</span>
+      </a>
+      <nav class="nav-links" aria-label="主要ナビゲーション">
+        <a href="#catalog">教材一覧</a>
+        <a href="#audiences">対象別</a>
+        <a href="#optional">発展教材</a>
+        <a href="#support">支援・相談</a>
+        <a href="https://github.com/yt-hsgw/lecture-materials" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-media" aria-hidden="true">
+          <img src="docs/screenshots/小学生_初級/04_AIってなんだろう.png" alt="">
+          <img src="docs/screenshots/中学生_中級/03_バックエンド入門.png" alt="">
+          <img src="docs/screenshots/高校生_上級/04_卒業プロジェクト発表会.png" alt="">
+          <img src="docs/screenshots/高齢者_上級/02_AIを暮らしの相棒に.png" alt="">
+        </div>
+        <div class="hero-content">
+          <p class="eyebrow">MIT License / Static Catalog / No Login</p>
+          <h1 id="hero-title">lecture-materials</h1>
+          <p class="hero-lead">
+            小学生・中学生・高校生・高齢者向けに、スライド原本とブラウザで動く体験教材をまとめたオープンソース教材セットです。
+          </p>
+          <div class="hero-actions" role="group" aria-label="主要アクション">
+            <a class="button primary" href="#catalog">教材を探す</a>
+            <a class="button ghost" href="https://github.com/yt-hsgw/lecture-materials" target="_blank" rel="noopener noreferrer">GitHubで見る</a>
+            <a class="button ghost" href="#support">支援・相談</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt" aria-labelledby="stats-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <div>
+              <h2 id="stats-title">授業で使える状態から始める</h2>
+              <p>教材はログインなしで閲覧できます。各回にスライド原本と体験HTMLへの導線を用意しています。</p>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat">
+              <strong data-stat-audiences>4</strong>
+              <span>対象</span>
+            </div>
+            <div class="stat">
+              <strong data-stat-courses>12</strong>
+              <span>コース</span>
+            </div>
+            <div class="stat">
+              <strong data-stat-lessons>48</strong>
+              <span>授業回</span>
+            </div>
+            <div class="stat">
+              <strong data-stat-materials>96</strong>
+              <span>原本教材</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="catalog" aria-labelledby="catalog-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <div>
+              <h2 id="catalog-title">教材カタログ</h2>
+              <p>対象、レベル、キーワードで絞り込み、各回のスライド・体験HTML・画面を直接開けます。</p>
+            </div>
+            <a class="button dark" href="README.md">READMEを開く</a>
+          </div>
+
+          <div class="catalog-tools">
+            <div class="search-field">
+              <label for="site-search">キーワード検索</label>
+              <input id="site-search" data-search type="search" placeholder="例: AI、Git、ファイル、Web">
+            </div>
+            <div class="filter-panel">
+              <div>
+                <div class="filter-group-label">対象</div>
+                <div class="filter-group" data-audience-filters aria-label="対象で絞り込み"></div>
+              </div>
+              <div>
+                <div class="filter-group-label">レベル</div>
+                <div class="filter-group" data-level-filters aria-label="レベルで絞り込み"></div>
+              </div>
+            </div>
+          </div>
+
+          <p class="result-line" data-result-line aria-live="polite"></p>
+          <div class="course-grid" data-course-grid></div>
+        </div>
+      </section>
+
+      <section class="section alt" id="audiences" aria-labelledby="audiences-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <div>
+              <h2 id="audiences-title">対象別に選ぶ</h2>
+              <p>年齢や目的ごとに、扱う用語、ハンズオン、注意点を変えています。</p>
+            </div>
+          </div>
+          <div class="audience-grid" data-audience-grid></div>
+        </div>
+      </section>
+
+      <section class="section" id="optional" aria-labelledby="optional-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <div>
+              <h2 id="optional-title">発展教材</h2>
+              <p>本編に加えて、授業時間や教室環境に合わせて使える単体HTML教材です。</p>
+            </div>
+          </div>
+          <div class="optional-list" data-optional-list></div>
+        </div>
+      </section>
+
+      <section class="section alt" id="support" aria-labelledby="support-title">
+        <div class="section-inner">
+          <div class="section-heading">
+            <div>
+              <h2 id="support-title">支援・相談</h2>
+              <p>教材は無料で公開し続け、支援は任意にします。改善提案、利用報告、授業利用の相談を歓迎します。</p>
+            </div>
+          </div>
+          <p class="support-note" data-support-note></p>
+          <div class="support-grid" data-support-grid></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>MIT License. Built as a static catalog for lecture-materials.</span>
+        <a href="LICENSE">License</a>
+      </div>
+    </footer>
+
+    <script src="assets/site-data.js"></script>
+    <script src="assets/site.js"></script>
+  </body>
+</html>

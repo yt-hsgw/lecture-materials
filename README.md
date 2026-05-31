@@ -12,6 +12,16 @@ Marpスライド (`lesson.md`) と インタラクティブHTML (`interactive.ht
 > **🤝 コントリビュート歓迎**：typo修正・新規教材・対話型ツールの改善など、どんな規模でも OK。詳細は [`CONTRIBUTING.md`](CONTRIBUTING.md) を参照。
 > 改善計画・残タスクは [GitHub Issues](../../issues) と [`docs/ISSUES.md`](docs/ISSUES.md) にあります。
 
+## 🌐 教材まとめサイト
+
+ルートの [`index.html`](index.html) は、ログインなしで使える静的LP兼教材カタログです。
+
+- ローカルで見る: `index.html` をブラウザで開く
+- 教材データを更新: `node scripts/generate-site-data.mjs`
+- 生成データの差分確認: `node scripts/generate-site-data.mjs --check`
+- 設計メモ: [`docs/SITE_STRATEGY.md`](docs/SITE_STRATEGY.md)
+- 支援・相談: [`SUPPORT.md`](SUPPORT.md)
+
 ---
 
 ## 🎉 完成状況

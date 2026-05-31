@@ -7,11 +7,29 @@
 | `build-pptx.sh` | Marpマークダウン (`lesson.md`) から PowerPoint (.pptx) を `_generated/` 配下に出力 |
 | `capture-screenshots.mjs` | 全 `interactive.html` を Playwright で 1280×720 撮影。`hero` / `full` / `sections` モード対応 |
 | `capture-videos.mjs` | 全 `interactive.html` を自動スクロールしながらデモ動画を WebM 録画。 `--convert-mp4` で MP4 変換 |
+| `generate-site-data.mjs` | 教材ディレクトリから `assets/site-data.js` を生成し、静的LP/教材カタログに反映 |
 | `check-inline-js.mjs` | 全 HTML の inline `<script>` を `vm.Script` で構文チェック（CI 用） |
 | `check-id-duplicates.mjs` | 同一 HTML 内の id 重複を検出（CI 用） |
 | `check-a11y-static.mjs` | lang / alt / label / icon-only button の静的 a11y チェック（CI 用） |
 | `check-curriculum-sections.mjs` | 各 `00_カリキュラム概要.md` の必須セクション欠落を検出（CI 用） |
 | `html-validate.config.json` | html-validate ルール設定（CI 用） |
+
+## generate-site-data.mjs
+
+ルートの `index.html` で使う教材カタログデータを、既存のコースディレクトリから生成します。教材を追加・削除したら実行してください。
+
+```bash
+node scripts/generate-site-data.mjs
+node scripts/generate-site-data.mjs --check
+```
+
+出力先:
+
+```text
+assets/site-data.js
+```
+
+`--check` は現在の `assets/site-data.js` が最新かだけを確認します。CI では更新漏れの検出に使います。
 
 ## build-pptx.sh
 
