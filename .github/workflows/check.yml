@@ -45,7 +45,7 @@ jobs:
           node-version: 20
 
       - name: Install html-validate
-        run: npm install -g html-validate@11.5.2
+        run: npm install -g html-validate@10.17.0
 
       - name: Validate catalog HTML
         run: html-validate --config scripts/html-validate.config.json index.html
