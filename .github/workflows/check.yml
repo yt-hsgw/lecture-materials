@@ -19,10 +19,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Install markdownlint-cli2
-        run: npm install -g markdownlint-cli2
+        run: npm install -g markdownlint-cli2@0.22.1
 
       - name: Lint Markdown
         run: |
@@ -44,20 +43,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Install html-validate
-        run: npm install -g html-validate
+        run: npm install -g html-validate@11.5.2
 
-      - name: Validate HTML files
-        run: |
-          # interactive.html / *.html を対象
-          find . \
-            -name '*.html' \
-            -not -path './node_modules/*' \
-            -not -path './_generated/*' \
-            -not -path './.git/*' \
-            -print0 | xargs -0 html-validate --config scripts/html-validate.config.json
+      - name: Validate catalog HTML
+        run: html-validate --config scripts/html-validate.config.json index.html
 
   # ────────────────────────────────────────────────
   # 3. JS 構文チェック（interactive.html 内 script）

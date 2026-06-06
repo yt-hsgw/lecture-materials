@@ -124,7 +124,7 @@ function parseCourse(directoryName) {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .filter((name) => /^\d+_/.test(name))
-    .sort((a, b) => a.localeCompare(b, "ja"));
+    .sort();
 
   const lessons = lessonDirectories.map((lessonDirectory) => {
     const number = Number(lessonDirectory.match(/^(\d+)_/)?.[1] || 0);
@@ -186,7 +186,7 @@ function parseOptionalMaterials() {
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .filter((name) => /^\d+_.*\.html$/.test(name))
-    .sort((a, b) => a.localeCompare(b, "ja"))
+    .sort()
     .map((fileName) => {
       const number = Number(fileName.match(/^(\d+)_/)?.[1] || 0);
       return {

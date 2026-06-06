@@ -6,7 +6,6 @@
  *   node scripts/generate-downloads.mjs
  *   node scripts/generate-downloads.mjs --check
  */
-import { deflateRawSync } from "node:zlib";
 import {
   existsSync,
   mkdirSync,
@@ -28,6 +27,7 @@ const CHECK_ONLY = process.argv.includes("--check");
 const COURSE_PATTERN = /^(小学生|中学生|高校生|高齢者)_(初級|中級|上級)$/;
 const FIXED_DOS_DATE = 0x5c21;
 const FIXED_DOS_TIME = 0;
+const ZIP_METHOD_STORE = 0;
 
 const CRC_TABLE = new Uint32Array(256);
 for (let index = 0; index < 256; index++) {
@@ -65,33 +65,32 @@ function zipEntries(entries) {
     const fileName = Buffer.from(entry.name.replaceAll(path.sep, "/"), "utf8");
     const pathExtra = unicodePathExtra(fileName);
     const source = entry.data;
-    const compressed = deflateRawSync(source, { level: 9 });
     const checksum = crc32(source);
 
     const localHeader = Buffer.alloc(30);
     localHeader.writeUInt32LE(0x04034b50, 0);
     localHeader.writeUInt16LE(20, 4);
     localHeader.writeUInt16LE(0x0800, 6);
-    localHeader.writeUInt16LE(8, 8);
+    localHeader.writeUInt16LE(ZIP_METHOD_STORE, 8);
     localHeader.writeUInt16LE(FIXED_DOS_TIME, 10);
     localHeader.writeUInt16LE(FIXED_DOS_DATE, 12);
     localHeader.writeUInt32LE(checksum, 14);
-    localHeader.writeUInt32LE(compressed.length, 18);
+    localHeader.writeUInt32LE(source.length, 18);
     localHeader.writeUInt32LE(source.length, 22);
     localHeader.writeUInt16LE(fileName.length, 26);
     localHeader.writeUInt16LE(pathExtra.length, 28);
-    localParts.push(localHeader, fileName, pathExtra, compressed);
+    localParts.push(localHeader, fileName, pathExtra, source);
 
     const centralHeader = Buffer.alloc(46);
     centralHeader.writeUInt32LE(0x02014b50, 0);
     centralHeader.writeUInt16LE(0x0314, 4);
     centralHeader.writeUInt16LE(20, 6);
     centralHeader.writeUInt16LE(0x0800, 8);
-    centralHeader.writeUInt16LE(8, 10);
+    centralHeader.writeUInt16LE(ZIP_METHOD_STORE, 10);
     centralHeader.writeUInt16LE(FIXED_DOS_TIME, 12);
     centralHeader.writeUInt16LE(FIXED_DOS_DATE, 14);
     centralHeader.writeUInt32LE(checksum, 16);
-    centralHeader.writeUInt32LE(compressed.length, 20);
+    centralHeader.writeUInt32LE(source.length, 20);
     centralHeader.writeUInt32LE(source.length, 24);
     centralHeader.writeUInt16LE(fileName.length, 28);
     centralHeader.writeUInt16LE(pathExtra.length, 30);
@@ -102,7 +101,7 @@ function zipEntries(entries) {
     centralHeader.writeUInt32LE(offset, 42);
     centralParts.push(centralHeader, fileName, pathExtra);
 
-    offset += localHeader.length + fileName.length + pathExtra.length + compressed.length;
+    offset += localHeader.length + fileName.length + pathExtra.length + source.length;
   }
 
   const centralDirectory = Buffer.concat(centralParts);
@@ -131,14 +130,14 @@ function discoverArchives() {
   const courseDirectories = readdirSync(ROOT, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && COURSE_PATTERN.test(entry.name))
     .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b, "ja"));
+    .sort();
 
   for (const courseDirectory of courseDirectories) {
     const coursePath = path.join(ROOT, courseDirectory);
     const lessonDirectories = readdirSync(coursePath, { withFileTypes: true })
       .filter((entry) => entry.isDirectory() && /^\d+_/.test(entry.name))
       .map((entry) => entry.name)
-      .sort((a, b) => a.localeCompare(b, "ja"));
+      .sort();
     const courseEntries = [];
     const overviewPath = `${courseDirectory}/00_カリキュラム概要.md`;
 
@@ -164,9 +163,13 @@ function discoverArchives() {
 
     const optionalPath = path.join(coursePath, "オプション教材");
     if (existsSync(optionalPath)) {
-      for (const entry of readdirSync(optionalPath, { withFileTypes: true })) {
-        if (!entry.isFile() || !entry.name.endsWith(".html")) continue;
-        const relativePath = `${courseDirectory}/オプション教材/${entry.name}`;
+      const optionalFiles = readdirSync(optionalPath, { withFileTypes: true })
+        .filter((entry) => entry.isFile() && entry.name.endsWith(".html"))
+        .map((entry) => entry.name)
+        .sort();
+
+      for (const fileName of optionalFiles) {
+        const relativePath = `${courseDirectory}/オプション教材/${fileName}`;
         courseEntries.push(fileEntry(relativePath, relativePath));
       }
     }
