@@ -9,6 +9,10 @@
   const catalog = document.querySelector("[data-course-grid]");
   const resultLine = document.querySelector("[data-result-line]");
   const searchInput = document.querySelector("[data-search]");
+  const contactForm = document.querySelector("[data-contact-form]");
+  const contactStatus = document.querySelector("[data-contact-status]");
+  const contactMessage = document.querySelector("#contact-message");
+  const messageCount = document.querySelector("[data-message-count]");
 
   function encodePath(path) {
     return encodeURI(path);
@@ -25,9 +29,10 @@
     return element;
   }
 
-  function createLink(className, href, label) {
+  function createLink(className, href, label, options = {}) {
     const link = createElement("a", className, label);
     link.href = href.startsWith("#") ? href : encodePath(href);
+    if (options.download) link.setAttribute("download", "");
     if (isExternalLink(href)) {
       link.target = "_blank";
       link.rel = "noopener noreferrer";
@@ -123,41 +128,16 @@
       const item = createElement("article", "optional-item");
       item.append(createElement("h3", "", material.title));
       item.append(createElement("p", "", "小学生・初級の発展教材として使える単体HTMLです。"));
-      item.append(createLink("", material.path, "教材を開く"));
+      item.append(createLink("", material.path, "HTMLをダウンロード", { download: true }));
       container.append(item);
     });
   }
 
-  function renderSupportLinks() {
-    const note = document.querySelector("[data-support-note]");
-    if (note) note.textContent = data.support.note;
-
-    const container = document.querySelector("[data-support-grid]");
-    if (!container) return;
-    container.textContent = "";
-
-    data.support.links.forEach((supportLink) => {
-      const item = createElement("article", "support-item");
-      item.append(createElement("h3", "", supportLink.label));
-      item.append(
-        createElement(
-          "p",
-          "",
-          supportLink.kind === "github"
-            ? "Issueで改善提案、利用報告、相談を送れます。"
-            : "任意支援と相談窓口の考え方を確認できます。",
-        ),
-      );
-      item.append(createLink("", supportLink.href, "開く"));
-      container.append(item);
-    });
-  }
-
-  function createMaterialLink(material, label) {
-    if (!material.exists) {
-      return createElement("span", "material-link disabled", `${label}なし`);
+  function createDownloadLink(download, label, className = "download-link") {
+    if (!download.exists) {
+      return createElement("span", `${className} disabled`, "準備中");
     }
-    return createLink("material-link", material.path, label);
+    return createLink(className, download.path, label, { download: true });
   }
 
   function renderLessonRow(lesson) {
@@ -168,11 +148,9 @@
     content.append(createElement("strong", "", lesson.title));
     if (lesson.theme) content.append(createElement("span", "", lesson.theme));
 
-    const links = createElement("div", "material-links");
-    links.append(createMaterialLink(lesson.materials.lesson, "スライド"));
-    links.append(createMaterialLink(lesson.materials.interactive, "体験HTML"));
-    links.append(createMaterialLink(lesson.materials.screenshot, "画面"));
-    content.append(links);
+    const downloadRow = createElement("div", "download-row");
+    downloadRow.append(createDownloadLink(lesson.download, "教材をダウンロード"));
+    content.append(downloadRow);
 
     row.append(content);
     return row;
@@ -203,8 +181,8 @@
     body.append(createElement("h3", "", course.title));
     body.append(createElement("p", "", course.goal));
 
-    const actions = createElement("div", "material-links");
-    actions.append(createLink("material-link", course.overviewPath, "概要"));
+    const actions = createElement("div", "course-actions");
+    actions.append(createDownloadLink(course.download, "まとめてダウンロード", "download-link primary"));
     actions.append(createLink("material-link", `${data.repository.url}/tree/main/${course.directory}`, "GitHub"));
     body.append(actions);
 
@@ -238,6 +216,71 @@
     });
   }
 
+  function updateMessageCount() {
+    if (!contactMessage || !messageCount) return;
+    messageCount.textContent = `${contactMessage.value.length} / 2000`;
+  }
+
+  function buildIssueUrl(category, subject, message) {
+    const body = [
+      "## お問い合わせ種別",
+      category,
+      "",
+      "## お問い合わせ内容",
+      message,
+      "",
+      "---",
+      "静的教材カタログのお問い合わせフォームから作成されました。",
+    ].join("\n");
+    const params = new URLSearchParams({
+      title: `[問い合わせ] ${subject}`,
+      body,
+      labels: "question",
+    });
+    return `${data.repository.issuesUrl}/new?${params.toString()}`;
+  }
+
+  function bindContactForm() {
+    if (!contactForm || !contactStatus || !contactMessage) return;
+    contactMessage.addEventListener("input", updateMessageCount);
+    updateMessageCount();
+
+    contactForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      contactStatus.className = "form-status";
+      contactStatus.textContent = "";
+
+      if (!contactForm.checkValidity()) {
+        contactStatus.classList.add("error");
+        contactStatus.textContent = "未入力または入力条件を満たしていない項目があります。";
+        contactForm.reportValidity();
+        return;
+      }
+
+      const formData = new FormData(contactForm);
+      const category = String(formData.get("category") || "").trim();
+      const subject = String(formData.get("subject") || "").trim();
+      const message = String(formData.get("message") || "").trim();
+
+      if (subject.length < 3 || message.length < 10) {
+        contactStatus.classList.add("error");
+        contactStatus.textContent = "件名は3文字以上、内容は10文字以上で入力してください。";
+        return;
+      }
+
+      if (/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/.test(`${subject} ${message}`)) {
+        contactStatus.classList.add("error");
+        contactStatus.textContent = "メールアドレスを含む内容は送信できません。個人情報を除いてください。";
+        return;
+      }
+
+      const issueUrl = buildIssueUrl(category, subject, message);
+      contactStatus.classList.add("success");
+      contactStatus.textContent = "GitHubで内容を確認する画面を開きます。";
+      window.location.assign(issueUrl);
+    });
+  }
+
   function init() {
     if (!data || !catalog || !resultLine) return;
     renderStats();
@@ -245,8 +288,8 @@
     renderFilterButtons("[data-level-filters]", data.levels, "level");
     renderAudiences();
     renderOptionalMaterials();
-    renderSupportLinks();
     bindSearch();
+    bindContactForm();
     renderCatalog();
   }
 

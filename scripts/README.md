@@ -7,6 +7,7 @@
 | `build-pptx.sh` | Marpマークダウン (`lesson.md`) から PowerPoint (.pptx) を `_generated/` 配下に出力 |
 | `capture-screenshots.mjs` | 全 `interactive.html` を Playwright で 1280×720 撮影。`hero` / `full` / `sections` モード対応 |
 | `capture-videos.mjs` | 全 `interactive.html` を自動スクロールしながらデモ動画を WebM 録画。 `--convert-mp4` で MP4 変換 |
+| `generate-downloads.mjs` | 各回と各コースの教材を、静的LPから配布するZIPとして `downloads/` に生成 |
 | `generate-site-data.mjs` | 教材ディレクトリから `assets/site-data.js` を生成し、静的LP/教材カタログに反映 |
 | `check-inline-js.mjs` | 全 HTML の inline `<script>` を `vm.Script` で構文チェック（CI 用） |
 | `check-id-duplicates.mjs` | 同一 HTML 内の id 重複を検出（CI 用） |
@@ -14,22 +15,35 @@
 | `check-curriculum-sections.mjs` | 各 `00_カリキュラム概要.md` の必須セクション欠落を検出（CI 用） |
 | `html-validate.config.json` | html-validate ルール設定（CI 用） |
 
-## generate-site-data.mjs
+## 教材カタログの生成
 
-ルートの `index.html` で使う教材カタログデータを、既存のコースディレクトリから生成します。教材を追加・削除したら実行してください。
+教材を追加・削除したら、先に配布ZIP、その後にカタログデータを生成してください。カタログデータはZIPの存在も記録します。
 
 ```bash
+node scripts/generate-downloads.mjs
 node scripts/generate-site-data.mjs
+```
+
+CIと同じ差分確認:
+
+```bash
+node scripts/generate-downloads.mjs --check
 node scripts/generate-site-data.mjs --check
 ```
 
 出力先:
 
 ```text
+downloads/
+├── lessons/<コース>/<授業回>.zip
+└── courses/<コース>.zip
+
 assets/site-data.js
 ```
 
-`--check` は現在の `assets/site-data.js` が最新かだけを確認します。CI では更新漏れの検出に使います。
+各回ZIPには `lesson.md` と、存在する場合は `interactive.html` が入ります。コースZIPにはカリキュラム概要、全4回の教材、該当する発展教材が入ります。
+
+`--check` は原本と生成済みファイルの差分だけを確認します。CIでは更新漏れの検出に使います。
 
 ## build-pptx.sh
 

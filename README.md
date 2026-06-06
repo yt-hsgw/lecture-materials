@@ -17,10 +17,12 @@ Marpスライド (`lesson.md`) と インタラクティブHTML (`interactive.ht
 ルートの [`index.html`](index.html) は、ログインなしで使える静的LP兼教材カタログです。
 
 - ローカルで見る: `index.html` をブラウザで開く
+- 配布ZIPを更新: `node scripts/generate-downloads.mjs`
+- 配布ZIPの差分確認: `node scripts/generate-downloads.mjs --check`
 - 教材データを更新: `node scripts/generate-site-data.mjs`
 - 生成データの差分確認: `node scripts/generate-site-data.mjs --check`
 - 設計メモ: [`docs/SITE_STRATEGY.md`](docs/SITE_STRATEGY.md)
-- 支援・相談: [`SUPPORT.md`](SUPPORT.md)
+- お問い合わせ: `index.html#contact` のフォームから GitHub Issue を作成
 
 ---
 

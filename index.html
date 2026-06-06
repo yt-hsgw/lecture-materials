@@ -8,7 +8,7 @@
       content="小学生・中学生・高校生・高齢者向けのプログラミングとパソコン教室教材をまとめたオープンソース教材カタログ。"
     >
     <title>lecture-materials | オープンソース教材カタログ</title>
-    <link rel="stylesheet" href="assets/site.css">
+    <link rel="stylesheet" href="assets/site.css?v=4">
   </head>
   <body>
     <header class="site-header">
@@ -20,7 +20,7 @@
         <a href="#catalog">教材一覧</a>
         <a href="#audiences">対象別</a>
         <a href="#optional">発展教材</a>
-        <a href="#support">支援・相談</a>
+        <a href="#contact">お問い合わせ</a>
         <a href="https://github.com/yt-hsgw/lecture-materials" target="_blank" rel="noopener noreferrer">GitHub</a>
       </nav>
     </header>
@@ -37,12 +37,12 @@
           <p class="eyebrow">MIT License / Static Catalog / No Login</p>
           <h1 id="hero-title">lecture-materials</h1>
           <p class="hero-lead">
-            小学生・中学生・高校生・高齢者向けに、スライド原本とブラウザで動く体験教材をまとめたオープンソース教材セットです。
+            小学生・中学生・高校生・高齢者向けに、授業資料とブラウザで動く体験教材をまとめたオープンソース教材セットです。
           </p>
           <div class="hero-actions" role="group" aria-label="主要アクション">
             <a class="button primary" href="#catalog">教材を探す</a>
             <a class="button ghost" href="https://github.com/yt-hsgw/lecture-materials" target="_blank" rel="noopener noreferrer">GitHubで見る</a>
-            <a class="button ghost" href="#support">支援・相談</a>
+            <a class="button ghost" href="#contact">お問い合わせ</a>
           </div>
         </div>
       </section>
@@ -52,7 +52,7 @@
           <div class="section-heading">
             <div>
               <h2 id="stats-title">授業で使える状態から始める</h2>
-              <p>教材はログインなしで閲覧できます。各回にスライド原本と体験HTMLへの導線を用意しています。</p>
+              <p>教材はログインなしでダウンロードできます。各回またはコース単位でまとめて入手できます。</p>
             </div>
           </div>
           <div class="stats-grid">
@@ -81,7 +81,7 @@
           <div class="section-heading">
             <div>
               <h2 id="catalog-title">教材カタログ</h2>
-              <p>対象、レベル、キーワードで絞り込み、各回のスライド・体験HTML・画面を直接開けます。</p>
+              <p>対象、レベル、キーワードで絞り込み、必要な教材をZIPでダウンロードできます。</p>
             </div>
             <a class="button dark" href="README.md">READMEを開く</a>
           </div>
@@ -132,16 +132,80 @@
         </div>
       </section>
 
-      <section class="section alt" id="support" aria-labelledby="support-title">
+      <section class="section alt" id="contact" aria-labelledby="contact-title">
         <div class="section-inner">
           <div class="section-heading">
             <div>
-              <h2 id="support-title">支援・相談</h2>
-              <p>教材は無料で公開し続け、支援は任意にします。改善提案、利用報告、授業利用の相談を歓迎します。</p>
+              <h2 id="contact-title">お問い合わせ</h2>
+              <p>教材の利用、内容、不具合、改善提案についてお問い合わせいただけます。</p>
             </div>
           </div>
-          <p class="support-note" data-support-note></p>
-          <div class="support-grid" data-support-grid></div>
+          <div class="contact-layout">
+            <form class="contact-form" data-contact-form novalidate>
+              <div class="form-field">
+                <label for="contact-category">お問い合わせ種別</label>
+                <select id="contact-category" name="category" required>
+                  <option value="">選択してください</option>
+                  <option value="教材の利用について">教材の利用について</option>
+                  <option value="教材内容について">教材内容について</option>
+                  <option value="不具合の報告">不具合の報告</option>
+                  <option value="改善・追加の提案">改善・追加の提案</option>
+                  <option value="その他">その他</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="contact-subject">件名</label>
+                <input
+                  id="contact-subject"
+                  name="subject"
+                  type="text"
+                  minlength="3"
+                  maxlength="80"
+                  autocomplete="off"
+                  placeholder="例: 中学生向け教材の授業利用について"
+                  required
+                >
+              </div>
+              <div class="form-field">
+                <label for="contact-message">お問い合わせ内容</label>
+                <textarea
+                  id="contact-message"
+                  name="message"
+                  rows="8"
+                  minlength="10"
+                  maxlength="2000"
+                  placeholder="対象コース、教材名、確認したい内容を入力してください。"
+                  required
+                ></textarea>
+                <div class="field-meta">
+                  <span>公開して問題のない内容だけを入力してください。</span>
+                  <span data-message-count>0 / 2000</span>
+                </div>
+              </div>
+              <label class="consent-field" for="contact-consent">
+                <input id="contact-consent" name="consent" type="checkbox" required>
+                <span>個人情報・パスワード・APIキーを含めていないことを確認しました</span>
+              </label>
+              <p class="form-status" data-contact-status aria-live="polite"></p>
+              <button class="button primary" type="submit">GitHubで問い合わせ内容を確認する</button>
+            </form>
+            <aside class="contact-aside" aria-labelledby="contact-flow-title">
+              <h3 id="contact-flow-title">送信方法</h3>
+              <ol>
+                <li>フォームに公開可能な内容を入力</li>
+                <li>GitHubの新規Issue画面で内容を確認</li>
+                <li>必要に応じて編集して投稿</li>
+              </ol>
+              <p>
+                このサイトは入力内容を保存・送信しません。投稿にはGitHubアカウントが必要です。
+              </p>
+              <a
+                href="https://github.com/yt-hsgw/lecture-materials/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+              >既存のお問い合わせを見る</a>
+            </aside>
+          </div>
         </div>
       </section>
     </main>
@@ -153,7 +217,7 @@
       </div>
     </footer>
 
-    <script src="assets/site-data.js"></script>
-    <script src="assets/site.js"></script>
+    <script src="assets/site-data.js?v=4"></script>
+    <script src="assets/site.js?v=4"></script>
   </body>
 </html>

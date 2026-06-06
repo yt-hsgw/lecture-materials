@@ -132,6 +132,7 @@ function parseCourse(directoryName) {
     const lessonPath = `${directoryName}/${lessonDirectory}/lesson.md`;
     const interactivePath = `${directoryName}/${lessonDirectory}/interactive.html`;
     const screenshotPath = `docs/screenshots/${directoryName}/${lessonDirectory}.png`;
+    const downloadPath = `downloads/lessons/${directoryName}/${lessonDirectory}.zip`;
 
     return {
       number,
@@ -139,6 +140,10 @@ function parseCourse(directoryName) {
       title: row.title || lessonTitleFromDirectory(lessonDirectory),
       theme: row.theme || "",
       handson: row.handson || "",
+      download: {
+        path: downloadPath,
+        exists: existsSync(path.join(ROOT, downloadPath)),
+      },
       materials: {
         lesson: {
           path: lessonPath,
@@ -164,7 +169,10 @@ function parseCourse(directoryName) {
     title: findCourseTitle(overviewMarkdown, `${audience} ${level}`),
     goal: findCourseGoal(overviewMarkdown) || AUDIENCE_DESCRIPTIONS[audience],
     color: COURSE_COLORS[directoryName] || "#334155",
-    overviewPath: `${directoryName}/00_カリキュラム概要.md`,
+    download: {
+      path: `downloads/courses/${directoryName}.zip`,
+      exists: existsSync(path.join(ROOT, `downloads/courses/${directoryName}.zip`)),
+    },
     lessonCount: lessons.length,
     lessons,
   };
@@ -215,26 +223,11 @@ function buildSiteData() {
   );
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     repository: {
       name: "lecture-materials",
       url: "https://github.com/yt-hsgw/lecture-materials",
       issuesUrl: "https://github.com/yt-hsgw/lecture-materials/issues",
-    },
-    support: {
-      note: "教材はMIT Licenseで公開し、支援は任意です。金銭支援先が未設定の場合は、Issue、PR、授業での利用報告が支援になります。",
-      links: [
-        {
-          label: "改善提案を送る",
-          href: "https://github.com/yt-hsgw/lecture-materials/issues",
-          kind: "github",
-        },
-        {
-          label: "支援方法を見る",
-          href: "https://github.com/yt-hsgw/lecture-materials/blob/main/SUPPORT.md",
-          kind: "support",
-        },
-      ],
     },
     counts: {
       audiences: AUDIENCE_ORDER.length,

@@ -108,7 +108,7 @@ jobs:
         run: node scripts/check-curriculum-sections.mjs
 
   # ────────────────────────────────────────────────
-  # 6. 静的LP カタログデータ 更新漏れ検出
+  # 6. 静的LP 配布ZIP・カタログデータ 更新漏れ検出
   # ────────────────────────────────────────────────
   site-data:
     name: Site data check
@@ -120,8 +120,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Check generated site data
-        run: node scripts/generate-site-data.mjs --check
+      - name: Check generated downloads and site data
+        run: |
+          node scripts/generate-downloads.mjs --check
+          node scripts/generate-site-data.mjs --check
 
   # ────────────────────────────────────────────────
   # 7. リンク切れ検出

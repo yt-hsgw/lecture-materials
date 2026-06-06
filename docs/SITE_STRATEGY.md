@@ -2,7 +2,7 @@
 
 ## 仕様
 
-このサイトは、公開済みの教材リポジトリを読む人のための入口である。ログイン、DB、決済は持たず、教材カタログ、GitHub導線、支援・相談導線だけを提供する。
+このサイトは、公開済みの教材リポジトリを読む人のための入口である。ログイン、DB、決済は持たず、教材カタログ、GitHub導線、問い合わせ導線だけを提供する。
 
 ### 対象読者
 
@@ -16,8 +16,8 @@
 
 - LPとして教材セットの価値、対象、規模を伝える
 - 4対象 × 3レベル × 4回の教材を一覧化する
-- 各回の `lesson.md`、`interactive.html`、スクリーンショットへ移動できる
-- GitHubリポジトリ、Issue、支援・相談導線へ移動できる
+- 各回またはコース単位で教材ZIPをダウンロードできる
+- GitHubリポジトリ、Issue、問い合わせ導線へ移動できる
 - 静的HTMLとしてローカルファイルでもGitHub Pagesでも開ける
 
 ### やらないこと
@@ -36,7 +36,9 @@ erDiagram
     LEVEL ||--o{ COURSE : classifies
     COURSE ||--o{ LESSON : contains
     LESSON ||--o{ MATERIAL : exposes
-    SITE ||--o{ SUPPORT_LINK : links
+    COURSE ||--|| DOWNLOAD_ARCHIVE : distributes
+    LESSON ||--|| DOWNLOAD_ARCHIVE : distributes
+    SITE ||--o{ CONTACT_REQUEST : creates
 
     AUDIENCE {
       string name
@@ -69,10 +71,16 @@ erDiagram
       boolean exists
     }
 
-    SUPPORT_LINK {
-      string label
-      string href
-      string kind
+    DOWNLOAD_ARCHIVE {
+      string scope
+      string path
+      boolean exists
+    }
+
+    CONTACT_REQUEST {
+      string category
+      string subject
+      string message
     }
 ```
 
@@ -80,14 +88,16 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    A["教材ディレクトリ"] --> B["scripts/generate-site-data.mjs"]
-    B --> C["assets/site-data.js"]
-    C --> D["index.html"]
-    E["assets/site.js"] --> D
-    F["assets/site.css"] --> D
-    D --> G["lesson.md"]
-    D --> H["interactive.html"]
-    D --> I["GitHub / Issue / Support"]
+    A["教材ディレクトリ"] --> B["scripts/generate-downloads.mjs"]
+    A --> C["scripts/generate-site-data.mjs"]
+    B --> D["downloads/"]
+    D --> C
+    C --> E["assets/site-data.js"]
+    E --> F["index.html"]
+    G["assets/site.js"] --> F
+    H["assets/site.css"] --> F
+    F --> D
+    F --> I["GitHub / 問い合わせIssue"]
 ```
 
 ### 境界
@@ -95,25 +105,26 @@ flowchart TD
 | 境界 | 内容 |
 |---|---|
 | 入力 | リポジトリ内のコースディレクトリ、`00_カリキュラム概要.md`、各回フォルダ |
-| 変換 | `scripts/generate-site-data.mjs` が教材構造を静的JSデータへ変換 |
+| 変換 | `scripts/generate-downloads.mjs` が各回・各コースのZIPを生成し、`scripts/generate-site-data.mjs` が教材構造とZIPの存在を静的JSデータへ変換 |
 | 表示 | `index.html` と `assets/site.js` がフィルタ可能な教材カタログを描画 |
-| 外部副作用 | GitHub、Issue、支援相談先へのリンク遷移のみ |
-| トランザクション | なし。静的サイトのため永続化処理を持たない |
+| 外部副作用 | ZIPダウンロード、GitHubへのリンク遷移、問い合わせ内容を付けた新規Issue画面の表示 |
+| トランザクション | サイト利用時はなし。ZIP生成時は一時ディレクトリで全件生成後、`downloads/` を一括差し替え |
 
 ## 設計理由
 
 - MIT公開リポジトリでは、ログインや有料DLで教材アクセスを囲い込む実効性が低い。
 - 教材の正は既存ディレクトリ構造に置き、LP専用DBを作らないことで更新漏れを減らす。
+- Markdownをブラウザで直接開かずZIPとして配布し、サーバーの文字コード判定による文字化けを避ける。
 - `index.html` をルートに置くことで、GitHub Pagesでもローカルファイルでも入口として使いやすい。
-- 支援は教材アクセスの条件にせず、任意の貢献・相談導線として扱う。
+- 問い合わせはGitHub Issue作成画面へ渡し、静的サイト内では保存・送信しない。
 - 個人情報を集めないため、OWASP Top10上の認証、セッション、保存データに関する攻撃面を増やさない。
 
 ## トレードオフ
 
 - 静的サイトなので、ユーザーごとの進度、修了証、ログイン後コンテンツは提供しない。
-- 生成済みの `assets/site-data.js` をコミットするため、教材構造変更時は再生成が必要になる。
+- 生成済みの `downloads/` と `assets/site-data.js` をコミットするため、教材変更時は両方の再生成が必要になる。
 - GitHub Pages以外のCMS的な編集体験はないが、レビュー可能性と単純さを優先する。
-- 支援導線は任意の案内に留めるため、短期的な収益化より信頼とOSS整合性を優先する。
+- 問い合わせにはGitHubアカウントが必要で、非公開の問い合わせには対応できない。
 
 ## 代替案
 
@@ -123,14 +134,18 @@ Next.jsなどで講座ポータルを作る案もある。この案は検索、�
 
 - ユーザー入力は検索語とフィルタのみで、DOMには `textContent` を使って反映する。
 - 外部リンクは `target="_blank"` と `rel="noopener noreferrer"` を付ける。
-- 支援・相談リンクは教材利用の条件にしない。
+- ZIPの入力元はリポジトリ内の既知の教材ディレクトリに限定し、利用者入力をファイルパスに使用しない。
+- 問い合わせフォームは必須項目、文字数、メールアドレス混入を検証する。
+- 入力内容はブラウザ内でIssue作成URLへ変換するだけで、サイト内には保存しない。
 - 秘密情報、APIキー、個人情報は扱わない。
 - GitHub Pagesで公開する場合も、認証境界や管理画面を持たない。
 
 ## 危険ケース
 
-- 教材ディレクトリを追加したのに `assets/site-data.js` を再生成せず、LPに表示されない。
-- 支援先が未設定のまま金銭支援を強く訴求し、利用者の混乱を招く。
-- 外部支援サービスを追加した際に、リンク切れやなりすまし先へ誘導してしまう。
+- 教材を変更したのに `downloads/` または `assets/site-data.js` を再生成せず、古い教材が配布される。
+- 教材を削除したのに古いZIPが残り、意図しない教材へ直接アクセスできる。
+- ZIPに日本語ファイル名を含めるため、UTF-8非対応の古い解凍ソフトではファイル名が正しく表示されない。
+- 問い合わせが公開Issueになることを読まず、個人情報を入力してしまう。
+- GitHubアカウントを持たない利用者は問い合わせを完了できない。
 - コース数が大幅に増えた場合、単一ページのDOM量が増えて初期表示が重くなる。
 - スクリーンショットが古くなり、実際の教材UIとLP上の見え方がずれる。
